@@ -1,4 +1,5 @@
 import type { FieldDef } from "@core/form/types";
+import { uploadImages } from "@root/core/form/image-upload-utils";
 
 export function buildDepartmentSettingsSchema(): FieldDef[] {
   return [
@@ -40,11 +41,7 @@ export function buildDepartmentSettingsSchema(): FieldDef[] {
       maxFiles: 1,
       multipleFiles: false,
       helperText: "PNG/JPG ≤ 2MB. Khuyến nghị hình vuông.",
-      uploader: async (_: File[]) => {
-        // TODO: thay bằng uploader thật
-        await new Promise((r) => setTimeout(r, 200));
-        return ["https://api.dicebear.com/9.x/initials/svg?seed=Dept"];
-      },
+      uploader: uploadImages,
     },
     {
       name: "active",

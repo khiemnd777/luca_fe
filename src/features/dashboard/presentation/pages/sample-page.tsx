@@ -58,7 +58,7 @@ const schema: FieldDef[] = [
     freeSolo: true,
     loadOptions: async (_) => {
       // gọi API lấy danh sách city theo keyword q
-      return [{label: "Georgia", value: "GA"}, {label: "Florida", value: "FL"}];
+      return [{ label: "Georgia", value: "GA" }, { label: "Florida", value: "FL" }];
     },
   },
   {

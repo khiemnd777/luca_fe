@@ -5,6 +5,8 @@ import type { MyDepartmentDto } from "@core/network/my-department.dto";
 import { useAutoForm } from "@core/form/use-auto-form";
 import { AutoFormFields } from "@core/form/auto-form-fields";
 import { mapper } from "@core/mapper/auto-mapper";
+import { updateDepartment } from "@features/settings/api/department.api";
+import toast from "react-hot-toast";
 
 export type DepartmentFormRef = {
   submit: () => Promise<boolean>;
@@ -28,10 +30,10 @@ const DepartmentForm = React.forwardRef<DepartmentFormRef, Props>((props, ref) =
     setSaving(true);
     try {
       const payload = mapper.map<Record<string, any>, MyDepartmentDto>("MyDepartment", values, "model_to_dto");
-      console.log(`[payload] ${payload}`);
-      // await departmentApi.updateMyDepartment(payload);
+      console.log(payload);
+      await updateDepartment(payload);
       props.onSaved?.();
-      // toast.success?.("Saved"); // toast later
+      toast.success?.("Lưu thông tin trang thành công!");
       return true;
     } finally {
       setSaving(false);

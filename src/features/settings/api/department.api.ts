@@ -3,7 +3,7 @@ import { apiClient } from "@core/network/api-client";
 import { env } from "@core/config/env";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { MyDepartmentDto } from "@root/core/network/my-department.dto";
-import { useAuth } from "@root/core/auth/use-auth";
+import { useAuthStore } from "@store/auth-store";
 
 export async function fetchDepartmentBySlug(slug: string): Promise<DepartmentDto> {
   const { data } = await apiClient.get<any[]>(`${env.apiBasePath}/main/department/slug/${slug}`);
@@ -12,7 +12,7 @@ export async function fetchDepartmentBySlug(slug: string): Promise<DepartmentDto
 }
 
 export async function updateDepartment(payload: Partial<MyDepartmentDto>): Promise<DepartmentDto> {
-  const { departmentApiPath } = useAuth();
+  const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.put<any>(departmentApiPath(), payload);
   const result = mapper.map<any, DepartmentDto>("Department", data, "dto_to_model");
   return result;

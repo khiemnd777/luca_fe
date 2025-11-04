@@ -14,10 +14,6 @@ export default function SettingsPage() {
   const { department, fetchDepartment } = useAuth();
   const formRef = React.useRef<DepartmentFormRef>(null);
   const [initial, setInitial] = React.useState<Partial<MyDepartmentDto | null>>();
-  const [darkMode, setDarkMode] = React.useState<boolean>(() => {
-    const saved = localStorage.getItem("pref_theme");
-    return saved ? saved === "dark" : false;
-  });
 
   React.useEffect(() => {
     let mounted = true;
@@ -46,9 +42,7 @@ export default function SettingsPage() {
               }} />
             </SectionCard>
             <SectionCard title="Giao diện">
-              <SettingsForm darkMode={darkMode} onChange={(v) => {
-                setDarkMode(v);
-              }} />
+              <SettingsForm />
             </SectionCard>
           </AutoGrid>
         </PageContainer>

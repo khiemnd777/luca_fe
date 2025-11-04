@@ -35,7 +35,7 @@ export default function SettingsPage() {
       <BasePage>
         <PageContainer>
           <PageToolbar
-            title="Thiết lặp"
+            title="Thiết lập"
             subtitle="Cấu hình thông tin trang quản lý và giao diện"
           />
           <AutoGrid>

@@ -14,8 +14,6 @@ export async function uploadImages(files: File[], onProgress?: (p: UploadProgres
       },
     });
     if (photo.url) {
-      // const { bytes, contentType } = await downloadPhotoWithMeta(photo.url, "thumbnail");
-      // const displayUrl = bytesToBlobUrl(bytes, contentType);
       results.push(photo.url);
     }
   }

@@ -2,8 +2,7 @@ import * as React from "react";
 import { Stack, Button, FormHelperText, IconButton, Tooltip, Box, LinearProgress, Typography } from "@mui/material";
 import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
 import AddPhotoAlternateRounded from "@mui/icons-material/AddPhotoAlternateRounded";
-import { downloadPhotoWithMeta } from "@core/photo/download-photo.api";
-import { bytesToBlobUrl } from "@shared/utils/file.utils";
+import { useDisplayUrl } from "../photo/use-display-url";
 
 export type ImageUploadValue = string | File;
 export type ImageUploadList = ImageUploadValue[];
@@ -290,36 +289,7 @@ function Thumb({
   progress?: number; // nếu có → hiển thị overlay progress
 }) {
   const uploading = typeof progress === "number" && progress >= 0 && progress < 100;
-  const [displayUrl, setDisplayUrl] = React.useState<string | undefined>(undefined);
-
-  React.useEffect(() => {
-    let active = true;
-    let blobUrl: string | null = null;
-
-    async function loadThumb() {
-      try {
-        // Nếu src là URL blob hoặc data URI => không cần tải lại
-        if (src.startsWith("blob:") || src.startsWith("data:") || src.startsWith("http")) {
-          if (active) setDisplayUrl(src);
-          return;
-        }
-
-        // tải thumbnail từ server
-        const { bytes, contentType } = await downloadPhotoWithMeta(src, "thumbnail");
-        blobUrl = bytesToBlobUrl(bytes, contentType);
-        if (active) setDisplayUrl(blobUrl);
-      } catch (err) {
-        if (active) setDisplayUrl(src);
-      }
-    }
-
-    loadThumb();
-
-    return () => {
-      active = false;
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  }, [src]);
+  const displayUrl = useDisplayUrl(src);
 
   return (
     <Box

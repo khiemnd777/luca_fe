@@ -23,11 +23,14 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { NavLink, useLocation } from "react-router-dom";
 import { useModuleMenu, type SidebarItem } from "@core/navigation/use-module.menu";
+import { useAuth } from "../auth/use-auth";
+import { Logo } from "@root/shared/components/ui/logo";
 
 const SIDEBAR_W = 280;
 const SIDEBAR_COLLAPSED_W = 76;
 
 export function BasePage({ children }: { children: React.ReactNode }) {
+  const { department } = useAuth();
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -168,19 +171,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
           }}
         >
           {/* Logo */}
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "10px",
-              bgcolor: "primary.main",
-              flexShrink: 0,
-              mx: collapsed ? "auto" : 0,
-              transition: theme.transitions.create(["margin"], {
-                duration: theme.transitions.duration.shortest,
-              }),
-            }}
-          />
+          <Logo src={department?.logo} name={department?.name} size={40} radius={"10px"} />
 
           {/* Text (ẩn khi collapse) */}
           {!collapsed && (
@@ -190,7 +181,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
               noWrap
               sx={{ flex: 1, ml: 1 }}
             >
-              Company Name
+              {department?.name}
             </Typography>
           )}
 

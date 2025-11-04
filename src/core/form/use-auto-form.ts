@@ -83,34 +83,52 @@ function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
 function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>) {
   const obj: Record<string, any> = {};
   for (const f of schema) {
-    const fallback =
+    // fallback mặc định cho từng kind
+    const defaultFallback =
       f.kind === "currency" ? 0 :
         f.kind === "number" ? 0 :
           f.kind === "checkbox" || f.kind === "switch" ? false :
             f.kind === "multiselect" ? [] :
-              f.kind === "fileupload" ? [] :
-                f.kind === "imageupload" ? [] :
-                  "";
+              // KHÔNG đặt mặc định [] cho upload nữa, sẽ xử lý bên dưới theo multipleFiles
+              "";
 
-    let v = raw && f.name in (raw ?? {}) ? raw![f.name] : (f as any).defaultValue ?? fallback;
+    let v = raw && f.name in (raw ?? {}) ? raw![f.name] : (f as any).defaultValue ?? defaultFallback;
 
     switch (f.kind) {
       case "fileupload":
-      case "imageupload":
-        if (v == null) v = [];
-        else if (typeof v === "string") v = [v];
-        else if (!Array.isArray(v)) v = [];
+      case "imageupload": {
+        const isMulti = (f as any).multipleFiles ?? true;
+        if (isMulti) {
+          if (v == null) v = [];
+          else if (typeof v === "string") v = [v];
+          else if (!Array.isArray(v)) v = [];
+        } else {
+          // single
+          if (Array.isArray(v)) {
+            // ưu tiên string đầu tiên, nếu không có thì File đầu tiên
+            const firstStr = v.find((x: any) => typeof x === "string");
+            const firstFile = v.find((x: any) => x instanceof File);
+            v = firstStr ?? firstFile ?? "";
+          } else if (v == null) {
+            v = "";
+          }
+        }
         break;
+      }
+
       case "select":
         if (f.multiple) v = Array.isArray(v) ? v : [];
         else if (v == null) v = "";
         break;
+
       case "multiselect":
         v = Array.isArray(v) ? v : [];
         break;
+
       case "autocomplete":
         v = v ?? (f.freeSolo ? "" : "");
         break;
+
       case "datetime":
         if (v == null || v === "") v = "";
         else {
@@ -118,6 +136,7 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
           v = isNaN(+d) ? "" : d.toISOString();
         }
         break;
+
       case "currency":
       case "number":
         if (v == null || v === "") v = 0;
@@ -126,20 +145,25 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
           v = Number.isFinite(n) ? n : 0;
         }
         break;
+
       case "checkbox":
       case "switch":
         v = !!v;
         break;
+
       case "color":
         v = v ?? "#000000";
         break;
+
       default:
         if (v == null) v = "";
     }
+
     obj[f.name] = v;
   }
   return obj;
 }
+
 
 /**
  * AUTO-EXTRAS: Tự động giữ các field không có trong schema (vd: id) vào `values`

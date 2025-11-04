@@ -1,7 +1,7 @@
 import { Typography, Button, Stack, Paper } from "@mui/material";
 import { BasePage } from "@core/pages/base-page";
 
-export default function StaffPstafage() {
+export default function StaffPage() {
   return (
     <>
       <BasePage>

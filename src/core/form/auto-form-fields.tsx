@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import type { FieldDef, Option } from "@core/form/types";
 import { CurrencyField } from "@core/form/currency-field";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from "./image-upload-field";
 
 type Props = {
   schema: FieldDef[];
@@ -40,7 +41,6 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
     <Stack spacing={gap}>
       {schema.map((f) => {
         const common = {
-          key: f.name,
           label: f.label,
           fullWidth: f.fullWidth ?? true,
           size: f.size ?? "small",
@@ -55,6 +55,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           const [show, setShow] = React.useState(false);
           return (
             <TextField
+              key={f.name}
               {...common}
               type={show ? "text" : "password"}
               value={values[f.name] ?? ""}
@@ -81,6 +82,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         if (f.kind === "email") {
           return (
             <TextField
+              key={f.name}
               {...common}
               type="email"
               value={values[f.name] ?? ""}
@@ -101,6 +103,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         if (f.kind === "textarea") {
           return (
             <TextField
+              key={f.name}
               {...common}
               value={values[f.name] ?? ""}
               onChange={(e) => setValue(f.name, e.target.value)}
@@ -116,6 +119,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           const val = iso ? dayjs(iso) : null;
           return (
             <DateTimePicker
+              key={f.name}
               label={f.label}
               value={val}
               onChange={(d) => setValue(f.name, d ? d.toISOString() : "")}
@@ -135,6 +139,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         if (f.kind === "color") {
           return (
             <TextField
+              key={f.name}
               {...common}
               type="color"
               value={values[f.name] ?? "#000000"}
@@ -148,6 +153,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         if (f.kind === "currency") {
           return (
             <CurrencyField
+              key={f.name}
               {...(common as any)}
               value={values[f.name] ?? 0}
               onChange={(n) => setValue(f.name, n)}
@@ -163,6 +169,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           const raw = values[f.name];
           return (
             <TextField
+              key={f.name}
               {...common}
               type="number"
               value={raw ?? 0}
@@ -189,6 +196,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         if (f.kind === "select" && !f.multiple) {
           return (
             <TextField
+              key={f.name}
               {...common}
               select
               value={values[f.name] ?? ""}
@@ -211,6 +219,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
 
           return (
             <Autocomplete
+              key={f.name}
               multiple
               options={f.options ?? []}
               value={currentOptions}
@@ -255,6 +264,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
 
           return (
             <Autocomplete
+              key={f.name}
               options={opts}
               value={f.freeSolo ? value ?? null : selectedOption}
               freeSolo={!!f.freeSolo}
@@ -333,7 +343,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           };
 
           return (
-            <>
+            <React.Fragment key={f.name}>
               <input
                 ref={inputRef}
                 type="file"
@@ -356,7 +366,31 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
                   <Chip key={`${file.name}-${i}`} label={`${file.name} (${Math.round(file.size / 1024)} KB)`} size="small" />
                 ))}
               </Stack>
-            </>
+            </React.Fragment>
+          );
+        }
+
+        // IMAGEUPLOAD — single/multiple
+        if (f.kind === "imageupload") {
+          // hỗ trợ cả 2 kiểu: single (string|File|null) hoặc multiple (Array)
+          const val = values[f.name] as ImageUploadList | ImageUploadValue | null | undefined;
+          const multiple = f.multipleFiles ?? true; // tái dùng field cũ nếu đã đang truyền
+
+          return (
+            <ImageUploadField
+              key={f.name}
+              name={f.name}
+              label={f.label}
+              size={f.size ?? "small"}
+              helperText={f.helperText}
+              error={errors?.[f.name] ?? null}
+              multiple={multiple}
+              maxFiles={f.maxFiles}
+              accept={f.accept ?? "image/*"}
+              uploader={f.uploader}
+              value={val}
+              onChange={(newVal) => setValue(f.name, newVal)}
+            />
           );
         }
 
@@ -366,7 +400,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           const hasErr = !!errors?.[f.name];
           const helper = errors?.[f.name] ?? f.helperText;
           return (
-            <FormControl error={hasErr} component="fieldset" variant="standard">
+            <FormControl key={f.name} error={hasErr} component="fieldset" variant="standard">
               <FormControlLabel
                 control={
                   <Checkbox
@@ -388,7 +422,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
           const hasErr = !!errors?.[f.name];
           const helper = errors?.[f.name] ?? f.helperText;
           return (
-            <FormControl error={hasErr} component="fieldset" variant="standard">
+            <FormControl key={f.name} error={hasErr} component="fieldset" variant="standard">
               <FormControlLabel
                 control={
                   <MuiSwitch
@@ -417,6 +451,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
         // DEFAULT: TEXT
         return (
           <TextField
+            key={f.name}
             {...common}
             value={values[f.name] ?? ""}
             onChange={(e) => setValue(f.name, e.target.value)}

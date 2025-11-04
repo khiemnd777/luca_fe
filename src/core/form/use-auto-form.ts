@@ -2,8 +2,7 @@
 import * as React from "react";
 import type { FieldDef, FieldRules, AutoFormOptions } from "./types";
 
-const emailRegex =
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 function getReqMsg(r?: boolean | string) {
   if (!r) return null;
@@ -12,23 +11,15 @@ function getReqMsg(r?: boolean | string) {
 
 type Errors = Record<string, string | null>;
 
-function normalizeErrors(
-  obj: Record<string, string | null | undefined>
-): Errors {
+function normalizeErrors(obj: Record<string, string | null | undefined>): Errors {
   const out: Errors = {};
   for (const [k, v] of Object.entries(obj)) out[k] = v ?? null;
   return out;
 }
 
-function validateOneSync(
-  value: any,
-  rules?: FieldRules,
-  label?: string,
-  kind?: string
-): string | null {
+function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
   if (!rules) return null;
 
-  // required
   const reqMsg = getReqMsg(rules.required);
   if (reqMsg) {
     if (typeof value === "boolean") {
@@ -47,7 +38,6 @@ function validateOneSync(
       return `${label ?? "This field"} must be at most ${rules.maxLength} characters`;
   }
 
-  // email auto pattern
   if (kind === "email" && value && !emailRegex.test(value)) {
     return "Invalid email format";
   }
@@ -81,7 +71,6 @@ function validateOneSync(
   return null;
 }
 
-// tiny debounce helper
 function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
   let t: any;
   return (...args: Parameters<F>) => {
@@ -90,92 +79,192 @@ function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
   };
 }
 
+// --- Normalize initial values for schema kinds ---
+function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>) {
+  const obj: Record<string, any> = {};
+  for (const f of schema) {
+    const fallback =
+      f.kind === "currency" ? 0 :
+        f.kind === "number" ? 0 :
+          f.kind === "checkbox" || f.kind === "switch" ? false :
+            f.kind === "multiselect" ? [] :
+              f.kind === "fileupload" ? [] :
+                f.kind === "imageupload" ? [] :
+                  "";
+
+    let v = raw && f.name in (raw ?? {}) ? raw![f.name] : (f as any).defaultValue ?? fallback;
+
+    switch (f.kind) {
+      case "fileupload":
+      case "imageupload":
+        if (v == null) v = [];
+        else if (typeof v === "string") v = [v];
+        else if (!Array.isArray(v)) v = [];
+        break;
+      case "select":
+        if (f.multiple) v = Array.isArray(v) ? v : [];
+        else if (v == null) v = "";
+        break;
+      case "multiselect":
+        v = Array.isArray(v) ? v : [];
+        break;
+      case "autocomplete":
+        v = v ?? (f.freeSolo ? "" : "");
+        break;
+      case "datetime":
+        if (v == null || v === "") v = "";
+        else {
+          const d = new Date(v);
+          v = isNaN(+d) ? "" : d.toISOString();
+        }
+        break;
+      case "currency":
+      case "number":
+        if (v == null || v === "") v = 0;
+        else {
+          const n = Number(v);
+          v = Number.isFinite(n) ? n : 0;
+        }
+        break;
+      case "checkbox":
+      case "switch":
+        v = !!v;
+        break;
+      case "color":
+        v = v ?? "#000000";
+        break;
+      default:
+        if (v == null) v = "";
+    }
+    obj[f.name] = v;
+  }
+  return obj;
+}
+
+/**
+ * AUTO-EXTRAS: Tự động giữ các field không có trong schema (vd: id) vào `values`
+ * - Không validate các field này
+ * - Tự hydrate khi `initial` đổi
+ */
 export function useAutoForm(
   schema: FieldDef[],
   initial?: Record<string, any>,
-  options?: AutoFormOptions
+  options?: AutoFormOptions & { hydrateOnInitialChange?: boolean }
 ) {
   const asyncDebounceMs = options?.asyncDebounceMs ?? 300;
+  const hydrateOnInitialChange = options?.hydrateOnInitialChange ?? true;
 
-  const init: Record<string, any> = React.useMemo(() => {
-    const obj: Record<string, any> = {};
-    for (const f of schema) {
-      const fallback =
-        f.kind === "currency" ? 0 :
-          f.kind === "number" ? 0 :
-            f.kind === "checkbox" || f.kind === "switch" ? false :
-              f.kind === "multiselect" ? [] :
-                f.kind === "fileupload" ? [] :
-                  "";
-      obj[f.name] = initial?.[f.name] ?? f.defaultValue ?? fallback;
+  const schemaNames = React.useMemo(() => new Set(schema.map(s => s.name)), [schema]);
+
+  // split initial → schemaValues + extras
+  const computeInit = React.useCallback(() => {
+    const base = normalizeInitialBySchema(schema, initial);
+    const extras: Record<string, any> = {};
+    if (initial) {
+      for (const [k, v] of Object.entries(initial)) {
+        if (!schemaNames.has(k)) extras[k] = v; // id, createdAt, ...
+      }
     }
-    return obj;
-  }, [schema, initial]);
+    return { base, extras };
+  }, [schema, schemaNames, initial]);
 
-  const [values, setValues] = React.useState<Record<string, any>>(init);
+  const { base: initBase, extras: initExtras } = React.useMemo(() => computeInit(), [computeInit]);
+
+  const [formValues, setFormValues] = React.useState<Record<string, any>>(initBase); // only schema keys
+  const extrasRef = React.useRef<Record<string, any>>(initExtras);                   // non-schema keys
+  const [extrasTick, setExtrasTick] = React.useState(0); // trigger rerender when extras change
+
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
-  const [validating, setValidating] = React.useState<Record<string, boolean>>({}); // per-field spinner state
+  const [validating, setValidating] = React.useState<Record<string, boolean>>({});
+
+  // hydrate on initial/schema change
+  React.useEffect(() => {
+    if (!hydrateOnInitialChange) return;
+    const { base, extras } = computeInit();
+    setFormValues(base);
+    extrasRef.current = extras;
+    setExtrasTick((t) => t + 1);
+    setErrors({});
+    setValidating({});
+  }, [computeInit, hydrateOnInitialChange]);
 
   // public setters
   const setValue = React.useCallback((name: string, v: any) => {
-    setValues((s) => ({ ...s, [name]: v }));
-  }, []);
+    if (schemaNames.has(name)) {
+      setFormValues((s) => ({ ...s, [name]: v }));
+    } else {
+      // allow setting extra keys (rare)
+      extrasRef.current = { ...extrasRef.current, [name]: v };
+      setExtrasTick((t) => t + 1);
+    }
+  }, [schemaNames]);
+
+  const setAllValues = React.useCallback((next: Record<string, any>) => {
+    const base: Record<string, any> = {};
+    const extras: Record<string, any> = {};
+    for (const [k, v] of Object.entries(next)) {
+      if (schemaNames.has(k)) base[k] = v;
+      else extras[k] = v;
+    }
+    setFormValues(base);
+    extrasRef.current = extras;
+    setExtrasTick((t) => t + 1);
+  }, [schemaNames]);
 
   const setFieldError = React.useCallback((name: string, msg: string | null) => {
     setErrors((e) => ({ ...e, [name]: msg }));
   }, []);
 
-  // -------- SYNC VALIDATION (per-form)
+  // values = extras + formValues (memoized)
+  const values = React.useMemo(
+    () => ({ ...extrasRef.current, ...formValues }),
+    [formValues, extrasTick]
+  );
+
+  // ---- validations (schema fields only)
   const validate = React.useCallback(() => {
     const err: Record<string, string | null> = {};
     for (const f of schema) {
-      const msg = validateOneSync(values[f.name], f.rules, f.label, f.kind);
+      const msg = validateOneSync(formValues[f.name], f.rules, f.label, f.kind);
       if (msg) err[f.name] = msg;
     }
     setErrors(err);
     return Object.values(err).every((x) => !x);
-  }, [schema, values]);
+  }, [schema, formValues]);
 
-  // -------- ASYNC VALIDATION (per-field)
   const validateFieldAsync = React.useCallback(async (name: string) => {
     const def = schema.find((x) => x.name === name);
     if (!def) return true;
 
-    // chạy sync trước
-    const syncMsg = validateOneSync(values[name], def.rules, def.label, def.kind);
+    const syncMsg = validateOneSync(formValues[name], def.rules, def.label, def.kind);
     if (syncMsg) {
       setFieldError(name, syncMsg);
       return false;
     }
-    // nếu không có rules.async → pass
     if (!def.rules?.async) {
       setFieldError(name, null);
       return true;
     }
 
-    // chạy async rule
     try {
       setValidating((v) => ({ ...v, [name]: true }));
-      const msg = await def.rules.async(values[name], values);
+      const msg = await def.rules.async(formValues[name], values);
       setFieldError(name, msg ?? null);
       return !msg;
     } catch (e: any) {
-      // phòng trường hợp API lỗi
       setFieldError(name, e?.message ?? "Validation failed");
       return false;
     } finally {
       setValidating((v) => ({ ...v, [name]: false }));
     }
-  }, [schema, values, setFieldError]);
+  }, [schema, formValues, values, setFieldError]);
 
-  // phiên bản debounced để gọi trong onBlur/onChange nếu muốn
   const validateFieldAsyncDebounced = React.useMemo(() => {
     return debounce((name: string) => {
       validateFieldAsync(name);
     }, asyncDebounceMs);
   }, [validateFieldAsync, asyncDebounceMs]);
 
-  // -------- ASYNC VALIDATION (global)
   const validateAsyncGlobal = React.useCallback(async () => {
     if (!options?.asyncValidate) return true;
     try {
@@ -187,43 +276,40 @@ export function useAutoForm(
       }
       return true;
     } catch (e: any) {
-      // Nếu server trả lỗi dạng chung, bạn có thể map về _form key:
       setErrors((er) => ({ ...er, _form: e?.message ?? "Server validation failed" }));
       return false;
     }
   }, [options, values]);
 
-  // -------- VALIDATE ALL (sync + per-field async + global async)
   const validateAll = React.useCallback(async () => {
-    // sync trước
     if (!validate()) return false;
 
-    // async từng field có rules.async
     const asyncNames = schema.filter((f) => f.rules?.async).map((f) => f.name);
     const results = await Promise.all(asyncNames.map((n) => validateFieldAsync(n)));
-    const okFields = results.every(Boolean);
-    if (!okFields) return false;
+    if (!results.every(Boolean)) return false;
 
-    // async global
     const okGlobal = await validateAsyncGlobal();
     return okGlobal;
   }, [schema, validate, validateFieldAsync, validateAsyncGlobal]);
 
   return {
-    values,
+    values,                // <-- luôn chứa cả id (và mọi extras từ initial)
     setValue,
+    setAllValues,
     errors,
     setErrors,
     setFieldError,
-    validating,                      // <- trạng thái đang validate từng field
-    validate,                        // sync
-    validateFieldAsync,              // validate 1 field (immediate)
-    validateFieldAsyncDebounced,     // validate 1 field (debounced)
-    validateAll,                     // sync + all async (per-field + global)
+    validating,
+    validate,
+    validateFieldAsync,
+    validateFieldAsyncDebounced,
+    validateAll,
     reset: React.useCallback(() => {
-      setValues(init);
+      setFormValues(initBase);
+      extrasRef.current = initExtras;
+      setExtrasTick((t) => t + 1);
       setErrors({});
       setValidating({});
-    }, [init]),
+    }, [initBase, initExtras]),
   };
 }

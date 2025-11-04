@@ -1,5 +1,5 @@
 import { apiClient } from "@core/network/api-client";
-import type { MeDto } from "@core/network/me-types";
+import type { MeDto } from "@root/core/network/me.dto";
 import { env } from "@core/config/env";
 import { mapper } from "@core/mapper/auto-mapper";
 

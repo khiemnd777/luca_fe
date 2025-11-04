@@ -1,4 +1,4 @@
-import type { RoleDto } from "@features/rbac/models/role.dto";
+import type { RoleDto } from "@root/features/rbac/model/role.dto";
 import { env } from "@core/config/env";
 import { mapper } from "@core/mapper/auto-mapper";
 import { apiClient } from "@core/network/api-client";

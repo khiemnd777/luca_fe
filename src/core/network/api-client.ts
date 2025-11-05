@@ -5,44 +5,43 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
-import { clearTokens, getAccessToken, getRefreshToken, saveAccessToken } from "@core/network/token-utils";
+import { getAccessToken, getRefreshToken, saveAccessToken } from "@core/network/token-utils";
 import { refreshAccessToken } from "@core/network/auth-api";
 
-// ==============================
-// ⚙️ Global state
-// ==============================
+/** =========================
+ *  Global (singleton + state)
+ *  ========================= */
+declare global {
+  // eslint-disable-next-line no-var
+  var __API_CLIENT_SINGLETON__: ApiClient | undefined;
+}
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
-let loggingOut = false;
-let lastRefreshedAt = 0;          // mốc thời gian vừa refresh xong
-
-// Hàng đợi các request bị tạm dừng trong lúc refresh
 const requestQueue: Array<(token: string | null) => void> = [];
+let lastRefreshFailedAt: number | null = null;
 
-// ==============================
-// ⚙️ Constants
-// ==============================
-const EARLY_REFRESH_S = 30;         // refresh sớm khi token còn < 30s
-const BC_RACE_MS = 200;             // chờ broadcast tối đa 200ms
-const QUEUE_MAX_WAIT_MS = 300;      // pause tối đa khi refresh
+/** =========================
+ *  Constants
+ *  ========================= */
+const EARLY_REFRESH_S = 30;
+const BC_RACE_MS = 200;
+const REFRESH_HARD_TIMEOUT_MS = 6000;
 const LOGIN_PATH = "/login";
-const LOGOUT_REDIRECT_GRACE_MS = 1500; // sau khi refresh, tạm thời KHÔNG redirect logout để tránh bounce
 
-// ==============================
-// ⚙️ Broadcast đa tab
-// ==============================
+/** =========================
+ *  Broadcast đa tab
+ *  ========================= */
 const bc = typeof window !== "undefined" && "BroadcastChannel" in window ? new BroadcastChannel("auth") : null;
-function broadcastToken(token: string | null) {
-  try { bc?.postMessage(token ? { type: "token_refreshed", token } : { type: "logout" }); } catch { }
+function broadcast(type: "token_refreshed" | "logout" | "refresh_failed", token?: string | null) {
+  try { bc?.postMessage(type === "token_refreshed" ? { type, token } : { type }); } catch { }
 }
 
-// ==============================
-// ⚙️ Utils
-// ==============================
+/** =========================
+ *  Utils
+ *  ========================= */
 function isOnLogin(): boolean {
   try { return typeof window !== "undefined" && window.location?.pathname?.startsWith(LOGIN_PATH); } catch { return false; }
 }
-
 function getTokenExpSec(token?: string | null): number | null {
   if (!token) return null;
   const parts = token.split(".");
@@ -59,44 +58,37 @@ function secondsUntilExpiry(token?: string | null): number | null {
   return exp - now;
 }
 
-export function isAuthRefreshing(): boolean {
-  return isRefreshing;
-}
-
-// ✅ Export helper cho route guard
+export function isAuthRefreshing(): boolean { return isRefreshing; }
 export function hasUsableAccessToken(): boolean {
   const t = getAccessToken();
-  const exp = ((): number | null => {
-    if (!t) return null;
-    const p = t.split(".");
-    if (p.length !== 3) return null;
-    try {
-      const payload = JSON.parse(atob(p[1].replace(/-/g, "+").replace(/_/g, "/")));
-      return typeof payload?.exp === "number" ? payload.exp : null;
-    } catch { return null; }
-  })();
+  const exp = getTokenExpSec(t);
   if (!exp) return false;
   const now = Math.floor(Date.now() / 1000);
   return exp > now;
 }
+export function didLastRefreshFail(): boolean {
+  return !!lastRefreshFailedAt && Date.now() - lastRefreshFailedAt < 5 * 60 * 1000;
+}
+function markRefreshFail() {
+  lastRefreshFailedAt = Date.now();
+  broadcast("refresh_failed");
+}
+function clearRefreshFailFlag() { lastRefreshFailedAt = null; }
 
-// ==============================
-// 🧹 Bootstrap: dọn token hết hạn để tránh loop guard
-// ==============================
+/** =========================
+ *  Bootstrap: dọn AT hết hạn
+ *  ========================= */
 (function bootstrapTokenSanity() {
   const t = getAccessToken();
   const remain = secondsUntilExpiry(t);
   if (t && (remain === null || remain <= 0)) {
-    // ❌ đừng clearTokens() (sẽ xóa cả refresh token)
-    // ✅ chỉ bỏ access token để các request sau đó kích refresh
     try { saveAccessToken(""); } catch { }
-    // ❌ KHÔNG broadcast logout (vì phiên vẫn còn refresh token)
   }
 })();
 
-// ==============================
-// ⚙️ Wait external refresh (race 200ms)
-// ==============================
+/** =========================
+ *  Race short từ tab khác
+ *  ========================= */
 function waitExternalRefreshShort(): Promise<string | null> {
   return new Promise((resolve) => {
     if (!bc) return resolve(null);
@@ -104,42 +96,60 @@ function waitExternalRefreshShort(): Promise<string | null> {
       try { bc.removeEventListener("message", handler); } catch { }
       resolve(null);
     }, BC_RACE_MS);
-
     const handler = (ev: MessageEvent) => {
       if (ev.data?.type === "token_refreshed") {
-        clearTimeout(timer);
-        bc.removeEventListener("message", handler);
+        clearTimeout(timer); bc.removeEventListener("message", handler);
         resolve(ev.data.token ?? null);
       }
-      if (ev.data?.type === "logout") {
-        clearTimeout(timer);
-        bc.removeEventListener("message", handler);
+      if (ev.data?.type === "logout" || ev.data?.type === "refresh_failed") {
+        clearTimeout(timer); bc.removeEventListener("message", handler);
         resolve(null);
       }
     };
     bc.addEventListener("message", handler);
   });
 }
+function isRefreshRequest(config?: AxiosRequestConfig | null) {
+  const url = config?.url ?? "";
+  return url.includes("/auth/refresh") || url.includes("/refresh-token");
+}
 
-// ==============================
-// ⚙️ Refresh logic
-// ==============================
+/** =========================
+ *  Queue helpers
+ *  ========================= */
+function flushQueue(newToken: string | null) {
+  while (requestQueue.length) {
+    const fn = requestQueue.shift()!;
+    try { fn(newToken); } catch { }
+  }
+}
+function failQueue() {
+  while (requestQueue.length) {
+    const fn = requestQueue.shift()!;
+    try { fn(null); } catch { }
+  }
+}
+
+/** =========================
+ *  Timeout wrapper
+ *  ========================= */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | "__TIMEOUT__"> {
+  return Promise.race([p, new Promise<"__TIMEOUT__">((res) => setTimeout(() => res("__TIMEOUT__"), ms))]);
+}
+
+/** =========================
+ *  Refresh logic
+ *  ========================= */
 async function doRefreshOnce(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
 
   isRefreshing = true;
-  refreshPromise = (async () => {
+  const core = (async () => {
     try {
-      // Nếu đang ở /login thì không race/refresh để tránh tự "đăng nhập lại" ngoài ý muốn
       if (isOnLogin()) return null;
 
-      // Race: chờ token từ tab khác rất ngắn
       const external = await waitExternalRefreshShort();
-      if (external) {
-        saveAccessToken(external);
-        lastRefreshedAt = Date.now();
-        return external;
-      }
+      if (external) { saveAccessToken(external); clearRefreshFailFlag(); return external; }
 
       const rt = getRefreshToken();
       if (!rt) return null;
@@ -147,68 +157,49 @@ async function doRefreshOnce(): Promise<string | null> {
       const newToken = await refreshAccessToken(rt);
       if (newToken) {
         saveAccessToken(newToken);
-        lastRefreshedAt = Date.now();
-        broadcastToken(newToken);
+        broadcast("token_refreshed", newToken);
+        clearRefreshFailFlag();
         return newToken;
       }
       return null;
     } catch {
       return null;
-    } finally {
-      // clear tại nơi gọi sau flushQueue
     }
   })();
 
-  return refreshPromise;
+  const raced = withTimeout(core, REFRESH_HARD_TIMEOUT_MS).then((r) => (r === "__TIMEOUT__" ? null : r));
+  refreshPromise = raced;
+
+  raced.then((token) => {
+    isRefreshing = false; refreshPromise = null;
+    if (token) flushQueue(token);
+    else { markRefreshFail(); failQueue(); }
+  }).catch(() => {
+    isRefreshing = false; refreshPromise = null;
+    markRefreshFail(); failQueue();
+  });
+
+  return raced;
 }
 
-function flushQueue(token: string | null) {
-  while (requestQueue.length) {
-    const resume = requestQueue.shift()!;
-    try { resume(token); } catch { }
-  }
-}
-
-// 🔒 Soft logout: clear + broadcast, CHỈ redirect nếu an toàn
-function softLogout() {
-  if (loggingOut) return;
-  loggingOut = true;
-  try {
-    clearTokens();
-    broadcastToken(null);
-  } finally {
-    const justRefreshed = Date.now() - lastRefreshedAt < LOGOUT_REDIRECT_GRACE_MS;
-    // Không redirect nếu: đang ở /login, hoặc vừa refresh xong (grace), để tránh bounce
-    if (!isOnLogin() && !justRefreshed) {
-      window.location.replace(LOGIN_PATH);
-    }
-    // Cho phép lần sau có thể logout lại nếu cần
-    setTimeout(() => { loggingOut = false; }, 500);
-  }
-}
-
-function isRefreshRequest(config?: AxiosRequestConfig | null) {
-  const url = config?.url ?? "";
-  return url.includes("/auth/refresh") || url.includes("/refresh-token");
-}
-
-// ==============================
-// ⚙️ ApiClient
-// ==============================
+/** =========================
+ *  ApiClient (singleton)
+ *  ========================= */
 export class ApiClient {
   private readonly instance: AxiosInstance;
-  private constructor(axiosInstance: AxiosInstance) {
-    this.instance = axiosInstance;
-  }
+  private constructor(axiosInstance: AxiosInstance) { this.instance = axiosInstance; }
 
   static create(): ApiClient {
+    // Singleton thật sự (chống HMR/dev tạo nhiều instance gây flicker do request lặp)
+    if (globalThis.__API_CLIENT_SINGLETON__) return globalThis.__API_CLIENT_SINGLETON__;
+
     const axiosInstance = axios.create({
       baseURL: "",
       headers: { "Content-Type": "application/json" },
       timeout: 10000,
     });
 
-    // ----- Request interceptor -----
+    // ----- Request interceptor (DUY NHẤT) -----
     axiosInstance.interceptors.request.use(
       async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
         const ensureHeaders = () => {
@@ -222,36 +213,23 @@ export class ApiClient {
         };
 
         const isRefresh = isRefreshRequest(config);
-        const token = getAccessToken();
-        const remain = secondsUntilExpiry(token);
+        const at = getAccessToken();
+        const remain = secondsUntilExpiry(at);
 
-        // Nếu token hết hạn/invalid → chỉ bỏ access token, KHÔNG đụng refresh token
-        if (token && (remain === null || remain <= 0)) {
+        if (at && (remain === null || remain <= 0)) {
           try { saveAccessToken(""); } catch { }
-          // ❌ KHÔNG broadcast logout — vẫn còn cơ hội refresh
-        } else if (token && !isRefresh && remain !== null && remain > 0) {
-          setAuth(token);
         }
 
-        // Không kích refresh nền ở trang login
-        if (!isOnLogin() && !isRefresh && !isRefreshing && remain !== null && remain <= EARLY_REFRESH_S && remain > 0) {
-          void doRefreshOnce();
+        if (at && remain !== null && remain > 0 && !isRefresh) {
+          setAuth(at);
+          if (remain <= EARLY_REFRESH_S && !isRefreshing && !isOnLogin()) void doRefreshOnce();
+          return config;
         }
 
-        // Nếu đang refresh → pause tối đa rồi đi tiếp
-        if (isRefreshing && !isRefresh) {
+        if (!isRefresh && getRefreshToken()) {
+          if (!isRefreshing) void doRefreshOnce();
           return new Promise<InternalAxiosRequestConfig>((resolve) => {
-            let released = false;
-            const timer = setTimeout(() => {
-              if (released) return;
-              released = true;
-              resolve(config); // đi tiếp; nếu 401 sẽ xử lý ở response
-            }, QUEUE_MAX_WAIT_MS);
-
             requestQueue.push((newToken) => {
-              if (released) return;
-              clearTimeout(timer);
-              released = true;
               if (newToken) setAuth(newToken);
               resolve(config);
             });
@@ -264,57 +242,31 @@ export class ApiClient {
 
     // ----- Response interceptor -----
     axiosInstance.interceptors.response.use(
-      (res) => res,
-      async (err) => {
-        const originalRequest = err.config as AxiosRequestConfig & { _retry?: boolean; __noAuthRedirect?: boolean };
-        const status = err?.response?.status;
+      (response) => response,
+      async (error) => {
+        const original: InternalAxiosRequestConfig & { _retry?: boolean } = error?.config ?? {};
+        const status = error?.response?.status as number | undefined;
 
-        // Cho phép tắt redirect cho một request cụ thể (nếu bạn muốn):
-        const suppressRedirect = originalRequest?.__noAuthRedirect === true;
-
-        if (status !== 401) return Promise.reject(err);
-
-        // 401 của chính refresh → kết thúc phiên
-        if (isRefreshRequest(originalRequest)) {
-          isRefreshing = false;
-          refreshPromise = null;
-          flushQueue(null);
-          if (!suppressRedirect) softLogout();
-          return Promise.reject(err);
+        if ((status === 401 || status === 403) && !original._retry && !isRefreshRequest(original) && getRefreshToken()) {
+          original._retry = true;
+          const newToken = await doRefreshOnce();
+          if (newToken) {
+            const headers = new AxiosHeaders(original.headers as any);
+            headers.set("Authorization", `Bearer ${newToken}`);
+            original.headers = headers;
+            return axiosInstance.request(original);
+          }
         }
-
-        // Tránh vòng lặp vô hạn
-        if (originalRequest._retry) {
-          isRefreshing = false;
-          refreshPromise = null;
-          flushQueue(null);
-          if (!suppressRedirect) softLogout();
-          return Promise.reject(err);
-        }
-        originalRequest._retry = true;
-
-        const token = await doRefreshOnce();
-        flushQueue(token);
-        isRefreshing = false;
-        refreshPromise = null;
-
-        if (!token) {
-          // if (!suppressRedirect) softLogout();
-          return Promise.reject(err);
-        }
-
-        originalRequest.headers = originalRequest.headers ?? {};
-        (originalRequest.headers as any).Authorization = `Bearer ${token}`;
-        return axiosInstance(originalRequest);
+        return Promise.reject(error);
       }
     );
 
-    return new ApiClient(axiosInstance);
+    const client = new ApiClient(axiosInstance);
+    globalThis.__API_CLIENT_SINGLETON__ = client;
+    return client;
   }
 
-  // ==============================
-  // ✅ Wrapped HTTP Methods (with retry)
-  // ==============================
+  // ====== Wrapped HTTP (with retry) ======
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.get<T>(url, config));
   }
@@ -328,15 +280,13 @@ export class ApiClient {
     return this.withRetry(() => this.instance.delete<T>(url, config));
   }
 
-  // ==============================
-  // ♻️ Retry logic
-  // ==============================
   private async withRetry<T>(
     requestFn: () => Promise<AxiosResponse<T>>,
     maxAttempts = 3,
     delayMs = 1000
   ): Promise<AxiosResponse<T>> {
     let attempt = 0;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         const res = await requestFn();
@@ -346,23 +296,17 @@ export class ApiClient {
         return res;
       } catch (err: any) {
         attempt++;
-
         const status = err?.response?.status as number | undefined;
         const isAuthError = status === 401 || status === 403;
-
         const retryable =
           err?.code === "ECONNABORTED" ||
           err?.message?.includes("timeout") ||
           (typeof status === "number" && status >= 500 && status !== 501);
 
         if (!retryable || attempt >= maxAttempts) {
-          // 🔇 Đừng spam console khi là lỗi auth (401/403) — guard/redirect sẽ xử lý
-          if (!isAuthError) {
-            console.error(`[Axios] Request failed after ${attempt} attempts`, err);
-          }
+          if (!isAuthError) console.error(`[Axios] Request failed after ${attempt} attempts`, err);
           throw err;
         }
-
         const jitter = Math.floor(Math.random() * 200);
         await new Promise((r) => setTimeout(r, delayMs + jitter));
       }
@@ -370,4 +314,5 @@ export class ApiClient {
   }
 }
 
+// Singleton export
 export const apiClient = ApiClient.create();

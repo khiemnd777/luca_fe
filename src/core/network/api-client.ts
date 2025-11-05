@@ -14,31 +14,35 @@ import { refreshAccessToken } from "@core/network/auth-api";
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 let loggingOut = false;
+let lastRefreshedAt = 0;          // mốc thời gian vừa refresh xong
 
 // Hàng đợi các request bị tạm dừng trong lúc refresh
 const requestQueue: Array<(token: string | null) => void> = [];
 
 // ==============================
-// ⚙️ Constants (tối ưu hiệu suất)
+// ⚙️ Constants
 // ==============================
-const EARLY_REFRESH_S = 30; // refresh sớm khi token còn < 30s
-const BC_RACE_MS = 200; // chờ broadcast tối đa 200ms
-const QUEUE_MAX_WAIT_MS = 300; // mỗi request chỉ pause tối đa 300ms
+const EARLY_REFRESH_S = 30;         // refresh sớm khi token còn < 30s
+const BC_RACE_MS = 200;             // chờ broadcast tối đa 200ms
+const QUEUE_MAX_WAIT_MS = 300;      // pause tối đa khi refresh
+const LOGIN_PATH = "/login";
+const LOGOUT_REDIRECT_GRACE_MS = 1500; // sau khi refresh, tạm thời KHÔNG redirect logout để tránh bounce
 
 // ==============================
 // ⚙️ Broadcast đa tab
 // ==============================
 const bc = typeof window !== "undefined" && "BroadcastChannel" in window ? new BroadcastChannel("auth") : null;
-
 function broadcastToken(token: string | null) {
-  try {
-    bc?.postMessage(token ? { type: "token_refreshed", token } : { type: "logout" });
-  } catch { }
+  try { bc?.postMessage(token ? { type: "token_refreshed", token } : { type: "logout" }); } catch { }
 }
 
 // ==============================
-// ⚙️ JWT util
+// ⚙️ Utils
 // ==============================
+function isOnLogin(): boolean {
+  try { return typeof window !== "undefined" && window.location?.pathname?.startsWith(LOGIN_PATH); } catch { return false; }
+}
+
 function getTokenExpSec(token?: string | null): number | null {
   if (!token) return null;
   const parts = token.split(".");
@@ -46,17 +50,49 @@ function getTokenExpSec(token?: string | null): number | null {
   try {
     const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
     return typeof payload?.exp === "number" ? payload.exp : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
-
 function secondsUntilExpiry(token?: string | null): number | null {
   const exp = getTokenExpSec(token);
   if (!exp) return null;
   const now = Math.floor(Date.now() / 1000);
   return exp - now;
 }
+
+export function isAuthRefreshing(): boolean {
+  return isRefreshing;
+}
+
+// ✅ Export helper cho route guard
+export function hasUsableAccessToken(): boolean {
+  const t = getAccessToken();
+  const exp = ((): number | null => {
+    if (!t) return null;
+    const p = t.split(".");
+    if (p.length !== 3) return null;
+    try {
+      const payload = JSON.parse(atob(p[1].replace(/-/g, "+").replace(/_/g, "/")));
+      return typeof payload?.exp === "number" ? payload.exp : null;
+    } catch { return null; }
+  })();
+  if (!exp) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return exp > now;
+}
+
+// ==============================
+// 🧹 Bootstrap: dọn token hết hạn để tránh loop guard
+// ==============================
+(function bootstrapTokenSanity() {
+  const t = getAccessToken();
+  const remain = secondsUntilExpiry(t);
+  if (t && (remain === null || remain <= 0)) {
+    // ❌ đừng clearTokens() (sẽ xóa cả refresh token)
+    // ✅ chỉ bỏ access token để các request sau đó kích refresh
+    try { saveAccessToken(""); } catch { }
+    // ❌ KHÔNG broadcast logout (vì phiên vẫn còn refresh token)
+  }
+})();
 
 // ==============================
 // ⚙️ Wait external refresh (race 200ms)
@@ -65,9 +101,7 @@ function waitExternalRefreshShort(): Promise<string | null> {
   return new Promise((resolve) => {
     if (!bc) return resolve(null);
     const timer = setTimeout(() => {
-      try {
-        bc.removeEventListener("message", handler);
-      } catch { }
+      try { bc.removeEventListener("message", handler); } catch { }
       resolve(null);
     }, BC_RACE_MS);
 
@@ -96,10 +130,14 @@ async function doRefreshOnce(): Promise<string | null> {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      // Race: chờ token từ tab khác tối đa 200ms
+      // Nếu đang ở /login thì không race/refresh để tránh tự "đăng nhập lại" ngoài ý muốn
+      if (isOnLogin()) return null;
+
+      // Race: chờ token từ tab khác rất ngắn
       const external = await waitExternalRefreshShort();
       if (external) {
         saveAccessToken(external);
+        lastRefreshedAt = Date.now();
         return external;
       }
 
@@ -109,6 +147,7 @@ async function doRefreshOnce(): Promise<string | null> {
       const newToken = await refreshAccessToken(rt);
       if (newToken) {
         saveAccessToken(newToken);
+        lastRefreshedAt = Date.now();
         broadcastToken(newToken);
         return newToken;
       }
@@ -116,7 +155,7 @@ async function doRefreshOnce(): Promise<string | null> {
     } catch {
       return null;
     } finally {
-      // Clear ở response interceptor sau khi flushQueue
+      // clear tại nơi gọi sau flushQueue
     }
   })();
 
@@ -126,20 +165,25 @@ async function doRefreshOnce(): Promise<string | null> {
 function flushQueue(token: string | null) {
   while (requestQueue.length) {
     const resume = requestQueue.shift()!;
-    try {
-      resume(token);
-    } catch { }
+    try { resume(token); } catch { }
   }
 }
 
-function logoutOnce() {
+// 🔒 Soft logout: clear + broadcast, CHỈ redirect nếu an toàn
+function softLogout() {
   if (loggingOut) return;
   loggingOut = true;
   try {
     clearTokens();
     broadcastToken(null);
   } finally {
-    window.location.href = "/login";
+    const justRefreshed = Date.now() - lastRefreshedAt < LOGOUT_REDIRECT_GRACE_MS;
+    // Không redirect nếu: đang ở /login, hoặc vừa refresh xong (grace), để tránh bounce
+    if (!isOnLogin() && !justRefreshed) {
+      window.location.replace(LOGIN_PATH);
+    }
+    // Cho phép lần sau có thể logout lại nếu cần
+    setTimeout(() => { loggingOut = false; }, 500);
   }
 }
 
@@ -153,7 +197,6 @@ function isRefreshRequest(config?: AxiosRequestConfig | null) {
 // ==============================
 export class ApiClient {
   private readonly instance: AxiosInstance;
-
   private constructor(axiosInstance: AxiosInstance) {
     this.instance = axiosInstance;
   }
@@ -174,35 +217,35 @@ export class ApiClient {
         };
         const setAuth = (token: string) => {
           const h = ensureHeaders();
-          if (typeof (h as any).set === "function") {
-            (h as AxiosHeaders).set("Authorization", `Bearer ${token}`);
-          } else {
-            (config.headers as any) = { ...(config.headers as any), Authorization: `Bearer ${token}` };
-          }
+          if (typeof (h as any).set === "function") (h as AxiosHeaders).set("Authorization", `Bearer ${token}`);
+          else (config.headers as any) = { ...(config.headers as any), Authorization: `Bearer ${token}` };
         };
 
         const isRefresh = isRefreshRequest(config);
         const token = getAccessToken();
+        const remain = secondsUntilExpiry(token);
 
-        // 1️⃣ Gắn token hiện tại
-        if (token && !isRefresh) setAuth(token);
-
-        // 2️⃣ Nếu token sắp hết hạn → refresh nền (fire & forget)
-        if (!isRefresh && !isRefreshing) {
-          const remain = secondsUntilExpiry(token);
-          if (remain !== null && remain <= EARLY_REFRESH_S) {
-            void doRefreshOnce();
-          }
+        // Nếu token hết hạn/invalid → chỉ bỏ access token, KHÔNG đụng refresh token
+        if (token && (remain === null || remain <= 0)) {
+          try { saveAccessToken(""); } catch { }
+          // ❌ KHÔNG broadcast logout — vẫn còn cơ hội refresh
+        } else if (token && !isRefresh && remain !== null && remain > 0) {
+          setAuth(token);
         }
 
-        // 3️⃣ Nếu đang refresh → pause tối đa 300ms
+        // Không kích refresh nền ở trang login
+        if (!isOnLogin() && !isRefresh && !isRefreshing && remain !== null && remain <= EARLY_REFRESH_S && remain > 0) {
+          void doRefreshOnce();
+        }
+
+        // Nếu đang refresh → pause tối đa rồi đi tiếp
         if (isRefreshing && !isRefresh) {
           return new Promise<InternalAxiosRequestConfig>((resolve) => {
             let released = false;
             const timer = setTimeout(() => {
               if (released) return;
               released = true;
-              resolve(config); // đi với token cũ, nếu 401 sẽ retry
+              resolve(config); // đi tiếp; nếu 401 sẽ xử lý ở response
             }, QUEUE_MAX_WAIT_MS);
 
             requestQueue.push((newToken) => {
@@ -223,24 +266,29 @@ export class ApiClient {
     axiosInstance.interceptors.response.use(
       (res) => res,
       async (err) => {
-        const originalRequest = err.config as AxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = err.config as AxiosRequestConfig & { _retry?: boolean; __noAuthRedirect?: boolean };
         const status = err?.response?.status;
+
+        // Cho phép tắt redirect cho một request cụ thể (nếu bạn muốn):
+        const suppressRedirect = originalRequest?.__noAuthRedirect === true;
 
         if (status !== 401) return Promise.reject(err);
 
+        // 401 của chính refresh → kết thúc phiên
         if (isRefreshRequest(originalRequest)) {
           isRefreshing = false;
           refreshPromise = null;
           flushQueue(null);
-          logoutOnce();
+          if (!suppressRedirect) softLogout();
           return Promise.reject(err);
         }
 
+        // Tránh vòng lặp vô hạn
         if (originalRequest._retry) {
           isRefreshing = false;
           refreshPromise = null;
           flushQueue(null);
-          logoutOnce();
+          if (!suppressRedirect) softLogout();
           return Promise.reject(err);
         }
         originalRequest._retry = true;
@@ -251,7 +299,7 @@ export class ApiClient {
         refreshPromise = null;
 
         if (!token) {
-          logoutOnce();
+          if (!suppressRedirect) softLogout();
           return Promise.reject(err);
         }
 
@@ -270,15 +318,12 @@ export class ApiClient {
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.get<T>(url, config));
   }
-
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.post<T>(url, data, config));
   }
-
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.put<T>(url, data, config));
   }
-
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.delete<T>(url, config));
   }
@@ -301,15 +346,23 @@ export class ApiClient {
         return res;
       } catch (err: any) {
         attempt++;
+
+        const status = err?.response?.status as number | undefined;
+        const isAuthError = status === 401 || status === 403;
+
         const retryable =
           err?.code === "ECONNABORTED" ||
           err?.message?.includes("timeout") ||
-          (err?.response?.status >= 500 && err?.response?.status !== 501);
+          (typeof status === "number" && status >= 500 && status !== 501);
 
         if (!retryable || attempt >= maxAttempts) {
-          console.error(`[Axios] Request failed after ${attempt} attempts`, err);
+          // 🔇 Đừng spam console khi là lỗi auth (401/403) — guard/redirect sẽ xử lý
+          if (!isAuthError) {
+            console.error(`[Axios] Request failed after ${attempt} attempts`, err);
+          }
           throw err;
         }
+
         const jitter = Math.floor(Math.random() * 200);
         await new Promise((r) => setTimeout(r, delayMs + jitter));
       }

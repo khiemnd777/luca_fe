@@ -30,7 +30,6 @@ async function runSubmit(def: SubmitDef, values: Record<string, any>) {
 
 export const AutoForm = React.forwardRef<AutoFormRef, AutoFormProps>(
   ({ schema, initial, onSaved, notifier }, ref) => {
-    // ❗️ Stable empty object khi không truyền initial
     const stableInitial = React.useMemo(() => (initial ?? {}), [initial]);
     const toasts = notifier ?? toast;
 

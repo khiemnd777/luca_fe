@@ -2,6 +2,8 @@ import type { FieldDef } from "@core/form/types";
 import type { FormSchema, SubmitDef } from "@core/form/form.types";
 import { uploadImages } from "@core/form/image-upload-utils";
 import { mapper } from "@root/core/mapper/auto-mapper";
+import { existsEmail, existsPhone, updateMe } from "@root/core/network/me.api";
+import type { MeModel } from "@root/core/auth/auth.types";
 
 export function buildAccountSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -20,7 +22,14 @@ export function buildAccountSchema(): FormSchema {
       kind: "email",
       rules: {
         required: "Yêu cầu nhập địa chỉ email",
-        maxLength: 300
+        maxLength: 300,
+        async: async (val: string | null) => {
+          if (!val) return null;
+          if (val) {
+          }
+          const existed = await existsEmail(val);
+          return existed ? `Email ${val} đã tồn tại, vui lòng chọn email khác.` : null;
+        }
       },
     },
     {
@@ -32,7 +41,14 @@ export function buildAccountSchema(): FormSchema {
         async: async (val: string | null) => {
           if (!val) return null;
           const ok = /^\+?\d{8,15}$/.test(val);
-          return ok ? null : "Invalid phone number";
+          if (!ok) {
+            return "Sai định dạng số điện thoại";
+          }
+          const existed = await existsPhone(val);
+          if (existed) {
+            return `Số ${val} đã tồn tại, vui lòng chọn số khác.`;
+          }
+          return null;
         },
       },
       helperText: "Có thể nhập +84 hoặc không.",
@@ -47,17 +63,12 @@ export function buildAccountSchema(): FormSchema {
       helperText: "PNG/JPG ≤ 2MB. Khuyến nghị hình vuông.",
       uploader: uploadImages,
     },
-    {
-      name: "active",
-      label: "Kích hoạt",
-      kind: "switch",
-    },
   ];
 
   const submit: SubmitDef = {
     type: "fn",
     run: async (values) => {
-      console.log(values);
+      await updateMe(values as MeModel);
     }
   };
 

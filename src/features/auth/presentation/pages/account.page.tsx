@@ -30,7 +30,7 @@ export default function AccountPage() {
                 Đổi
               </Button>
             }>
-              <AccountChangePasswordForm ref={formAccountRef} />
+              <AccountChangePasswordForm ref={formAccountChangePasswordRef} />
             </SectionCard>
           </AutoGrid>
         </PageContainer>

@@ -111,7 +111,7 @@ function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: 
   }
 
   if (kind === "email" && value && !emailRegex.test(value)) {
-    return "Invalid email format";
+    return "Định dạng email không đúng";
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {

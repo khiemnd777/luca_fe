@@ -8,3 +8,23 @@ export async function fetchMe(): Promise<MeModel> {
   const result = mapper.map<any, MeModel>("Me", data, "dto_to_model");
   return result;
 }
+
+export async function updateMe(me: MeModel): Promise<MeModel> {
+  const { data } = await apiClient.put<any>(`${env.apiBasePath}/profile/me`, me);
+  const result = mapper.map<any, MeModel>("Me", data, "dto_to_model");
+  return result;
+}
+
+export async function existsEmail(email: string): Promise<boolean> {
+  const { data } = await apiClient.post<boolean>(`${env.apiBasePath}/profile/me/exists-email`, {
+    email
+  });
+  return data;
+}
+
+export async function existsPhone(phone: string): Promise<boolean> {
+  const { data } = await apiClient.post<boolean>(`${env.apiBasePath}/profile/me/exists-phone`, {
+    phone
+  });
+  return data;
+}

@@ -4,6 +4,20 @@ import { type Perm, useRoleChecks, usePermissionChecks } from "@core/auth/rbac-u
 import { getRefreshToken } from "@core/network/token-utils";
 import { hasUsableAccessToken, isAuthRefreshing } from "@core/network/api-client";
 
+function AuthHolding() {
+  return (
+    <div style={{
+      display: "grid",
+      placeItems: "center",
+      minHeight: "60vh",
+      fontSize: 14,
+      opacity: 0.8
+    }}>
+      <div>Đang kiểm tra phiên đăng nhập…</div>
+    </div>
+  );
+}
+
 type RequireAuthProps = {
   roles?: string[];
   permissions?: Perm[];
@@ -46,8 +60,32 @@ export default function RequireAuth({
   }, [shouldRedirectToLogin, params, loc.pathname, loc.search, navigate, loginPath]);
 
   // Nếu đang chờ refresh (có RT hoặc đang refresh) hoặc vừa điều hướng → render trống để tránh bounce
-  if (requireLogin && !usable && (hasRT || refreshing || redirectingRef.current)) {
-    return null;
+  if (requireLogin && !usable) {
+    // ✅ Còn cơ hội (có RT hoặc đang refresh) → đừng điều hướng, đừng trả null → hiển thị holding rõ ràng
+    if (hasRT || refreshing || redirectingRef.current) {
+      return <AuthHolding />;
+    }
+
+    // ❌ Hết cơ hội (không có RT, không refresh) → điều hướng /login (imperative) và hiển thị thông báo tạm
+    if (!redirectingRef.current) {
+      redirectingRef.current = true;
+
+      const rawRedirect = params.get("redirect") ?? (loc.pathname + loc.search);
+      // Tránh redirect=/login (vòng lặp)
+      const redirect = rawRedirect.startsWith(loginPath) ? "/" : rawRedirect;
+
+      // Hiển thị dòng thông báo ngay trước khi chuyển trang (tránh trắng)
+      // (không bắt buộc, nhưng giúp UX mượt)
+      setTimeout(() => {
+        navigate(`${loginPath}?redirect=${encodeURIComponent(redirect)}`, { replace: true });
+      }, 0);
+    }
+
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "60vh", fontSize: 14 }}>
+        Phiên đăng nhập đã hết hạn, đang chuyển đến trang đăng nhập…
+      </div>
+    );
   }
 
   // ===== 2) Roles/Permissions =====

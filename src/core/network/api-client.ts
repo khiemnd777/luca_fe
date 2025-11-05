@@ -299,7 +299,7 @@ export class ApiClient {
         refreshPromise = null;
 
         if (!token) {
-          if (!suppressRedirect) softLogout();
+          // if (!suppressRedirect) softLogout();
           return Promise.reject(err);
         }
 

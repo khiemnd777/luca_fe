@@ -8,8 +8,10 @@ import type { AutoFormRef } from "@root/core/form/form.types";
 import AccountForm from "@features/auth/components/account-form";
 import AccountChangePasswordForm from "@features/auth/components/account-change-password-form";
 import { AutoGrid } from "@shared/components/ui/auto-grid";
+import { Section } from "@shared/components/ui/section";
 import { useAuthStore } from "@store/auth-store";
 import { LogoutRounded } from "@mui/icons-material";
+import { Spacer } from "@root/shared/components/ui/spacer";
 
 export default function AccountPage() {
   const logout = useAuthStore((s) => s.logout);
@@ -29,20 +31,30 @@ export default function AccountPage() {
             }
           />
           <AutoGrid>
-            <SectionCard title={"Thông tin tài khoản"} extra={
-              <Button variant="contained" onClick={() => formAccountRef.current?.submit()}>
-                Lưu
-              </Button>
-            }>
-              <AccountForm ref={formAccountRef} />
-            </SectionCard>
-            <SectionCard title={"Đổi mật khẩu"} extra={
-              <Button variant="contained" onClick={() => formAccountChangePasswordRef.current?.submit()}>
-                Đổi
-              </Button>
-            }>
-              <AccountChangePasswordForm ref={formAccountChangePasswordRef} />
-            </SectionCard>
+            {/* Left */}
+            <Section>
+              <SectionCard title={"Thông tin tài khoản"} extra={
+                <Button variant="contained" onClick={() => formAccountRef.current?.submit()}>
+                  Lưu
+                </Button>
+              }>
+                <AccountForm ref={formAccountRef} />
+              </SectionCard>
+
+              <Spacer />
+
+              <SectionCard title={"Đổi mật khẩu"} extra={
+                <Button variant="contained" onClick={() => formAccountChangePasswordRef.current?.submit()}>
+                  Đổi
+                </Button>
+              }>
+                <AccountChangePasswordForm ref={formAccountChangePasswordRef} />
+              </SectionCard>
+            </Section>
+
+            {/* Right */}
+            <Section />
+
           </AutoGrid>
         </PageContainer>
       </BasePage>

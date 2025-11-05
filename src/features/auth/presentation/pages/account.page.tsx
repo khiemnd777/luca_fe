@@ -11,6 +11,8 @@ import { useAuthStore } from "@store/auth-store";
 import { LogoutRounded } from "@mui/icons-material";
 import { Spacer } from "@root/shared/components/ui/spacer";
 import { AutoForm } from "@root/core/form/auto-form";
+import ChangeCircleOutlinedIcon from '@mui/icons-material/ChangeCircleOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 export default function AccountPage() {
   const logout = useAuthStore((s) => s.logout);
@@ -33,7 +35,7 @@ export default function AccountPage() {
             {/* Left */}
             <Section>
               <SectionCard title={"Thông tin tài khoản"} extra={
-                <Button variant="contained" onClick={() => formAccountRef.current?.submit()}>
+                <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formAccountRef.current?.submit()}>
                   Lưu
                 </Button>
               }>
@@ -43,7 +45,7 @@ export default function AccountPage() {
               <Spacer />
 
               <SectionCard title={"Đổi mật khẩu"} extra={
-                <Button variant="contained" onClick={() => formAccountChangePasswordRef.current?.submit()}>
+                <Button variant="contained" startIcon={<ChangeCircleOutlinedIcon />} onClick={() => formAccountChangePasswordRef.current?.submit()}>
                   Đổi
                 </Button>
               }>

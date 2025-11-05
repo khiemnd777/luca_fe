@@ -7,7 +7,7 @@ import React from "react";
 import SettingsForm from "@features/settings/components/common-settings-form";
 import { AutoGrid } from "@shared/components/ui/auto-grid";
 import type { AutoFormRef } from "@core/form/form.types";
-import DepartmentForm from "@features/settings/components/department-form";
+import { AutoForm } from "@root/core/form/auto-form";
 
 export default function SettingsPage() {
   const formRef = React.useRef<AutoFormRef>(null);
@@ -22,7 +22,7 @@ export default function SettingsPage() {
           />
           <AutoGrid>
             <SectionCard title="Thông tin trang" extra={<Button variant="contained" onClick={() => formRef.current?.submit()}>Lưu</Button>}>
-              <DepartmentForm ref={formRef} />
+              <AutoForm name="department-settings" ref={formRef} />
             </SectionCard>
             <SectionCard title="Giao diện">
               <SettingsForm />

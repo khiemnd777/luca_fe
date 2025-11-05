@@ -1,6 +1,7 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema, SubmitDef } from "@core/form/form.types";
 import { changeMyPassword } from "@root/core/network/me.api";
+import { registerForm } from "@root/core/form/form-registry";
 
 export function buildAccountChangePasswordSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -42,3 +43,5 @@ export function buildAccountChangePasswordSchema(): FormSchema {
     submit,
   };
 }
+
+registerForm("account-change-password", buildAccountChangePasswordSchema);

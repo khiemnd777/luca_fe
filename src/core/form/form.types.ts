@@ -39,11 +39,13 @@ export type FormSchema = {
   submit: SubmitDef;
   hooks?: FormHooks;
   toasts?: { saved?: string; failed?: string };
-  showReset?: boolean; // true để hiển thị nút reset
+  showReset?: boolean;
+  initialResolver?: () => Promise<Record<string, any> | null> | Record<string, any> | null;
+  afterSaved?: (result: any) => Promise<void> | void;
 };
 
 export type AutoFormProps = {
-  schema: FormSchema;
+  schema?: FormSchema;
   initial?: Record<string, any> | null;
   onSaved?: (result?: any) => void;
   notifier?: Notifier;

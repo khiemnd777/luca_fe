@@ -3,6 +3,8 @@ import type { FormSchema, SubmitDef } from "@core/form/form.types";
 import { uploadImages } from "@root/core/form/image-upload-utils";
 import { mapper } from "@root/core/mapper/auto-mapper";
 import { updateDepartment } from "@features/settings/api/department.api";
+import { registerForm } from "@root/core/form/form-registry";
+import { useAuthStore } from "@root/store/auth-store";
 
 export function buildDepartmentSettingsSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -62,6 +64,12 @@ export function buildDepartmentSettingsSchema(): FormSchema {
 
   return {
     fields,
+    initialResolver() {
+      return useAuthStore.getState().department;
+    },
+    async afterSaved() {
+      await useAuthStore.getState().fetchDepartment();
+    },
     toasts: {
       saved: "Lưu thông tin trang thành công!",
       failed: "Lưu thất bại, xin thử lại!",
@@ -72,3 +80,5 @@ export function buildDepartmentSettingsSchema(): FormSchema {
     }
   };
 }
+
+registerForm("department-settings", buildDepartmentSettingsSchema);

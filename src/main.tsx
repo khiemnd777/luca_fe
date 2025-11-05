@@ -8,6 +8,7 @@ import "@root/mapper/index";
 
 // Auto-load modules
 import.meta.glob("@features/**/index.tsx", { eager: true });
+import.meta.glob("@features/**/schemas/*.schema.ts", { eager: true });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -3,7 +3,9 @@ import type { FormSchema, SubmitDef } from "@core/form/form.types";
 import { uploadImages } from "@core/form/image-upload-utils";
 import { mapper } from "@root/core/mapper/auto-mapper";
 import { existsEmail, existsPhone, updateMe } from "@root/core/network/me.api";
-import type { MeModel } from "@root/core/auth/auth.types";
+import type { MeModel } from "@core/auth/auth.types";
+import { registerForm } from "@core/form/form-registry";
+import { useAuthStore } from "@root/store/auth-store";
 
 export function buildAccountSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -74,6 +76,12 @@ export function buildAccountSchema(): FormSchema {
 
   return {
     fields,
+    initialResolver() {
+      return useAuthStore.getState().user;
+    },
+    async afterSaved() {
+      await useAuthStore.getState().fetchMe();
+    },
     toasts: {
       saved: "Lưu tài khoản thành công!",
       failed: "Lưu thất bại, xin thử lại!",
@@ -84,3 +92,5 @@ export function buildAccountSchema(): FormSchema {
     }
   };
 }
+
+registerForm("account", buildAccountSchema);

@@ -5,13 +5,12 @@ import { PageToolbar } from "@root/shared/components/ui/page-toolbar";
 import { SectionCard } from "@root/shared/components/ui/section-card";
 import { Button } from "@mui/material";
 import type { AutoFormRef } from "@root/core/form/form.types";
-import AccountForm from "@features/auth/components/account-form";
-import AccountChangePasswordForm from "@features/auth/components/account-change-password-form";
 import { AutoGrid } from "@shared/components/ui/auto-grid";
 import { Section } from "@shared/components/ui/section";
 import { useAuthStore } from "@store/auth-store";
 import { LogoutRounded } from "@mui/icons-material";
 import { Spacer } from "@root/shared/components/ui/spacer";
+import { AutoForm } from "@root/core/form/auto-form";
 
 export default function AccountPage() {
   const logout = useAuthStore((s) => s.logout);
@@ -38,7 +37,7 @@ export default function AccountPage() {
                   Lưu
                 </Button>
               }>
-                <AccountForm ref={formAccountRef} />
+                <AutoForm name="account" ref={formAccountRef} />
               </SectionCard>
 
               <Spacer />
@@ -48,7 +47,7 @@ export default function AccountPage() {
                   Đổi
                 </Button>
               }>
-                <AccountChangePasswordForm ref={formAccountChangePasswordRef} />
+                <AutoForm name="account-change-password" ref={formAccountChangePasswordRef} />
               </SectionCard>
             </Section>
 

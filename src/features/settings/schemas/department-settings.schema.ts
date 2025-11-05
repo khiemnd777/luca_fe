@@ -1,8 +1,13 @@
 import type { FieldDef } from "@core/form/types";
+import type { FormSchema, SubmitDef } from "@core/form/form.types";
 import { uploadImages } from "@root/core/form/image-upload-utils";
+import { mapper } from "@root/core/mapper/auto-mapper";
+import { updateDepartment } from "@features/settings/api/department.api";
+import { registerForm } from "@root/core/form/form-registry";
+import { useAuthStore } from "@root/store/auth-store";
 
-export function buildDepartmentSettingsSchema(): FieldDef[] {
-  return [
+export function buildDepartmentSettingsSchema(): FormSchema {
+  const fields: FieldDef[] = [
     {
       name: "name",
       label: "Tên công ty",
@@ -49,4 +54,31 @@ export function buildDepartmentSettingsSchema(): FieldDef[] {
       kind: "switch",
     },
   ];
+
+  const submit: SubmitDef = {
+    type: "fn",
+    run: async (values) => {
+      return updateDepartment(values);
+    },
+  }
+
+  return {
+    fields,
+    initialResolver() {
+      return useAuthStore.getState().department;
+    },
+    async afterSaved() {
+      await useAuthStore.getState().fetchDepartment();
+    },
+    toasts: {
+      saved: "Lưu thông tin trang thành công!",
+      failed: "Lưu thất bại, xin thử lại!",
+    },
+    submit,
+    hooks: {
+      mapToDto: (v) => mapper.map("MyDepartment", v, "model_to_dto"),
+    }
+  };
 }
+
+registerForm("department-settings", buildDepartmentSettingsSchema);

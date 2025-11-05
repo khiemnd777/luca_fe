@@ -1,4 +1,4 @@
-export interface MeDto {
+export interface UserModel {
   id: number;
   email: string;
   name?: string;
@@ -6,4 +6,7 @@ export interface MeDto {
   active: boolean;
   avatar?: string;
   qrCode?: string | null;
+}
+
+export interface MeModel extends UserModel {
 }

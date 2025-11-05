@@ -1,7 +1,6 @@
 // BasePage.tsx
 import * as React from "react";
 import {
-  Avatar,
   Box,
   Divider,
   List,
@@ -25,6 +24,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useModuleMenu, type SidebarItem } from "@core/navigation/use-module.menu";
 import { useAuth } from "../auth/use-auth";
 import { Logo } from "@root/shared/components/ui/logo";
+import MyAccountBadge from "@root/shared/components/ui/account-badge";
 
 const SIDEBAR_W = 280;
 const SIDEBAR_COLLAPSED_W = 76;
@@ -321,52 +321,8 @@ export function BasePage({ children }: { children: React.ReactNode }) {
         <Divider sx={{ my: 1 }} />
 
         {/* Bottom: user info */}
-        <Stack
-          direction={collapsed ? "column" : "row"}
-          alignItems="center"
-          justifyContent={collapsed ? "center" : "flex-start"}
-          spacing={collapsed ? 0 : 1.5}
-          px={collapsed ? 0 : 1.5}
-          py={1}
-          sx={{
-            borderRadius: 1,
-            mx: 1,
-            transition: (t) =>
-              t.transitions.create(["all"], {
-                duration: t.transitions.duration.shortest,
-              }),
-            "&:hover": {
-              bgcolor: "action.hover",
-              cursor: "pointer",
-            },
-          }}
-        >
-          <Avatar
-            src="https://api.dicebear.com/9.x/initials/svg?seed=User"
-            alt="User"
-            sx={{
-              width: 40,
-              height: 40,
-              flexShrink: 0,
-              mx: collapsed ? "auto" : 0, // căn giữa khi collapse
-              transition: (t) =>
-                t.transitions.create(["margin"], {
-                  duration: t.transitions.duration.shortest,
-                }),
-            }}
-          />
+        <MyAccountBadge collapsed={collapsed} to={(_) => "/account"} />
 
-          {!collapsed && (
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" fontWeight={600} noWrap>
-                John Doe
-              </Typography>
-              <Typography variant="body2" color="text.secondary" noWrap>
-                john.doe@example.com
-              </Typography>
-            </Box>
-          )}
-        </Stack>
       </Paper>
 
       {/* Right column: scrollable content only */}

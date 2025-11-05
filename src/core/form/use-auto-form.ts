@@ -1,6 +1,5 @@
-// src/core/form/use-auto-form.ts
 import * as React from "react";
-import type { FieldDef, FieldRules, AutoFormOptions } from "./types";
+import type { FieldDef, FieldRules, AutoFormOptions, PasswordRules } from "@core/form/types";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -15,6 +14,79 @@ function normalizeErrors(obj: Record<string, string | null | undefined>): Errors
   const out: Errors = {};
   for (const [k, v] of Object.entries(obj)) out[k] = v ?? null;
   return out;
+}
+
+function checkPasswordRules(pw: string, pr?: PasswordRules, allValues?: Record<string, any>): string | null {
+  const r: Required<Omit<PasswordRules, "maxLength" | "custom" | "disallowReuseCurrent">> & Pick<PasswordRules, "maxLength" | "custom" | "disallowReuseCurrent"> = {
+    minLength: 8,
+    requireUpper: true,
+    requireLower: true,
+    requireDigit: true,
+    requireSymbol: false,
+    disallowSpaces: true,
+    maxLength: pr?.maxLength,
+    custom: pr?.custom,
+    disallowReuseCurrent: pr?.disallowReuseCurrent,
+  };
+
+  if (!pw) return "Vui lòng nhập mật khẩu";
+
+  if (r.disallowSpaces && /\s/.test(pw)) return "Mật khẩu không được chứa khoảng trắng";
+  if (pw.length < (pr?.minLength ?? r.minLength)) return `Mật khẩu phải ≥ ${pr?.minLength ?? r.minLength} ký tự`;
+  if (pr?.maxLength && pw.length > pr.maxLength) return `Mật khẩu phải ≤ ${pr.maxLength} ký tự`;
+  if ((pr?.requireUpper ?? r.requireUpper) && !/[A-Z]/.test(pw)) return "Mật khẩu phải có ít nhất 1 chữ in hoa";
+  if ((pr?.requireLower ?? r.requireLower) && !/[a-z]/.test(pw)) return "Mật khẩu phải có ít nhất 1 chữ thường";
+  if ((pr?.requireDigit ?? r.requireDigit) && !/[0-9]/.test(pw)) return "Mật khẩu phải có ít nhất 1 chữ số";
+  if ((pr?.requireSymbol ?? r.requireSymbol) && !/[^\w\s]/.test(pw)) return "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
+
+  if (pr?.custom) {
+    const msg = pr.custom(pw, allValues ?? {});
+    if (msg) return msg;
+  }
+  return null;
+}
+
+function validateNewPasswordObject(
+  value: any,
+  def: FieldDef,
+  allValues: Record<string, any>
+): string | null {
+  const pw = value?.password ?? "";
+  const cf = value?.confirm ?? "";
+
+  // required tổng (dựa vào rules.required của field)
+  const reqMsg = def.rules?.required ? getReqMsg(def.rules.required) : null;
+  if (reqMsg && (!pw || !cf)) return reqMsg!;
+
+  // nếu có nhập thì kiểm tra rule
+  if (pw) {
+    const msg = checkPasswordRules(pw, def.passwordRules, allValues);
+    if (msg) return msg;
+  }
+  if (pw !== cf) return "Xác nhận mật khẩu không khớp";
+  return null;
+}
+
+function validateChangePasswordObject(
+  value: any,
+  def: FieldDef,
+  allValues: Record<string, any>
+): string | null {
+  const cur = value?.current ?? "";
+  const pw = value?.password ?? "";
+  const cf = value?.confirm ?? "";
+
+  const reqMsg = def.rules?.required ? getReqMsg(def.rules.required) : null;
+  if (reqMsg && (!cur || !pw || !cf)) return reqMsg!;
+
+  if (pw) {
+    const msg = checkPasswordRules(pw, def.passwordRules, allValues);
+    if (msg) return msg;
+  }
+  if ((def.passwordRules?.disallowReuseCurrent ?? true) && !!cur && pw === cur)
+    return "Mật khẩu mới phải khác mật khẩu hiện tại";
+  if (pw !== cf) return "Xác nhận mật khẩu không khớp";
+  return null;
 }
 
 function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
@@ -39,7 +111,7 @@ function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: 
   }
 
   if (kind === "email" && value && !emailRegex.test(value)) {
-    return "Invalid email format";
+    return "Định dạng email không đúng";
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -96,64 +168,100 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
 
     switch (f.kind) {
       case "fileupload":
-      case "imageupload": {
-        const isMulti = (f as any).multipleFiles ?? true;
-        if (isMulti) {
-          if (v == null) v = [];
-          else if (typeof v === "string") v = [v];
-          else if (!Array.isArray(v)) v = [];
-        } else {
-          // single
-          if (Array.isArray(v)) {
-            // ưu tiên string đầu tiên, nếu không có thì File đầu tiên
-            const firstStr = v.find((x: any) => typeof x === "string");
-            const firstFile = v.find((x: any) => x instanceof File);
-            v = firstStr ?? firstFile ?? "";
-          } else if (v == null) {
-            v = "";
+      case "imageupload":
+        {
+          const isMulti = (f as any).multipleFiles ?? true;
+          if (isMulti) {
+            if (v == null) v = [];
+            else if (typeof v === "string") v = [v];
+            else if (!Array.isArray(v)) v = [];
+          } else {
+            // single
+            if (Array.isArray(v)) {
+              // ưu tiên string đầu tiên, nếu không có thì File đầu tiên
+              const firstStr = v.find((x: any) => typeof x === "string");
+              const firstFile = v.find((x: any) => x instanceof File);
+              v = firstStr ?? firstFile ?? "";
+            } else if (v == null) {
+              v = "";
+            }
           }
+          break;
         }
-        break;
-      }
 
       case "select":
-        if (f.multiple) v = Array.isArray(v) ? v : [];
-        else if (v == null) v = "";
-        break;
+        {
+          if (f.multiple) v = Array.isArray(v) ? v : [];
+          else if (v == null) v = "";
+          break;
+        }
 
       case "multiselect":
-        v = Array.isArray(v) ? v : [];
-        break;
+        {
+          v = Array.isArray(v) ? v : [];
+          break;
+        }
 
       case "autocomplete":
-        v = v ?? (f.freeSolo ? "" : "");
-        break;
+        {
+          v = v ?? (f.freeSolo ? "" : "");
+          break;
+        }
 
       case "datetime":
-        if (v == null || v === "") v = "";
-        else {
-          const d = new Date(v);
-          v = isNaN(+d) ? "" : d.toISOString();
+        {
+          if (v == null || v === "") v = "";
+          else {
+            const d = new Date(v);
+            v = isNaN(+d) ? "" : d.toISOString();
+          }
+          break;
         }
-        break;
 
       case "currency":
       case "number":
-        if (v == null || v === "") v = 0;
-        else {
-          const n = Number(v);
-          v = Number.isFinite(n) ? n : 0;
+        {
+          if (v == null || v === "") v = 0;
+          else {
+            const n = Number(v);
+            v = Number.isFinite(n) ? n : 0;
+          }
+          break;
         }
-        break;
 
       case "checkbox":
       case "switch":
-        v = !!v;
-        break;
+        {
+          v = !!v;
+          break;
+        }
 
       case "color":
-        v = v ?? "#000000";
-        break;
+        {
+          v = v ?? "#000000";
+          break;
+        }
+
+      case "new-password":
+        {
+          const v0 = v ?? {};
+          v = {
+            password: typeof v0.password === "string" ? v0.password : "",
+            confirm: typeof v0.confirm === "string" ? v0.confirm : "",
+          };
+          break;
+        }
+
+      case "change-password":
+        {
+          const v0 = v ?? {};
+          v = {
+            current: typeof v0.current === "string" ? v0.current : "",
+            password: typeof v0.password === "string" ? v0.password : "",
+            confirm: typeof v0.confirm === "string" ? v0.confirm : "",
+          };
+          break;
+        }
 
       default:
         if (v == null) v = "";
@@ -249,18 +357,35 @@ export function useAutoForm(
   const validate = React.useCallback(() => {
     const err: Record<string, string | null> = {};
     for (const f of schema) {
-      const msg = validateOneSync(formValues[f.name], f.rules, f.label, f.kind);
+      let msg: string | null = null;
+
+      if (f.kind === "new-password") {
+        msg = validateNewPasswordObject(formValues[f.name], f, values);
+      } else if (f.kind === "change-password") {
+        msg = validateChangePasswordObject(formValues[f.name], f, values);
+      } else {
+        msg = validateOneSync(formValues[f.name], f.rules, f.label, f.kind);
+      }
+
       if (msg) err[f.name] = msg;
     }
     setErrors(err);
     return Object.values(err).every((x) => !x);
-  }, [schema, formValues]);
+  }, [schema, formValues, values]);
 
   const validateFieldAsync = React.useCallback(async (name: string) => {
     const def = schema.find((x) => x.name === name);
     if (!def) return true;
 
-    const syncMsg = validateOneSync(formValues[name], def.rules, def.label, def.kind);
+    let syncMsg: string | null = null;
+    if (def.kind === "new-password") {
+      syncMsg = validateNewPasswordObject(formValues[name], def, values);
+    } else if (def.kind === "change-password") {
+      syncMsg = validateChangePasswordObject(formValues[name], def, values);
+    } else {
+      syncMsg = validateOneSync(formValues[name], def.rules, def.label, def.kind);
+    }
+
     if (syncMsg) {
       setFieldError(name, syncMsg);
       return false;

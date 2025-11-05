@@ -15,6 +15,13 @@ export async function updateMe(me: MeModel): Promise<MeModel> {
   return result;
 }
 
+export async function changeMyPassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiClient.put<any>(`${env.apiBasePath}/profile/me/change-password`, {
+    "current_password": currentPassword,
+    "new_password": newPassword
+  });
+}
+
 export async function existsEmail(email: string): Promise<boolean> {
   const { data } = await apiClient.post<boolean>(`${env.apiBasePath}/profile/me/exists-email`, {
     email

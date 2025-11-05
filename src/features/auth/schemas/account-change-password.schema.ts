@@ -1,6 +1,6 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema, SubmitDef } from "@core/form/form.types";
-import { mapper } from "@root/core/mapper/auto-mapper";
+import { changeMyPassword } from "@root/core/network/me.api";
 
 export function buildAccountChangePasswordSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -12,12 +12,14 @@ export function buildAccountChangePasswordSchema(): FormSchema {
       newLabel: "Mật khẩu mới",
       confirmLabel: "Xác nhận mật khẩu mới",
       rules: {
-        required: true,
+        required: "Nhập mật khẩu",
       },
       passwordRules: {
         disallowReuseCurrent: false,
         minLength: 8,
         requireDigit: true,
+        requireUpper: false,
+        requireLower: false,
       },
     },
   ];
@@ -26,6 +28,8 @@ export function buildAccountChangePasswordSchema(): FormSchema {
     type: "fn",
     run: async (values) => {
       console.log(values);
+      const { current, password } = values.password;
+      await changeMyPassword(current, password);
     }
   };
 
@@ -36,8 +40,5 @@ export function buildAccountChangePasswordSchema(): FormSchema {
       failed: "Thay đổi mật khẩu thất bại, xin thử lại!",
     },
     submit,
-    hooks: {
-      mapToDto: (v) => mapper.map("Me", v, "model_to_dto"),
-    }
   };
 }

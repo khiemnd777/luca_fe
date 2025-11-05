@@ -1,5 +1,5 @@
 import { apiClient } from "@core/network/api-client";
-import type { MatrixPermission, MyRoleDto } from "@root/core/network/rbac-types";
+import type { MatrixPermission, MyRoleDto } from "@root/core/network/rbac.types";
 import { env } from "@core/config/env";
 import { mapper } from "@core/mapper/auto-mapper";
 

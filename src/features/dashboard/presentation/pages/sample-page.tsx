@@ -13,6 +13,7 @@ import { AutoGrid } from "@root/shared/components/ui/auto-grid";
 import type { FieldDef } from "@core/form/types";
 import { AutoFormFields } from "@core/form/auto-form-fields";
 import { useAutoForm } from "@core/form/use-auto-form";
+import { Spacer } from "@root/shared/components/ui/spacer";
 
 const schema: FieldDef[] = [
   { name: "title", label: "Title", kind: "text", rules: { required: true, maxLength: 120 } },
@@ -58,7 +59,7 @@ const schema: FieldDef[] = [
     freeSolo: true,
     loadOptions: async (_) => {
       // gọi API lấy danh sách city theo keyword q
-      return [{label: "Georgia", value: "GA"}, {label: "Florida", value: "FL"}];
+      return [{ label: "Georgia", value: "GA" }, { label: "Florida", value: "FL" }];
     },
   },
   {
@@ -133,7 +134,7 @@ export default function SamplePage() {
         />
 
         {/* Khu chính 8/4 */}
-        <AutoGrid sx={{ mb: 2 }}>
+        <AutoGrid>
           <SectionCard title="Role List" extra={<Button size="small">Refresh</Button>}>
             <Loading text="Fetching data..." />
             <EmptyState title="No roles" description="Create the first role." actionText="New Role" onAction={() => setOpenForm(true)} />
@@ -144,6 +145,8 @@ export default function SamplePage() {
             </Typography>
           </SectionCard>
         </AutoGrid>
+
+        <Spacer />
 
         {/* Lưới card responsive */}
         <ResponsiveGrid>

@@ -13,6 +13,7 @@ export type FieldKind =
   | "multiselect"
   | "autocomplete"
   | "fileupload"
+  | "imageupload"
   | "custom";
 ;
 
@@ -64,7 +65,7 @@ export type FieldDef = {
   freeSolo?: boolean;                                   // autocomplete free text
   multiple?: boolean;                                   // multiselect flag
 
-  // fileupload
+  // fileupload | imageupload
   accept?: string;                                      // ví dụ: "image/*,.pdf"
   uploader?: (files: File[]) => Promise<string[]>;      // trả về URLs sau upload
   maxFiles?: number;

@@ -16,7 +16,7 @@ const mod: ModuleDescriptor = {
   menuItems: [
     {
       key: "material",
-      label: "Nguyên liệu",
+      label: "Vật tư",
       to: "/material",
       icon: <CategoryIcon />,
       priority: 99,

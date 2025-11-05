@@ -9,13 +9,17 @@ import {
   getAccessToken,
 } from "@core/network/token-utils";
 import { login as apiLogin, logout as apiLogout } from "@core/network/auth-api";
-import { fetchMe } from "@root/core/network/me-api";
-import { fetchMyMatrixPermissions, fetchMyRoles } from "@core/network/rbac-api";
-import type { MeDto } from "@core/network/me-types";
-import type { MatrixPermission, MyRoleDto } from "@root/core/network/rbac-types";
+import { fetchMe } from "@core/network/me.api";
+import { fetchMyMatrixPermissions, fetchMyRoles } from "@core/network/rbac.api";
+import type { MeDto } from "@core/network/me.dto";
+import type { MatrixPermission, MyRoleDto } from "@core/network/rbac.types";
+import { fetchMyDepartment } from "@core/network/my-department.api";
+import type { MyDepartmentDto } from "@core/network/my-department.dto";
+import { env } from "@core/config/env";
 
 type AuthState = {
   user: MeDto | null;
+  department: MyDepartmentDto | null;
   roles: string[];              // danh sách role_name
   roleObjects?: MyRoleDto[];      // (optional) giữ full role để hiển thị
   matrixPermission?: MatrixPermission | null;
@@ -27,23 +31,27 @@ type AuthState = {
     accessToken: string;
     refreshToken: string;
     user?: MeDto | null;
+    department?: MyDepartmentDto | null;
     roles?: string[];
     matrixPermission?: MatrixPermission | null;
   }) => void;
 
   fetchMe: () => Promise<void>;
   fetchRoles: () => Promise<void>;
+  fetchDepartment: () => Promise<void>;
   fetchMatrixPermissions: () => Promise<void>;
   bootstrap: () => Promise<void>;
 
   hasRole: (role: string) => boolean;
   hasPermission: (permission: string) => boolean;
+  departmentApiPath: () => string;
 };
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      department: null,
       roles: [],
       roleObjects: undefined,
       isLoggedIn: false,
@@ -57,6 +65,7 @@ export const useAuthStore = create<AuthState>()(
         // sau khi có token -> nạp hồ sơ + roles + permissions
         await Promise.all([
           get().fetchMe(),
+          get().fetchDepartment(),
           get().fetchRoles(),
           get().fetchMatrixPermissions()
         ]);
@@ -89,6 +98,13 @@ export const useAuthStore = create<AuthState>()(
         set({ user: me, isLoggedIn: true });
       },
 
+      async fetchDepartment() {
+        const token = getAccessToken();
+        if (!token) return;
+        const myDept = await fetchMyDepartment();
+        set({ department: myDept });
+      },
+
       async fetchRoles() {
         const token = getAccessToken();
         if (!token) return;
@@ -115,6 +131,7 @@ export const useAuthStore = create<AuthState>()(
         if (!token) return;
         await Promise.allSettled([
           get().fetchMe(),
+          get().fetchDepartment(),
           get().fetchRoles(),
           get().fetchMatrixPermissions()
         ]);
@@ -149,6 +166,10 @@ export const useAuthStore = create<AuthState>()(
         }
         return false;
       },
+      departmentApiPath() {
+        const dept = get().department;
+        return `${env.apiBasePath}/department/${dept?.id}`;
+      }
     }),
     { name: "auth-store" }
   )

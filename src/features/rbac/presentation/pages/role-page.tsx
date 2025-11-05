@@ -1,7 +1,7 @@
 import React from "react";
 import { Typography, Stack, Paper } from "@mui/material";
 import { BasePage } from "@core/pages/base-page";
-import type { RoleDto } from "@features/rbac/models/role.dto";
+import type { RoleDto } from "@root/features/rbac/model/role.dto";
 import { EditTable, type ColumnDef } from "@shared/components/table/edit-table";
 import { fetchRoles } from "@features/rbac/api/role.api";
 
@@ -73,9 +73,9 @@ export default function RolePage() {
               loading={loading}
               onPageChange={setPage}
               onPageSizeChange={(v) => { setPage(0); setPageSize(v); }}
-              // onView={handleView}        // mở trang chi tiết
-              // onEdit={handleEdit}        // mở trang chỉnh sửa
-              // onDelete={handleDelete}    // xoá rồi reload
+            // onView={handleView}        // mở trang chi tiết
+            // onEdit={handleEdit}        // mở trang chỉnh sửa
+            // onDelete={handleDelete}    // xoá rồi reload
             />
           </Paper>
         </Stack>

@@ -5,6 +5,7 @@ export function useAuth() {
   return useAuthStore(
     useShallow((s) => ({
       user: s.user,
+      department: s.department,
       roles: s.roles,
       roleObjects: s.roleObjects,
       isLoggedIn: s.isLoggedIn,
@@ -13,10 +14,12 @@ export function useAuth() {
       setSession: s.setSession,
       fetchMe: s.fetchMe,
       fetchRoles: s.fetchRoles,
+      fetchDepartment: s.fetchDepartment,
       fetchMatrixPermissions: s.fetchMatrixPermissions,
       bootstrap: s.bootstrap,
       hasRole: s.hasRole,
       hasPermission: s.hasPermission,
+      departmentApiPath: s.departmentApiPath,
     }))
   );
 }

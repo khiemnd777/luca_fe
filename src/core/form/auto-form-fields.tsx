@@ -12,15 +12,14 @@ import {
   Chip,
   Button,
   CircularProgress,
-  IconButton,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { Autocomplete } from "@mui/material";
 import dayjs from "dayjs";
 import type { FieldDef, Option } from "@core/form/types";
 import { CurrencyField } from "@core/form/currency-field";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from "./image-upload-field";
+import { PasswordField } from "@core/form/password-field";
 
 type Props = {
   schema: FieldDef[];
@@ -35,6 +34,12 @@ function toMap(options?: Option[]) {
   (options ?? []).forEach((o) => map.set(o.value, o));
   return map;
 }
+
+// function useToggle(initial = false) {
+//   const [v, setV] = React.useState(initial);
+//   const toggle = React.useCallback(() => setV(s => !s), []);
+//   return { v, toggle, setV };
+// }
 
 export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Props) {
   return (
@@ -52,29 +57,81 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
 
         // PASSWORD
         if (f.kind === "password") {
-          const [show, setShow] = React.useState(false);
           return (
-            <TextField
+            <PasswordField
               key={f.name}
-              {...common}
-              type={show ? "text" : "password"}
+              label={f.label}
               value={values[f.name] ?? ""}
-              onChange={(e) => setValue(f.name, e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      aria-label="toggle password visibility"
-                      onClick={() => setShow((s) => !s)}
-                      edge="end"
-                    >
-                      {show ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
+              onChange={(v) => setValue(f.name, v)}
+              size={f.size ?? "small"}
+              fullWidth={f.fullWidth ?? true}
+              error={!!errors?.[f.name]}
+              helperText={errors?.[f.name] ?? f.helperText}
             />
+          );
+        }
+
+        // NEW-PASSWORD
+        if (f.kind === "new-password") {
+          const val = values[f.name] ?? { password: "", confirm: "" };
+          const newLabel = f.newLabel ?? "Mật khẩu";
+          const confirmLabel = f.confirmLabel ?? "Xác nhận mật khẩu";
+
+          return (
+            <Stack key={f.name} spacing={1}>
+              <PasswordField
+                label={newLabel}
+                value={val.password}
+                onChange={(v) => setValue(f.name, { ...val, password: v })}
+                size={f.size ?? "small"}
+                fullWidth={f.fullWidth ?? true}
+              />
+              <PasswordField
+                label={confirmLabel}
+                value={val.confirm}
+                onChange={(v) => setValue(f.name, { ...val, confirm: v })}
+                size={f.size ?? "small"}
+                fullWidth={f.fullWidth ?? true}
+                error={!!errors?.[f.name]}
+                helperText={errors?.[f.name] ?? f.helperText}
+              />
+            </Stack>
+          );
+        }
+
+        // CHANGE-PASSWORD
+        if (f.kind === "change-password") {
+          const val = values[f.name] ?? { current: "", password: "", confirm: "" };
+          const currentLabel = f.currentLabel ?? "Mật khẩu hiện tại";
+          const newLabel = f.newLabel ?? "Mật khẩu mới";
+          const confirmLabel = f.confirmLabel ?? "Xác nhận mật khẩu mới";
+
+          return (
+            <Stack key={f.name} spacing={1}>
+              <PasswordField
+                label={currentLabel}
+                value={val.current}
+                onChange={(v) => setValue(f.name, { ...val, current: v })}
+                size={f.size ?? "small"}
+                fullWidth={f.fullWidth ?? true}
+              />
+              <PasswordField
+                label={newLabel}
+                value={val.password}
+                onChange={(v) => setValue(f.name, { ...val, password: v })}
+                size={f.size ?? "small"}
+                fullWidth={f.fullWidth ?? true}
+              />
+              <PasswordField
+                label={confirmLabel}
+                value={val.confirm}
+                onChange={(v) => setValue(f.name, { ...val, confirm: v })}
+                size={f.size ?? "small"}
+                fullWidth={f.fullWidth ?? true}
+                error={!!errors?.[f.name]}
+                helperText={errors?.[f.name] ?? f.helperText}
+              />
+            </Stack>
           );
         }
 

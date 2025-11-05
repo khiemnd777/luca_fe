@@ -1,29 +1,30 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema, SubmitDef } from "@core/form/form.types";
-import { uploadImages } from "@root/core/form/image-upload-utils";
+import { uploadImages } from "@core/form/image-upload-utils";
 import { mapper } from "@root/core/mapper/auto-mapper";
-import { updateDepartment } from "@features/settings/api/department.api";
 
-export function buildDepartmentSettingsSchema(): FormSchema {
+export function buildAccountSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "name",
-      label: "Tên công ty",
+      label: "Tên hiển thị",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập tên",
-        minLength: 2,
-        maxLength: 120,
+        required: "Yêu cầu nhập tên hiển thị",
+        maxLength: 50,
       },
     },
     {
-      name: "address",
-      label: "Địa chỉ",
-      kind: "text",
-      rules: { maxLength: 300 },
+      name: "email",
+      label: "Email",
+      kind: "email",
+      rules: {
+        required: "Yêu cầu nhập địa chỉ email",
+        maxLength: 300
+      },
     },
     {
-      name: "phoneNumber",
+      name: "phone",
       label: "Số điện thoại",
       kind: "text",
       placeholder: "+84xxxxxxxxx",
@@ -37,8 +38,8 @@ export function buildDepartmentSettingsSchema(): FormSchema {
       helperText: "Có thể nhập +84 hoặc không.",
     },
     {
-      name: "logo",
-      label: "Logo",
+      name: "avatar",
+      label: "Ảnh đại diện",
       kind: "imageupload",
       accept: "image/*",
       maxFiles: 1,
@@ -56,19 +57,19 @@ export function buildDepartmentSettingsSchema(): FormSchema {
   const submit: SubmitDef = {
     type: "fn",
     run: async (values) => {
-      return updateDepartment(values);
-    },
-  }
+      console.log(values);
+    }
+  };
 
   return {
     fields,
     toasts: {
-      saved: "Lưu thông tin trang thành công!",
+      saved: "Lưu tài khoản thành công!",
       failed: "Lưu thất bại, xin thử lại!",
     },
     submit,
     hooks: {
-      mapToDto: (v) => mapper.map("MyDepartment", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Me", v, "model_to_dto"),
     }
   };
 }

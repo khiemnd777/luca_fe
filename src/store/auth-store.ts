@@ -11,14 +11,14 @@ import {
 import { login as apiLogin, logout as apiLogout } from "@core/network/auth-api";
 import { fetchMe } from "@core/network/me.api";
 import { fetchMyMatrixPermissions, fetchMyRoles } from "@core/network/rbac.api";
-import type { MeDto } from "@core/network/me.dto";
+import type { MeModel } from "@root/core/auth/auth.types";
 import type { MatrixPermission, MyRoleDto } from "@core/network/rbac.types";
 import { fetchMyDepartment } from "@core/network/my-department.api";
 import type { MyDepartmentDto } from "@core/network/my-department.dto";
 import { env } from "@core/config/env";
 
 type AuthState = {
-  user: MeDto | null;
+  user: MeModel | null;
   department: MyDepartmentDto | null;
   roles: string[];              // danh sách role_name
   roleObjects?: MyRoleDto[];      // (optional) giữ full role để hiển thị
@@ -30,7 +30,7 @@ type AuthState = {
   setSession: (p: {
     accessToken: string;
     refreshToken: string;
-    user?: MeDto | null;
+    user?: MeModel | null;
     department?: MyDepartmentDto | null;
     roles?: string[];
     matrixPermission?: MatrixPermission | null;

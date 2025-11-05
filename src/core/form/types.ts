@@ -1,6 +1,8 @@
 export type FieldKind =
   | "text"
   | "password"
+  | "new-password"
+  | "change-password"
   | "email"
   | "textarea"
   | "datetime"
@@ -15,7 +17,19 @@ export type FieldKind =
   | "fileupload"
   | "imageupload"
   | "custom";
-;
+
+// Password rules
+export type PasswordRules = {
+  minLength?: number;          // default 8
+  maxLength?: number;          // optional
+  requireUpper?: boolean;      // default true
+  requireLower?: boolean;      // default true
+  requireDigit?: boolean;      // default true
+  requireSymbol?: boolean;     // default false
+  disallowSpaces?: boolean;    // default true
+  disallowReuseCurrent?: boolean; // chỉ áp cho change-password, default true
+  custom?: (pw: string, allValues: Record<string, any>) => string | null | undefined;
+};
 
 export type FieldRules = {
   required?: boolean | string; // true | "custom message"
@@ -27,7 +41,7 @@ export type FieldRules = {
   minDateTime?: string; // ISO string
   maxDateTime?: string; // ISO string
   custom?: (value: any) => string | null | undefined; // sync: return message if invalid
-  
+
   // async validation (per-field)
   // Trả về message lỗi hoặc null/undefined nếu hợp lệ.
   async?: (value: any, allValues: Record<string, any>) => Promise<string | null | undefined>;
@@ -70,6 +84,13 @@ export type FieldDef = {
   uploader?: (files: File[]) => Promise<string[]>;      // trả về URLs sau upload
   maxFiles?: number;
   multipleFiles?: boolean;                              // nếu không set, suy ra từ rules.required hoặc defaultValue
+
+  // password
+  passwordRules?: PasswordRules;
+  // change-password labels
+  currentLabel?: string;  // default: "Mật khẩu hiện tại"
+  newLabel?: string;      // default: "Mật khẩu mới" (hoặc "Mật khẩu" cho new-password)
+  confirmLabel?: string;  // default: "Xác nhận mật khẩu mới" / "Xác nhận mật khẩu"
 
   // custom
   render?: (ctx: CustomRenderCtx) => React.ReactNode;

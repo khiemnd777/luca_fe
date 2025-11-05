@@ -3,28 +3,14 @@ import { Button } from "@mui/material";
 import { PageContainer } from "@shared/components/ui/page-container";
 import { PageToolbar } from "@shared/components/ui/page-toolbar";
 import { SectionCard } from "@shared/components/ui/section-card";
-import DepartmentForm, { type DepartmentFormRef } from "@features/settings/components/department-form";
 import React from "react";
-import type { MyDepartmentDto } from "@core/network/my-department.dto";
-import { useAuth } from "@core/auth/use-auth";
 import SettingsForm from "@features/settings/components/common-settings-form";
-import { AutoGrid } from "@root/shared/components/ui/auto-grid";
+import { AutoGrid } from "@shared/components/ui/auto-grid";
+import type { AutoFormRef } from "@core/form/form.types";
+import DepartmentForm from "@features/settings/components/department-form";
 
 export default function SettingsPage() {
-  const { department, fetchDepartment } = useAuth();
-  const formRef = React.useRef<DepartmentFormRef>(null);
-  const [initial, setInitial] = React.useState<Partial<MyDepartmentDto | null>>();
-
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!mounted) return;
-      setInitial(department);
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [department]);
+  const formRef = React.useRef<AutoFormRef>(null);
 
   return (
     <>
@@ -36,10 +22,7 @@ export default function SettingsPage() {
           />
           <AutoGrid>
             <SectionCard title="Thông tin trang" extra={<Button variant="contained" onClick={() => formRef.current?.submit()}>Lưu</Button>}>
-              <DepartmentForm ref={formRef} initial={initial} onSaved={async () => {
-                // Refresh department after adjusting.
-                await fetchDepartment();
-              }} />
+              <DepartmentForm ref={formRef} />
             </SectionCard>
             <SectionCard title="Giao diện">
               <SettingsForm />

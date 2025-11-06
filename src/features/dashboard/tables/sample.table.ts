@@ -1,6 +1,6 @@
 import { registerTable } from "@core/table/table-registry";
 import { createTableSchema } from "@core/table/table.types";
-import type { ColumnDef, FetchOpts } from "@core/table/table.types";
+import type { ColumnDef, FetchTableOpts } from "@core/table/table.types";
 
 type Product = {
   id: number;
@@ -12,7 +12,7 @@ type Product = {
   createdAt: string; // ISO
 };
 
-async function fetchProducts(opts: FetchOpts): Promise<{ items: Product[]; total: number }> {
+async function fetchProducts(opts: FetchTableOpts): Promise<{ items: Product[]; total: number }> {
   const all: Product[] = Array.from({ length: 137 }).map((_, i) => ({
     id: i + 1,
     name: `Product ${i + 1}`,
@@ -43,8 +43,8 @@ async function fetchProducts(opts: FetchOpts): Promise<{ items: Product[]; total
     all.sort(cmp);
   }
 
-  const start = opts.page * opts.size;
-  const items = all.slice(start, start + opts.size);
+  const start = opts.limit * opts.page;
+  const items = all.slice(start, start + opts.page);
   await new Promise(r => setTimeout(r, 300));
   return { items, total: all.length };
 }

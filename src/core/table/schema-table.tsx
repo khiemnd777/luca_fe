@@ -27,16 +27,16 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
     setLoading(true);
     try {
       const res = await schema.fetch({
-        page,
-        size: pageSize,
+        limit: pageSize,
+        page: page,
         orderBy: sortBy ?? undefined,
         direction: sortDir,
       });
       setRows(res.items ?? []);
       setTotal(res.total ?? 0);
       await Promise.resolve(schema.afterReload?.({
-        page,
-        size: pageSize,
+        limit: pageSize,
+        page: page,
         orderBy: sortBy ?? undefined,
         direction: sortDir,
         total: res.total ?? 0,

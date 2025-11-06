@@ -1,9 +1,11 @@
+import type { ListResult } from "@core/types/list-result";
+
 // @core/table/table.types.ts
 export type SortDir = "asc" | "desc";
 
-export type FetchOpts = {
-  page: number;            // 0-based
-  size: number;
+export type FetchTableOpts = {
+  limit: number;            // 0-based
+  page: number;
   orderBy?: string | null;
   direction?: SortDir;
 };
@@ -30,8 +32,8 @@ export type ColumnDef<T> = {
 export type TableSchema<T> = {
   columns: ColumnDef<T>[];
 
-  /** BẮT BUỘC: fetch server-side (paging + sorting) */
-  fetch: (opts: FetchOpts) => Promise<{ items: T[]; total: number }>;
+  /* Mandatory */
+  fetch: (opts: FetchTableOpts) => Promise<ListResult<T>>;
 
   // UI options
   initialPageSize?: number;                // default 20
@@ -46,7 +48,7 @@ export type TableSchema<T> = {
   onDelete?: (row: T) => void | Promise<void>;
 
   // lifecycle
-  afterReload?: (ctx: FetchOpts & { total: number }) => void | Promise<void>;
+  afterReload?: (ctx: FetchTableOpts & { total: number }) => void | Promise<void>;
 };
 
 export function createTableSchema<T>(schema: TableSchema<T>): TableSchema<T> {

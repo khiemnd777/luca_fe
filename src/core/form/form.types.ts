@@ -34,11 +34,26 @@ export type FormHooks = {
   onChange?: (values: Record<string, any>) => void;
 };
 
+export type FormMode = "create" | "update";
+
+export type ModeText =
+  | string
+  | { create: string; update: string }
+  | ((ctx: { mode: FormMode; values: any; result?: any }) => string);
+
 export type FormSchema = {
   fields: FieldDef[];
-  submit: SubmitDef;
+  submit:
+  | SubmitDef
+  | { create: SubmitDef; update: SubmitDef };
+  idField?: string; // mặc định "id"
+  modeResolver?: (initial: Record<string, any>) => FormMode;
   hooks?: FormHooks;
-  toasts?: { saved?: string; failed?: string };
+  toasts?: {
+    saved?: ModeText;   // vd: "Lưu xong!" | { create:"Tạo xong!", update:"Cập nhật xong!" } | (ctx)=>string
+    failed?: ModeText;
+  };
+
   showReset?: boolean;
   initialResolver?: () => Promise<Record<string, any> | null> | Record<string, any> | null;
   afterSaved?: (result: any) => Promise<void> | void;

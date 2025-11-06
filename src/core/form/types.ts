@@ -18,6 +18,8 @@ export type FieldKind =
   | "imageupload"
   | "custom";
 
+export type DeriveMode = "always" | "whenEmpty" | "untilManual";
+
 // Password rules
 export type PasswordRules = {
   minLength?: number;          // default 8
@@ -94,6 +96,20 @@ export type FieldDef = {
 
   // custom
   render?: (ctx: CustomRenderCtx) => React.ReactNode;
+
+  // derive value từ field khác (vd: fullname -> slug)
+  derive?: {
+    /** Field nguồn (vd: "fullname") */
+    field: string;
+    /** Ánh xạ từ giá trị nguồn -> giá trị đích */
+    map: (sourceValue: any, values: Record<string, any>) => any;
+    /** Cơ chế ghi đè:
+     *  - "always": luôn sync theo nguồn
+     *  - "whenEmpty": chỉ điền nếu hiện đang rỗng
+     *  - "untilManual": tự động cho đến khi người dùng chỉnh tay field đích
+     **/
+    mode?: DeriveMode; // default: "untilManual"
+  };
 };
 
 // tuỳ chọn cho hook, gồm global async validate

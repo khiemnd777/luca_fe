@@ -7,6 +7,7 @@ import { SectionCard } from "@root/shared/components/ui/section-card";
 import { AutoTable } from "@root/core/table/auto-table";
 import { Button } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import { openFormDialog } from "@root/core/form/form-dialog.service";
 
 export default function RolePage() {
   return (
@@ -18,7 +19,9 @@ export default function RolePage() {
             <Section>
               <SectionCard extra={
                 <>
-                  <Button variant="outlined" startIcon={<AddIcon />} >Thêm vai trò</Button>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
+                    openFormDialog("role");
+                  }} >Thêm vai trò</Button>
                 </>
               }>
                 <AutoTable name="roles" />

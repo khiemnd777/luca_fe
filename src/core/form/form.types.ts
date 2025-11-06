@@ -55,7 +55,7 @@ export type FormSchema = {
   };
 
   showReset?: boolean;
-  initialResolver?: () => Promise<Record<string, any> | null> | Record<string, any> | null;
+  initialResolver?: (initial?: any) => Promise<Record<string, any> | null> | Record<string, any> | null;
   afterSaved?: (result: any) => Promise<void> | void;
 };
 

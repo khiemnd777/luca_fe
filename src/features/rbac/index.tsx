@@ -31,20 +31,20 @@ const mod: ModuleDescriptor = {
       to: "/rbac",
       icon: <KeyIcon />,
       priority: 1,
-      subItems: [
-        {
-          key: "role",
-          label: "Vai trò",
-          to: "/role",
-          priority: 2,
-        },
-        {
-          key: "permission",
-          label: "Phân quyền",
-          to: "/permission",
-          priority: 1,
-        },
-      ],
+      // subItems: [
+      //   {
+      //     key: "role",
+      //     label: "Vai trò",
+      //     to: "/role",
+      //     priority: 2,
+      //   },
+      //   {
+      //     key: "permission",
+      //     label: "Phân quyền",
+      //     to: "/permission",
+      //     priority: 1,
+      //   },
+      // ],
     },
   ],
 };

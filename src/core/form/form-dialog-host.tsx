@@ -31,23 +31,29 @@ export function FormDialogHost() {
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!payload) return; // ⬅️ quan trọng: effect tồn tại nhưng không làm gì khi chưa có payload
-      const schema = getFormSchema(payload.name);
+      if (!payload) return;
+      const schema = getFormSchema(payload.name) ?? getFormDialogBuilder(payload.name);
       setResolvingInitial(true);
       try {
-        const v =
-          payload.options?.initial !== undefined
-            ? payload.options.initial
-            : await Promise.resolve(schema?.initialResolver?.() ?? null);
-        if (!cancelled) setResolvedInitial(v ?? {});
+        const base = payload.options?.initial; // không ép về null ở đây để dễ debug
+        // DEBUG: xem Host nhận được gì
+        console.debug("[FormDialogHost] options.initial =", base);
+
+        const resolved = schema?.initialResolver
+          ? await Promise.resolve(schema.initialResolver(base))
+          : base;
+
+        const finalInitial =
+          base && resolved && typeof base === "object" && typeof resolved === "object"
+            ? { ...base, ...resolved } // giữ id từ base
+            : (resolved ?? base ?? {});
+
+        if (!cancelled) setResolvedInitial(finalInitial);
       } finally {
         if (!cancelled) setResolvingInitial(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-    // phụ thuộc vào các phần dễ đổi nhưng vẫn ổn định thứ tự hooks
+    return () => { cancelled = true; };
   }, [payload?.name, payload?.options?.initial, payload]);
 
   // ---- derive các biến render (không thêm hooks mới) ----
@@ -55,7 +61,7 @@ export function FormDialogHost() {
   const options = payload?.options;
 
   const defaults = name ? (getFormDialogDefaults(name) ?? {}) : {};
-  const schema = name ? (getFormDialogBuilder(name) ?? getFormSchema(name)) : null;
+  const schema = name ? (getFormSchema(name) ?? getFormDialogBuilder(name)) : null;
 
   // mode chỉ có ý nghĩa khi đã resolve được initial & có schema
   const mode = schema && resolvedInitial ? resolveMode(schema as FormSchema, resolvedInitial) : "create";
@@ -130,6 +136,7 @@ export function FormDialogHost() {
         <div>Loading…</div>
       ) : (
         <AutoForm
+          key={`${name}:${resolvedInitial?.id ?? "new"}`}
           ref={autoRef}
           schema={schema}
           name={name!}

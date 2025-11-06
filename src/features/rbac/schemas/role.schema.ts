@@ -3,6 +3,8 @@ import type { FormSchema } from "@core/form/form.types";
 import { mapper } from "@root/core/mapper/auto-mapper";
 import { registerFormDialog } from "@root/core/form/form-dialog.registry";
 import { slugify } from "@root/shared/utils/slugify";
+import { createRole, fetchRoleByID, updateRole } from "@features/rbac/api/role.api";
+import type { RoleModel } from "@features/rbac/model/role.model";
 
 export function buildRoleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -21,7 +23,7 @@ export function buildRoleSchema(): FormSchema {
       kind: "text",
       derive: {
         field: "displayName",
-        mode: "always",
+        mode: "whenEmpty",
         map: (srcVal) => slugify(String(srcVal ?? "")),
       },
     },
@@ -40,15 +42,14 @@ export function buildRoleSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          console.log("Create new");
+          await createRole(values as RoleModel);
           return values;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          console.log("Update");
-          console.log(values);
+          await updateRole(values as RoleModel);
           return values;
         },
       },
@@ -65,7 +66,10 @@ export function buildRoleSchema(): FormSchema {
           : `Cập nhật vai trò "${values?.displayName ?? ""}" thất bại, xin thử lại!`,
     },
 
-    initialResolver() {
+    async initialResolver(data: any) {
+      if (data) {
+        return await fetchRoleByID(data.id);
+      }
       return {};
     },
 

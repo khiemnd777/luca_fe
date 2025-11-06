@@ -34,7 +34,8 @@ function emit() { for (const l of listeners) l(current); }
 
 export function openFormDialog(name: string, options?: OpenFormDialogOptions): Promise<any> {
   return new Promise((resolve, reject) => {
-    current = { name, options, resolve, reject };
+    const cloned = options ? structuredClone(options) : undefined;
+    current = { name, options: cloned, resolve, reject };
     emit();
   });
 }

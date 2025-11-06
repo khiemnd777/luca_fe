@@ -3,7 +3,8 @@ import { env } from "@core/config/env";
 import { mapper } from "@core/mapper/auto-mapper";
 import { apiClient } from "@core/network/api-client";
 import type { ListResult } from "@core/types/list-result";
-import type { FetchTableOpts } from "@root/core/table/table.types";
+import type { FetchTableOpts } from "@core/table/table.types";
+import type { MatrixPermission } from "@core/network/rbac.types";
 
 export async function fetchRoles(tableOpts: FetchTableOpts): Promise<ListResult<RoleModel>> {
   const { data } = await apiClient.getTable<any[]>(`${env.apiBasePath}/rbac/roles`, tableOpts);
@@ -23,4 +24,15 @@ export async function createRole(model: RoleModel): Promise<void> {
 
 export async function updateRole(model: RoleModel): Promise<void> {
   await apiClient.put<any>(`${env.apiBasePath}/rbac/roles/${model.id}`, model);
+}
+
+export async function fetchRBACMatrix(signal?: AbortSignal): Promise<MatrixPermission | null> {
+  const { data } = await apiClient.get<any>(`${env.apiBasePath}/rbac/matrix`, {
+    signal,
+  });
+  if (!data) {
+    return null;
+  }
+  const result = mapper.map<any, MatrixPermission>("MatrixPermission", data, "dto_to_model");
+  return result;
 }

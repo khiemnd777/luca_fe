@@ -8,6 +8,8 @@ import { AutoTable } from "@root/core/table/auto-table";
 import { Button } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { openFormDialog } from "@root/core/form/form-dialog.service";
+import { RBACMatrix } from "@features/rbac/components/rbac-matrix";
+import { Spacer } from "@shared/components/ui/spacer";
 
 export default function RBACPage() {
   return (
@@ -17,6 +19,7 @@ export default function RBACPage() {
           <PageToolbar title="Quyền hạn" subtitle="Quản lý vai trò và phân quyền." />
           <AutoGrid>
             <Section>
+              {/* Vai trò */}
               <SectionCard title={"Vai trò"} extra={
                 <>
                   <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
@@ -25,6 +28,13 @@ export default function RBACPage() {
                 </>
               }>
                 <AutoTable name="roles" />
+              </SectionCard>
+
+              <Spacer />
+
+              {/* Matrix  */}
+              <SectionCard title={"Phân quyền"}>
+                <RBACMatrix />
               </SectionCard>
             </Section>
             <Section />

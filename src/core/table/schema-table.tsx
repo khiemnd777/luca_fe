@@ -1,18 +1,20 @@
 import * as React from "react";
 import { EditTable } from "@core/table/edit-table";
-import type { TableSchema, SortDir } from "./table.types";
+import type { TableSchema, SortDir } from "@core/table/table.types";
+import { subscribeTableReload } from "./table-reload";
 
 export type SchemaTableRef = { reload: () => void };
 
 type Props<T extends { id?: string | number }> = {
   schema: TableSchema<T>;
+  schemaName?: string;
 };
 
 export function ForwardSchemaTable<T extends { id?: string | number }>(
   props: Props<T>,
   ref: React.ForwardedRef<SchemaTableRef>
 ) {
-  const { schema } = props;
+  const { schema, schemaName } = props;
 
   const [page, setPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(schema.initialPageSize ?? 20);
@@ -47,6 +49,15 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
   }, [schema, page, pageSize, sortBy, sortDir]);
 
   React.useEffect(() => { load(); }, [load]);
+
+  React.useEffect(() => {
+    if (!schemaName) return;
+    const unsub = subscribeTableReload(schemaName, () => {
+      // giữ nguyên page/sort hiện tại, chỉ refetch
+      void load();
+    });
+    return unsub;
+  }, [schemaName, load]);
 
   React.useImperativeHandle(ref, () => ({
     reload: () => load(),

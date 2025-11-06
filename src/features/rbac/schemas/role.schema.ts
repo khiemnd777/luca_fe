@@ -5,6 +5,7 @@ import { registerFormDialog } from "@root/core/form/form-dialog.registry";
 import { slugify } from "@root/shared/utils/slugify";
 import { createRole, fetchRoleByID, updateRole } from "@features/rbac/api/role.api";
 import type { RoleModel } from "@features/rbac/model/role.model";
+import { reloadTable } from "@root/core/table/table-reload";
 
 export function buildRoleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -19,7 +20,7 @@ export function buildRoleSchema(): FormSchema {
     },
     {
       name: "roleName",
-      label: "Tên vai trò",
+      label: "Tên hệ thống",
       kind: "text",
       derive: {
         field: "displayName",
@@ -74,6 +75,7 @@ export function buildRoleSchema(): FormSchema {
     },
 
     async afterSaved() {
+      reloadTable("roles");
     },
 
     hooks: {

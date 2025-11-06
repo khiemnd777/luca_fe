@@ -6,8 +6,8 @@ import { openFormDialog } from "@root/core/form/form-dialog.service";
 
 const columns: ColumnDef<RoleModel>[] = [
   { key: "id", header: "ID", width: 80, sortable: true, stickyLeft: true },
-  { key: "roleName", header: "Tên Vai Trò", width: 220, sortable: true, stickyLeft: true },
-  { key: "displayName", header: "Hiển Thị", sortable: true },
+  { key: "displayName", header: "Tên Hiển Thị", sortable: true },
+  { key: "roleName", header: "Tên Hệ Thống", width: 220, sortable: true, stickyLeft: true },
   { key: "brief", header: "Mô Tả" },
 ];
 

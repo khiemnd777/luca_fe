@@ -25,6 +25,6 @@ export const AutoTable = React.forwardRef<AutoTableRef, Props<any>>(
 
     if (!schema) return <div>Table schema {name ? `"${name}"` : ""} chưa được đăng ký.</div>;
 
-    return <SchemaTable ref={inner} schema={schema} />;
+    return <SchemaTable ref={inner} schema={schema} schemaName={name} />;
   }
 );

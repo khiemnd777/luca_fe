@@ -6,7 +6,7 @@ import { createRole, fetchRBACMatrix, fetchRoleByID, updateRole } from "@root/fe
 import type { RoleModel } from "@features/rbac/model/role.model";
 import { reloadTable } from "@root/core/table/table-reload";
 import { EV_RBAC_MATRIX_INVALIDATE } from "@features/rbac/model/rbac.events";
-import { emit } from "@core/module/event-bus";
+import { invalidate } from "@root/core/module/event-invalidation";
 
 export function buildRoleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -85,7 +85,7 @@ export function buildRoleSchema(): FormSchema {
       // reload table
       reloadTable("roles");
       // invalidate
-      emit(EV_RBAC_MATRIX_INVALIDATE, { reason: "role:save" });
+      invalidate(EV_RBAC_MATRIX_INVALIDATE, { reason: "role:save" });
     },
 
     hooks: {

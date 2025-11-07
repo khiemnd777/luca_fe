@@ -1,5 +1,5 @@
 import * as React from "react";
-import { on, off } from "@core/module/event-bus";
+import { on, off, emit, emitAsync } from "@core/module/event-bus";
 
 type Opts<T> = {
   fetcher: () => Promise<T>;
@@ -7,6 +7,14 @@ type Opts<T> = {
   initial?: T | null;
   errorText?: string;
 };
+
+export function invalidate(event: string, payload?: unknown) {
+  return emit(event, payload);
+}
+
+export async function invalidateAsync<T, K>(event: string, payload?: T | undefined) {
+  return await emitAsync<T, K>(event, payload);
+}
 
 export function useEventInvalidation<T>({
   fetcher,

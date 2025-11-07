@@ -4,7 +4,7 @@ import {
 import type { MatrixPermission } from "@root/core/network/rbac.types";
 import { fetchRBACMatrix } from "@features/rbac/api/rbac.api";
 import { EV_RBAC_MATRIX_INVALIDATE } from "@features/rbac/model/rbac.events";
-import { useEventInvalidation } from "@root/core/module/use-event-invalidation";
+import { useEventInvalidation } from "@root/core/module/event-invalidation";
 
 export function RBACMatrix() {
   const { data: matrix, setData, loading, error } = useEventInvalidation<MatrixPermission | null>({

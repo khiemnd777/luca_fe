@@ -8,7 +8,7 @@ export default function StaffPage() {
     <>
       <BasePage>
         <PageContainer>
-          <PageToolbar title="Sản phẩm" />
+          <PageToolbar title="Nhân sự" />
           <UnderConstruction />
         </PageContainer>
       </BasePage>

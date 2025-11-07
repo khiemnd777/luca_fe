@@ -1,5 +1,4 @@
 import { BasePage } from "@core/pages/base-page";
-import { Button } from "@mui/material";
 import { PageContainer } from "@shared/components/ui/page-container";
 import { PageToolbar } from "@shared/components/ui/page-toolbar";
 import { SectionCard } from "@shared/components/ui/section-card";
@@ -9,6 +8,7 @@ import { AutoGrid } from "@shared/components/ui/auto-grid";
 import type { AutoFormRef } from "@core/form/form.types";
 import { AutoForm } from "@root/core/form/auto-form";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import { SafeButton } from "@shared/components/button/safe-button";
 
 export default function SettingsPage() {
   const formRef = React.useRef<AutoFormRef>(null);
@@ -22,7 +22,9 @@ export default function SettingsPage() {
             subtitle="Cấu hình thông tin trang quản lý và giao diện"
           />
           <AutoGrid>
-            <SectionCard title="Thông tin trang" extra={<Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formRef.current?.submit()}>Lưu</Button>}>
+            <SectionCard title="Thông tin trang" extra={
+              <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formRef.current?.submit()}>Lưu</SafeButton>
+            }>
               <AutoForm name="department-settings" ref={formRef} />
             </SectionCard>
             <SectionCard title="Giao diện">

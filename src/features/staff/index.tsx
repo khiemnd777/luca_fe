@@ -11,36 +11,29 @@ const mod: ModuleDescriptor = {
   id: "staff",
   routes: [
     {
-      path: "/staff",
-      element: <StaffPage />,
-    },
-    {
-      path: "/section",
-      element: <SectionPage />,
-    },
-    {
-      path: "/technician",
-      element: <TechnicianPage />,
-    },
-  ],
-  menuItems: [
-    {
       key: "staff",
       label: "Nhân sự",
-      to: "/staff",
+      title: "Nhân sự",
+      subtitle: "Quản lý nhân sự",
+      path: "/staff",
+      element: <StaffPage />,
       icon: <BadgeIcon />,
       priority: 94,
-      subItems: [
+      children: [
         {
           key: "section",
           label: "Bộ phận",
-          to: "/section",
+          title: "Bộ phận",
+          path: "/section",
+          element: <SectionPage />,
           priority: 2,
         },
         {
           key: "technician",
           label: "Kỹ thuật viên",
-          to: "/technician",
+          title: "Kỹ thuật viên",
+          path: "/technician",
+          element: <TechnicianPage />,
           priority: 1,
         },
       ],

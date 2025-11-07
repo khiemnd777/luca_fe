@@ -3,21 +3,17 @@ import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import DiscountIcon from '@mui/icons-material/Discount';
 
-const PromotionPage = React.lazy(() => import("@features/promotion/presentation/pages/promotion-page"));
+const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
 const mod: ModuleDescriptor = {
   id: "promotion",
   routes: [
     {
-      path: "/promotion",
-      element: <PromotionPage />,
-    },
-  ],
-  menuItems: [
-    {
       key: "promotion",
       label: "Khuyến mãi",
-      to: "/promotion",
+      title: "Khuyến mãi",
+      path: "/promotion",
+      element: <UnderConstructionPage />,
       icon: <DiscountIcon />,
       priority: 96,
     },

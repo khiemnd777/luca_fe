@@ -12,6 +12,7 @@ export type SlotConfig = {
 
 export type RouteConfig = {
   path: string;
+  permissions?: Perm[];
   element: ReactNode | LazyExoticComponent<() => JSX.Element>;
 };
 

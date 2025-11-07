@@ -8,7 +8,8 @@ import axios, {
 import { getAccessToken, getRefreshToken, saveAccessToken } from "@core/network/token-utils";
 import { refreshAccessToken } from "@core/network/auth-api";
 import type { FetchTableOpts } from "@core/table/table.types";
-import { mapper } from "../mapper/auto-mapper";
+import { mapper } from "@core/mapper/auto-mapper";
+import { getIdemKeyFor } from "@core/network/api-client.utils";
 
 /** =========================
  *  Global (singleton + state)
@@ -238,6 +239,12 @@ export class ApiClient {
           });
         }
 
+        const method = (config.method ?? "get").toUpperCase();
+        if (method === "POST" || method === "PUT" || method === "DELETE") {
+          const key = getIdemKeyFor(config);
+          config.headers = config.headers ?? {};
+          (config.headers as any)["Idempotency-Key"] = key;
+        }
         return config;
       }
     );

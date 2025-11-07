@@ -3,7 +3,6 @@ import { BasePage } from "@core/pages/base-page";
 import { PageContainer } from "@root/shared/components/ui/page-container";
 import { PageToolbar } from "@root/shared/components/ui/page-toolbar";
 import { SectionCard } from "@root/shared/components/ui/section-card";
-import { Button } from "@mui/material";
 import type { AutoFormRef } from "@root/core/form/form.types";
 import { AutoGrid } from "@shared/components/ui/auto-grid";
 import { Section } from "@shared/components/ui/section";
@@ -13,6 +12,7 @@ import { Spacer } from "@root/shared/components/ui/spacer";
 import { AutoForm } from "@root/core/form/auto-form";
 import ChangeCircleOutlinedIcon from '@mui/icons-material/ChangeCircleOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import { SafeButton } from "@shared/components/button/safe-button";
 
 export default function AccountPage() {
   const logout = useAuthStore((s) => s.logout);
@@ -25,9 +25,9 @@ export default function AccountPage() {
           <PageToolbar title="Tài khoản" subtitle="Chỉnh sửa thông tin tài khoản đăng nhập."
             actions={
               <>
-                <Button variant="contained" color="error" startIcon={<LogoutRounded />} onClick={async () => await logout()}>
+                <SafeButton variant="contained" color="error" startIcon={<LogoutRounded />} onClick={async () => await logout()}>
                   Đăng xuất
-                </Button>
+                </SafeButton>
               </>
             }
           />
@@ -35,9 +35,9 @@ export default function AccountPage() {
             {/* Left */}
             <Section>
               <SectionCard title={"Thông tin tài khoản"} extra={
-                <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formAccountRef.current?.submit()}>
+                <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formAccountRef.current?.submit()}>
                   Lưu
-                </Button>
+                </SafeButton>
               }>
                 <AutoForm name="account" ref={formAccountRef} />
               </SectionCard>
@@ -45,9 +45,9 @@ export default function AccountPage() {
               <Spacer />
 
               <SectionCard title={"Đổi mật khẩu"} extra={
-                <Button variant="contained" startIcon={<ChangeCircleOutlinedIcon />} onClick={() => formAccountChangePasswordRef.current?.submit()}>
+                <SafeButton variant="contained" startIcon={<ChangeCircleOutlinedIcon />} onClick={() => formAccountChangePasswordRef.current?.submit()}>
                   Đổi
-                </Button>
+                </SafeButton>
               }>
                 <AutoForm name="account-change-password" ref={formAccountChangePasswordRef} />
               </SectionCard>

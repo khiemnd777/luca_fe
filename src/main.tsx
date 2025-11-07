@@ -13,7 +13,7 @@ import.meta.glob("@features/**/schemas/*.schema.ts", { eager: true });
 // Auto-load tables
 import.meta.glob("@features/**/tables/*.table.ts", { eager: true });
 // Auto-load widgets
-import.meta.glob("@features/**/presentation/widgets/*.widget.tsx", { eager: true });
+import.meta.glob("@features/**/widgets/*.widget.tsx", { eager: true });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

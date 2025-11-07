@@ -3,9 +3,7 @@ import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import BadgeIcon from '@mui/icons-material/Badge';
 
-const StaffPage = React.lazy(() => import("@features/staff/presentation/pages/staff-page"));
-const SectionPage = React.lazy(() => import("@features/staff/presentation/pages/section-page"));
-const TechnicianPage = React.lazy(() => import("@features/staff/presentation/pages/technician-page"));
+const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
 const mod: ModuleDescriptor = {
   id: "staff",
@@ -16,7 +14,7 @@ const mod: ModuleDescriptor = {
       title: "Nhân sự",
       subtitle: "Quản lý nhân sự",
       path: "/staff",
-      element: <StaffPage />,
+      element: <UnderConstructionPage />,
       icon: <BadgeIcon />,
       priority: 94,
       children: [
@@ -25,7 +23,6 @@ const mod: ModuleDescriptor = {
           label: "Bộ phận",
           title: "Bộ phận",
           path: "/section",
-          element: <SectionPage />,
           priority: 2,
         },
         {
@@ -33,7 +30,7 @@ const mod: ModuleDescriptor = {
           label: "Kỹ thuật viên",
           title: "Kỹ thuật viên",
           path: "/technician",
-          element: <TechnicianPage />,
+          element: <UnderConstructionPage />,
           priority: 1,
         },
       ],

@@ -11,7 +11,7 @@ const mod: ModuleDescriptor = {
     {
       key: "material",
       label: "Vật tư",
-      title: "Vật tự",
+      title: "Vật tư",
       path: "/material",
       element: <UnderConstructionPage />,
       icon: <CategoryIcon />,

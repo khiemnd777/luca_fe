@@ -1,4 +1,4 @@
-export interface RoleDto {
+export interface RoleModel {
   id: number;
   roleName: string;
   displayName?: string | null;

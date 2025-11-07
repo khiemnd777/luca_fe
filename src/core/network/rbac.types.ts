@@ -14,6 +14,7 @@ export interface PermissionMeta {
 export interface MatrixRow {
   roleId: number;
   roleName: string;
+  displayName?: string;
   flags: boolean[]; // theo thứ tự Permissions
 }
 

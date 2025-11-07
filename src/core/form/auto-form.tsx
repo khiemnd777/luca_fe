@@ -1,13 +1,32 @@
-// @core/form/auto-form.tsx
 import * as React from "react";
 import { Stack } from "@mui/material";
 import { AutoFormFields } from "@core/form/auto-form-fields";
 import { useAutoForm } from "@core/form/use-auto-form";
-import type { AutoFormRef, AutoFormProps, SubmitDef } from "@core/form/form.types";
+import type { AutoFormRef, AutoFormProps, SubmitDef, FormSchema, FormMode, ModeText } from "@core/form/form.types";
 import { getFormSchema } from "@core/form/form-registry";
 import toast from "react-hot-toast";
 
 const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
+
+function resolveMode(schema: FormSchema, initialVals: any): FormMode {
+  const idField = schema.idField ?? "id";
+  if (schema.modeResolver) return schema.modeResolver(initialVals ?? {});
+  const id = initialVals?.[idField];
+  return id !== null && id !== undefined && id !== "" ? "update" : "create";
+}
+
+function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
+  const s = schema.submit as any;
+  if (s?.create && s?.update) return mode === "create" ? s.create : s.update;
+  return schema.submit as SubmitDef;
+}
+
+function renderModeText(t?: ModeText, ctx?: { mode: FormMode; values: any; result?: any }): string | undefined {
+  if (!t) return undefined;
+  if (typeof t === "string") return t;
+  if (typeof t === "function") return t(ctx!);
+  return t[ctx!.mode];
+}
 
 async function runSubmit(def: SubmitDef, values: Record<string, any>) {
   if (def.type === "fn") return def.run(values);
@@ -21,7 +40,7 @@ async function runSubmit(def: SubmitDef, values: Record<string, any>) {
   });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try { const j = await res.json(); msg = j?.message || msg; } catch {}
+    try { const j = await res.json(); msg = j?.message || msg; } catch { }
     throw new Error(msg);
   }
   const data = await res.json().catch(() => null);
@@ -89,25 +108,31 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       const ok = await validateAll();
       if (!ok) return false;
       setSaving(true);
+      const initialVals = stableInitial;
+      const dto = schema.hooks?.mapToDto ? schema.hooks.mapToDto(values) : values;
+      const mode = resolveMode(schema, initialVals);
+
       try {
-        const dto = schema.hooks?.mapToDto ? schema.hooks.mapToDto(values) : values;
-        const result = await runSubmit(schema.submit, dto);
+        const submitDef = pickSubmit(schema, mode);
+        const result = await runSubmit(submitDef, dto);
 
         if (schema.hooks?.mapFromDto) {
           const uiVals = schema.hooks.mapFromDto(result);
           if (uiVals && typeof uiVals === "object") setAllValues(uiVals);
         }
 
-        toasts?.success?.(schema.toasts?.saved ?? "Đã lưu thành công");
+        const savedMsg = renderModeText(schema.toasts?.saved, { mode, values, result }) ?? "Đã lưu thành công";
+        toasts?.success?.(savedMsg);
 
-        // local callback trước
         await Promise.resolve(onSaved?.(result));
-        // ✅ schema-level afterSaved
         if (schema.afterSaved) await Promise.resolve(schema.afterSaved(result));
 
         return true;
       } catch (e: any) {
-        toasts?.error?.(schema.toasts?.failed ?? (e?.message || "Lưu thất bại"));
+        const failedMsg =
+          renderModeText(schema.toasts?.failed, { mode, values, result: undefined }) ??
+          (e?.message || "Lưu thất bại");
+        toasts?.error?.(failedMsg);
         setErrors((prev) => ({ ...prev, _form: e?.message ?? "" }));
         return false;
       } finally {

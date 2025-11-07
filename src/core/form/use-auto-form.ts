@@ -46,19 +46,13 @@ function checkPasswordRules(pw: string, pr?: PasswordRules, allValues?: Record<s
   return null;
 }
 
-function validateNewPasswordObject(
-  value: any,
-  def: FieldDef,
-  allValues: Record<string, any>
-): string | null {
+function validateNewPasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
   const pw = value?.password ?? "";
   const cf = value?.confirm ?? "";
 
-  // required tổng (dựa vào rules.required của field)
   const reqMsg = def.rules?.required ? getReqMsg(def.rules.required) : null;
   if (reqMsg && (!pw || !cf)) return reqMsg!;
 
-  // nếu có nhập thì kiểm tra rule
   if (pw) {
     const msg = checkPasswordRules(pw, def.passwordRules, allValues);
     if (msg) return msg;
@@ -67,11 +61,7 @@ function validateNewPasswordObject(
   return null;
 }
 
-function validateChangePasswordObject(
-  value: any,
-  def: FieldDef,
-  allValues: Record<string, any>
-): string | null {
+function validateChangePasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
   const cur = value?.current ?? "";
   const pw = value?.password ?? "";
   const cf = value?.confirm ?? "";
@@ -155,114 +145,89 @@ function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
 function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>) {
   const obj: Record<string, any> = {};
   for (const f of schema) {
-    // fallback mặc định cho từng kind
     const defaultFallback =
       f.kind === "currency" ? 0 :
         f.kind === "number" ? 0 :
           f.kind === "checkbox" || f.kind === "switch" ? false :
-            f.kind === "multiselect" ? [] :
-              // KHÔNG đặt mặc định [] cho upload nữa, sẽ xử lý bên dưới theo multipleFiles
-              "";
+            f.kind === "multiselect" ? [] : "";
 
     let v = raw && f.name in (raw ?? {}) ? raw![f.name] : (f as any).defaultValue ?? defaultFallback;
 
     switch (f.kind) {
       case "fileupload":
-      case "imageupload":
-        {
-          const isMulti = (f as any).multipleFiles ?? true;
-          if (isMulti) {
-            if (v == null) v = [];
-            else if (typeof v === "string") v = [v];
-            else if (!Array.isArray(v)) v = [];
-          } else {
-            // single
-            if (Array.isArray(v)) {
-              // ưu tiên string đầu tiên, nếu không có thì File đầu tiên
-              const firstStr = v.find((x: any) => typeof x === "string");
-              const firstFile = v.find((x: any) => x instanceof File);
-              v = firstStr ?? firstFile ?? "";
-            } else if (v == null) {
-              v = "";
-            }
+      case "imageupload": {
+        const isMulti = (f as any).multipleFiles ?? true;
+        if (isMulti) {
+          if (v == null) v = [];
+          else if (typeof v === "string") v = [v];
+          else if (!Array.isArray(v)) v = [];
+        } else {
+          if (Array.isArray(v)) {
+            const firstStr = v.find((x: any) => typeof x === "string");
+            const firstFile = v.find((x: any) => x instanceof File);
+            v = firstStr ?? firstFile ?? "";
+          } else if (v == null) {
+            v = "";
           }
-          break;
         }
-
-      case "select":
-        {
-          if (f.multiple) v = Array.isArray(v) ? v : [];
-          else if (v == null) v = "";
-          break;
+        break;
+      }
+      case "select": {
+        if (f.multiple) v = Array.isArray(v) ? v : [];
+        else if (v == null) v = "";
+        break;
+      }
+      case "multiselect": {
+        v = Array.isArray(v) ? v : [];
+        break;
+      }
+      case "autocomplete": {
+        v = v ?? (f.freeSolo ? "" : "");
+        break;
+      }
+      case "datetime": {
+        if (v == null || v === "") v = "";
+        else {
+          const d = new Date(v);
+          v = isNaN(+d) ? "" : d.toISOString();
         }
-
-      case "multiselect":
-        {
-          v = Array.isArray(v) ? v : [];
-          break;
-        }
-
-      case "autocomplete":
-        {
-          v = v ?? (f.freeSolo ? "" : "");
-          break;
-        }
-
-      case "datetime":
-        {
-          if (v == null || v === "") v = "";
-          else {
-            const d = new Date(v);
-            v = isNaN(+d) ? "" : d.toISOString();
-          }
-          break;
-        }
-
+        break;
+      }
       case "currency":
-      case "number":
-        {
-          if (v == null || v === "") v = 0;
-          else {
-            const n = Number(v);
-            v = Number.isFinite(n) ? n : 0;
-          }
-          break;
+      case "number": {
+        if (v == null || v === "") v = 0;
+        else {
+          const n = Number(v);
+          v = Number.isFinite(n) ? n : 0;
         }
-
+        break;
+      }
       case "checkbox":
-      case "switch":
-        {
-          v = !!v;
-          break;
-        }
-
-      case "color":
-        {
-          v = v ?? "#000000";
-          break;
-        }
-
-      case "new-password":
-        {
-          const v0 = v ?? {};
-          v = {
-            password: typeof v0.password === "string" ? v0.password : "",
-            confirm: typeof v0.confirm === "string" ? v0.confirm : "",
-          };
-          break;
-        }
-
-      case "change-password":
-        {
-          const v0 = v ?? {};
-          v = {
-            current: typeof v0.current === "string" ? v0.current : "",
-            password: typeof v0.password === "string" ? v0.password : "",
-            confirm: typeof v0.confirm === "string" ? v0.confirm : "",
-          };
-          break;
-        }
-
+      case "switch": {
+        v = !!v;
+        break;
+      }
+      case "color": {
+        v = v ?? "#000000";
+        break;
+      }
+      case "new-password": {
+        const v0 = v ?? {};
+        v = {
+          password: typeof v0.password === "string" ? v0.password : "",
+          confirm: typeof v0.confirm === "string" ? v0.confirm : "",
+        };
+        break;
+      }
+      case "change-password": {
+        const v0 = v ?? {};
+        v = {
+          current: typeof v0.current === "string" ? v0.current : "",
+          password: typeof v0.password === "string" ? v0.password : "",
+          confirm: typeof v0.confirm === "string" ? v0.confirm : "",
+        };
+        break;
+      }
       default:
         if (v == null) v = "";
     }
@@ -272,11 +237,14 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
   return obj;
 }
 
-
 /**
  * AUTO-EXTRAS: Tự động giữ các field không có trong schema (vd: id) vào `values`
  * - Không validate các field này
  * - Tự hydrate khi `initial` đổi
+ * 
+ * Support: derive (fullname -> slug, ...):
+ * - FieldDef.derive = { field, map, mode?: "always" | "whenEmpty" | "untilManual" }
+ * - setValue(name, v, { user: true }) để đánh dấu “đã chỉnh tay” (chặn untilManual)
  */
 export function useAutoForm(
   schema: FieldDef[],
@@ -287,6 +255,15 @@ export function useAutoForm(
   const hydrateOnInitialChange = options?.hydrateOnInitialChange ?? true;
 
   const schemaNames = React.useMemo(() => new Set(schema.map(s => s.name)), [schema]);
+
+  // index derive rules: target -> derive config
+  const deriveRules = React.useMemo(() => {
+    const map = new Map<string, NonNullable<FieldDef["derive"]>>();
+    for (const f of schema) {
+      if (f.derive) map.set(f.name, f.derive);
+    }
+    return map;
+  }, [schema]);
 
   // split initial → schemaValues + extras
   const computeInit = React.useCallback(() => {
@@ -309,6 +286,9 @@ export function useAutoForm(
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const [validating, setValidating] = React.useState<Record<string, boolean>>({});
 
+  // ✅ track fields user edited (for derive.mode = "untilManual")
+  const manualEditedRef = React.useRef<Set<string>>(new Set());
+
   // hydrate on initial/schema change
   React.useEffect(() => {
     if (!hydrateOnInitialChange) return;
@@ -318,14 +298,15 @@ export function useAutoForm(
     setExtrasTick((t) => t + 1);
     setErrors({});
     setValidating({});
+    manualEditedRef.current.clear(); // reset manual flags on hydrate
   }, [computeInit, hydrateOnInitialChange]);
 
   // public setters
-  const setValue = React.useCallback((name: string, v: any) => {
+  const setValue = React.useCallback((name: string, v: any, meta?: { user?: boolean }) => {
     if (schemaNames.has(name)) {
       setFormValues((s) => ({ ...s, [name]: v }));
+      if (meta?.user) manualEditedRef.current.add(name);
     } else {
-      // allow setting extra keys (rare)
       extrasRef.current = { ...extrasRef.current, [name]: v };
       setExtrasTick((t) => t + 1);
     }
@@ -341,6 +322,7 @@ export function useAutoForm(
     setFormValues(base);
     extrasRef.current = extras;
     setExtrasTick((t) => t + 1);
+    // KHÔNG đánh dấu manual ở đây
   }, [schemaNames]);
 
   const setFieldError = React.useCallback((name: string, msg: string | null) => {
@@ -352,6 +334,46 @@ export function useAutoForm(
     () => ({ ...extrasRef.current, ...formValues }),
     [formValues, extrasTick]
   );
+
+  // ✅ DERIVE ENGINE
+  React.useEffect(() => {
+    if (deriveRules.size === 0) return;
+
+    setFormValues((prev) => {
+      let next = prev;
+
+      for (const [target, derive] of deriveRules.entries()) {
+        const source = derive.field;
+        if (!source || source === target) continue;
+
+        const mode = derive.mode ?? "untilManual";
+
+        const srcVal = prev[source];
+        const curVal = prev[target];
+
+        // quyết định có ghi đè?
+        let shouldWrite = false;
+        if (mode === "always") {
+          shouldWrite = true;
+        } else if (mode === "whenEmpty") {
+          shouldWrite = curVal == null || curVal === "";
+        } else {
+          // untilManual
+          shouldWrite = !manualEditedRef.current.has(target);
+        }
+
+        if (!shouldWrite) continue;
+
+        const mapped = derive.map(srcVal, { ...extrasRef.current, ...prev });
+        if (mapped !== curVal) {
+          if (next === prev) next = { ...prev };
+          next[target] = mapped;
+        }
+      }
+
+      return next;
+    });
+  }, [deriveRules, values]); // re-run khi values đổi (nguồn thay đổi)
 
   // ---- validations (schema fields only)
   const validate = React.useCallback(() => {
@@ -442,8 +464,8 @@ export function useAutoForm(
   }, [schema, validate, validateFieldAsync, validateAsyncGlobal]);
 
   return {
-    values,                // <-- luôn chứa cả id (và mọi extras từ initial)
-    setValue,
+    values,
+    setValue,              // <-- nhận meta { user?: true } để chặn derive untilManual
     setAllValues,
     errors,
     setErrors,
@@ -459,6 +481,7 @@ export function useAutoForm(
       setExtrasTick((t) => t + 1);
       setErrors({});
       setValidating({});
+      manualEditedRef.current.clear();
     }, [initBase, initExtras]),
   };
 }

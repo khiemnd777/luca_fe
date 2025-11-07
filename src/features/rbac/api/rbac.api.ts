@@ -36,3 +36,9 @@ export async function fetchRBACMatrix(signal?: AbortSignal): Promise<MatrixPermi
   const result = mapper.map<any, MatrixPermission>("MatrixPermission", data, "dto_to_model");
   return result;
 }
+
+export async function replaceRBAC({ roleId, permIds }: { roleId: number; permIds: number[]; }): Promise<void> {
+  const data = mapper.map<any, any>("Common", { roleId, permIds }, "model_to_dto");
+  console.log(data);
+  await apiClient.post<any>(`${env.apiBasePath}/rbac/matrix/replace`, data);
+}

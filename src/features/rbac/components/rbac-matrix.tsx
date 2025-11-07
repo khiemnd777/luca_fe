@@ -1,8 +1,9 @@
 import {
-  Box, Paper, Table, TableHead, TableRow, TableCell, TableBody, Checkbox, CircularProgress, Typography
+  Box, Paper, Table, TableHead, TableRow, TableCell, TableBody, Checkbox, CircularProgress, Typography,
+  debounce
 } from "@mui/material";
 import type { MatrixPermission } from "@root/core/network/rbac.types";
-import { fetchRBACMatrix } from "@features/rbac/api/rbac.api";
+import { fetchRBACMatrix, replaceRBAC } from "@features/rbac/api/rbac.api";
 import { EV_RBAC_MATRIX_INVALIDATE } from "@features/rbac/model/rbac.events";
 import { useEventInvalidation } from "@root/core/module/event-invalidation";
 
@@ -14,11 +15,28 @@ export function RBACMatrix() {
     errorText: "Không thể tải dữ liệu phân quyền",
   });
 
+  const saveRolePermissions = debounce(async (roleId: number, permIds: number[]) => {
+    try {
+      await replaceRBAC({ roleId, permIds });
+    } catch (err) {
+      console.error("Failed to update RBAC:", err);
+    }
+  }, 500);
+
   const toggle = (rIdx: number, pIdx: number) => {
     setData((prev) => {
       if (!prev) return prev;
       const next = structuredClone(prev);
-      next.roles[rIdx].flags[pIdx] = !next.roles[rIdx].flags[pIdx];
+      const row = next.roles[rIdx];
+
+      row.flags[pIdx] = !row.flags[pIdx];
+
+      const enabledPermIds = next.permissions
+        .map((p, idx) => (row.flags[idx] ? p.id : null))
+        .filter((id): id is number => id !== null);
+      
+        saveRolePermissions(row.roleId, enabledPermIds);
+
       return next;
     });
   };

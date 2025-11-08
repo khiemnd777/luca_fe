@@ -1,12 +1,12 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
-import { mapper } from "@root/core/mapper/auto-mapper";
-import { registerFormDialog } from "@root/core/form/form-dialog.registry";
-import { createRole, fetchRBACMatrix, fetchRoleByID, updateRole } from "@root/features/rbac/api/rbac.api";
+import { mapper } from "@core/mapper/auto-mapper";
+import { registerFormDialog } from "@core/form/form-dialog.registry";
+import { createRole, fetchRoleByID, updateRole } from "@features/rbac/api/rbac.api";
 import type { RoleModel } from "@features/rbac/model/role.model";
-import { reloadTable } from "@root/core/table/table-reload";
+import { reloadTable } from "@core/table/table-reload";
 import { EV_RBAC_MATRIX_INVALIDATE } from "@features/rbac/model/rbac.events";
-import { invalidate } from "@root/core/module/event-invalidation";
+import { invalidate } from "@core/module/event-invalidation";
 
 export function buildRoleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -73,8 +73,6 @@ export function buildRoleSchema(): FormSchema {
     },
 
     async initialResolver(data: any) {
-      const rbac = await fetchRBACMatrix();
-      console.log(rbac);
       if (data) {
         return await fetchRoleByID(data.id);
       }

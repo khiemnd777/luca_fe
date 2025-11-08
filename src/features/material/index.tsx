@@ -3,21 +3,17 @@ import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import CategoryIcon from '@mui/icons-material/Category';
 
-const MaterialPage = React.lazy(() => import("@features/material/presentation/pages/material-page"));
+const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
 const mod: ModuleDescriptor = {
   id: "material",
   routes: [
     {
-      path: "/material",
-      element: <MaterialPage />,
-    },
-  ],
-  menuItems: [
-    {
       key: "material",
       label: "Vật tư",
-      to: "/material",
+      title: "Vật tư",
+      path: "/material",
+      element: <UnderConstructionPage />,
       icon: <CategoryIcon />,
       priority: 99,
     },

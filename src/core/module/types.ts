@@ -10,31 +10,46 @@ export type SlotConfig = {
   render: () => ReactNode;
 };
 
+export type RouteNode = {
+  key: string;
+  label?: string;
+  title?: string;                 // Page title
+  subtitle?: string;              // Page subtitle
+  path: string;                   // dùng cho router + menu
+  element?: ReactNode | LazyExoticComponent<() => JSX.Element> | undefined; // nếu bỏ trống → GeneralPage
+  icon?: ReactNode;
+  priority?: number;
+  roles?: string[];
+  requireAll?: boolean;
+  permissions?: Perm[];
+  hidden?: boolean;
+  children?: RouteNode[];         // thay cho subItems/menu nesting
+  extra?: Record<string, unknown>;
+};
+
 export type RouteConfig = {
   path: string;
+  permissions?: Perm[];
   element: ReactNode | LazyExoticComponent<() => JSX.Element>;
 };
 
 export type MenuItem = {
-  key: string;                 
-  label: string;
-  to?: string;                      // đường dẫn (nếu là link)
-  icon?: ReactNode;                 // <HomeRoundedIcon /> ...
-  priority?: number;                // lớn hơn → render trước
+  key: string;
+  label?: string;
+  to: string;
+  icon?: ReactNode;
+  priority?: number;
   roles?: string[];
-  requireAll?: boolean;             // mặc định false
+  requireAll?: boolean;
   permissions?: Perm[];
-  subItems?: MenuItem[];       
-  extra?: Record<string, unknown>;  // metadata tuỳ ý
+  subItems?: MenuItem[];
+  extra?: Record<string, unknown>;
 };
 
 export type ModuleDescriptor = {
   id: string;
-  routes?: RouteConfig[];
+  routes?: RouteNode[];
   slots?: SlotConfig[];
-  /** Map sự kiện → handler (có thể sync hoặc async) */
   onEvents?: Record<string, (payload?: unknown) => void>;
-  /** Danh sách tên sự kiện mà module *có thể* emit (metadata để tooling/docs) */
   emitEvents?: string[];
-  menuItems?: MenuItem[];
 };

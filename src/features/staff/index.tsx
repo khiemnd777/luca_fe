@@ -23,7 +23,7 @@ const mod: ModuleDescriptor = {
           label: "Bộ phận",
           title: "Bộ phận",
           path: "/section",
-          priority: 2,
+          priority: 99,
         },
       ],
     },

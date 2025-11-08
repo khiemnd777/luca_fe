@@ -11,3 +11,25 @@ export async function fetchSections(tableOpts: FetchTableOpts): Promise<ListResu
   const result = mapper.map<any[], ListResult<SectionModel>>("Section", data, "dto_to_model");
   return result;
 }
+
+export async function fetchById(id: number): Promise<SectionModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/section/${id}`);
+  const result = mapper.map<any, SectionModel>("Section", data, "dto_to_model");
+  return result;
+}
+
+export async function create(model: SectionModel): Promise<void> {
+  const { departmentApiPath } = useAuthStore.getState();
+  await apiClient.post<any>(`${departmentApiPath()}/section`, model);
+}
+
+export async function update(model: SectionModel): Promise<void> {
+  const { departmentApiPath } = useAuthStore.getState();
+  await apiClient.put<any>(`${departmentApiPath()}/section/${model.id}`, model);
+}
+
+export async function remove(id: number): Promise<void> {
+  const { departmentApiPath } = useAuthStore.getState();
+  await apiClient.delete<any>(`${departmentApiPath()}/section/${id}`);
+}

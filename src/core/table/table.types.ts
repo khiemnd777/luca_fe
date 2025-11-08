@@ -27,6 +27,10 @@ export type ColumnDef<T> = {
   // Freeze
   stickyLeft?: boolean;
   stickyRight?: boolean;
+
+  // Present for confirm dialog
+  labelField?: boolean;
+  present?: (row: T) => string;
 };
 
 export type TableSchema<T> = {

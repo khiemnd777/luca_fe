@@ -3,7 +3,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, fetchById, update } from "@features/staff/api/section.api";
+import { create, id, update } from "@features/staff/api/section.api";
 import type { SectionModel } from "@features/staff/model/section.model";
 
 export function buildSectionSchema(): FormSchema {
@@ -60,7 +60,7 @@ export function buildSectionSchema(): FormSchema {
 
     async initialResolver(data: any) {
       if (data) {
-        return await fetchById(data.id);
+        return await id(data.id);
       }
       return {};
     },

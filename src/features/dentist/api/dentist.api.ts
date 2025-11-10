@@ -37,7 +37,7 @@ export async function update(model: DentistModel): Promise<void> {
   await apiClient.put<any>(`${departmentApiPath()}/dentist/${model.id}`, model);
 }
 
-export async function remove(id: number): Promise<void> {
+export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/dentist/${id}`);
 }

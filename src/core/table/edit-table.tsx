@@ -18,32 +18,8 @@ import {
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
-
-type SortDir = "asc" | "desc";
-
-export type ColumnType = "text" | "number" | "date" | "color" | "image" | "chips" | "custom";
-
-export type ColumnDef<T> = {
-  key: keyof T | string;
-  header: string;
-  width?: number | string;
-  type?: ColumnType;
-  /** Render tùy biến khi type = "custom" hoặc muốn override */
-  render?: (row: T) => React.ReactNode;
-
-  /** ==== Sorting ==== */
-  sortable?: boolean;
-  /** Lấy giá trị để sort (nếu không cung cấp sẽ dùng (row as any)[key]) */
-  accessor?: (row: T) => unknown;
-  /** Comparator tùy chỉnh cho client-sort */
-  comparator?: (a: T, b: T) => number;
-
-  /** ==== Freeze/Sticky ==== */
-  /** Cố định về bên trái khi scroll ngang */
-  stickyLeft?: boolean;
-  /** Cố định về bên phải khi scroll ngang */
-  stickyRight?: boolean;
-};
+import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
+import { useDisplayUrl } from "@core/photo/use-display-url";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -100,6 +76,50 @@ function getContrastText(bg: string): "#000" | "#fff" {
   return L > 0.5 ? "#000" : "#fff";
 }
 
+/* ================= Components ================= */
+function ImageCell(props: { src: string; shape?: ImageShape }) {
+  const { src, shape } = props;
+  const displayUrl = useDisplayUrl(src);
+
+  let initialsSeed = "user";
+  if (src) {
+    try {
+      const parts = src.split(/[\/\\]/);
+      const last = parts[parts.length - 1];
+      initialsSeed = last?.split(".")[0] || "user";
+    } catch {
+      initialsSeed = "user";
+    }
+  }
+  const fallbackUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(initialsSeed)}`;
+
+  const finalUrl = displayUrl || fallbackUrl;
+
+  const rectW = 48, rectH = 36;
+  const squareSize = 40;
+
+  const isSquare = shape === "square";
+  const isCircle = shape === "circle";
+
+  return (
+    <Box
+      component="img"
+      src={finalUrl}
+      alt=""
+      sx={{
+        width: isSquare || isCircle ? squareSize : rectW,
+        height: isSquare || isCircle ? squareSize : rectH,
+        objectFit: "cover",
+        borderRadius: isCircle ? "50%" : 0.75,
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.default",
+      }}
+    />
+  );
+}
+
+
 /* ================= Core ================= */
 
 function getCellValue<T>(row: T, col: ColumnDef<T>) {
@@ -148,6 +168,11 @@ export function EditTable<T extends { id?: string | number }>({
       setOrder(nextDir);
     }
   };
+
+  // ==== actions column as first (sticky-left) ====
+  const hasActions = Boolean(onView || onEdit || onDelete);
+  const actionsWidth = 120;
+  const baseLeftOffset = hasActions ? actionsWidth : 0;
 
   // ==== compute sticky offsets ====
   const leftOffsets: number[] = [];
@@ -230,15 +255,7 @@ export function EditTable<T extends { id?: string | number }>({
 
       case "image": {
         const src = String(val ?? "");
-        if (!src) return null;
-        return (
-          <Box
-            component="img"
-            src={src}
-            alt=""
-            sx={{ width: 48, height: 36, objectFit: "cover", borderRadius: 0.75, border: "1px solid", borderColor: "divider" }}
-          />
-        );
+        return <ImageCell src={src} shape={col.shape} />;
       }
 
       case "chips": {
@@ -287,21 +304,36 @@ export function EditTable<T extends { id?: string | number }>({
     }
   };
 
-  const anyStickyRight = columns.some(c => c.stickyRight);
-
   return (
     <Paper variant="outlined">
       <TableContainer sx={{ maxHeight: stickyHeader ? 560 : "unset" }}>
         <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
           <TableHead>
             <TableRow>
+              {hasActions && (
+                <TableCell
+                  align="right"
+                  width={actionsWidth}
+                  sx={{
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 3,
+                    backgroundColor: "background.paper",
+                    top: stickyHeader ? stickyTopOffset : undefined,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Actions
+                </TableCell>
+              )}
+
               {columns.map((c, idx) => {
                 const k = String(c.key);
                 const sortable = !!c.sortable || !!c.accessor || !!c.comparator;
                 const isActive = (controlledSortBy ?? orderBy) === k;
                 const dir = (controlledSortDir ?? order) ?? "asc";
 
-                const left = c.stickyLeft ? (leftOffsets[idx] ?? 0) : undefined;
+                const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[idx] ?? 0) : undefined;
                 const right = c.stickyRight ? (rightOffsets[idx] ?? 0) : undefined;
 
                 return (
@@ -333,33 +365,68 @@ export function EditTable<T extends { id?: string | number }>({
                   </TableCell>
                 );
               })}
-              <TableCell
-                align="right"
-                width={120}
-                sx={{
-                  position: anyStickyRight ? "sticky" : "static",
-                  right: anyStickyRight ? (rightOffsets.length ? (rightOffsets[columns.length - 1] ?? 0) : 0) : undefined,
-                  zIndex: anyStickyRight ? 3 : 2,
-                  backgroundColor: "background.paper",
-                  top: stickyHeader ? stickyTopOffset : undefined,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Actions
-              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={columns.length + 1}>Loading…</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
+                  Đang tải…
+                </TableCell>
+              </TableRow>
             ) : sortedRows.length === 0 ? (
-              <TableRow><TableCell colSpan={columns.length + 1}>No data</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
+                  Không có dữ liệu
+                </TableCell>
+              </TableRow>
             ) : (
               sortedRows.map((r, rowIdx) => (
                 <TableRow hover key={(r as any).id ?? rowIdx}>
+                  {/* Actions cell, sticky-left */}
+                  {hasActions && (
+                    <TableCell
+                      align="right"
+                      sx={{
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 1,
+                        backgroundColor: "background.paper",
+                        whiteSpace: "nowrap",
+                        width: actionsWidth,
+                        maxWidth: actionsWidth,
+                      }}
+                    >
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        {onView && (
+                          <Tooltip title="View">
+                            <IconButton size="small" onClick={() => onView(r)}>
+                              <VisibilityRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {onEdit && (
+                          <Tooltip title="Edit">
+                            <IconButton size="small" onClick={() => onEdit(r)}>
+                              <EditRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {onDelete && (
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => onDelete(r)}>
+                              <DeleteRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </TableCell>
+                  )}
+
+                  {/* Columns */}
                   {columns.map((c, colIdx) => {
-                    const left = c.stickyLeft ? (leftOffsets[colIdx] ?? 0) : undefined;
+                    const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[colIdx] ?? 0) : undefined;
                     const right = c.stickyRight ? (rightOffsets[colIdx] ?? 0) : undefined;
                     return (
                       <TableCell
@@ -377,41 +444,6 @@ export function EditTable<T extends { id?: string | number }>({
                       </TableCell>
                     );
                   })}
-
-                  <TableCell
-                    align="right"
-                    sx={{
-                      position: anyStickyRight ? "sticky" : "static",
-                      right: 0,
-                      zIndex: anyStickyRight ? 1 : "auto",
-                      backgroundColor: anyStickyRight ? "background.paper" : undefined,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                      {onView && (
-                        <Tooltip title="View">
-                          <IconButton size="small" onClick={() => onView(r)}>
-                            <VisibilityRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {onEdit && (
-                        <Tooltip title="Edit">
-                          <IconButton size="small" onClick={() => onEdit(r)}>
-                            <EditRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {onDelete && (
-                        <Tooltip title="Delete">
-                          <IconButton size="small" color="error" onClick={() => onDelete(r)}>
-                            <DeleteRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  </TableCell>
                 </TableRow>
               ))
             )}

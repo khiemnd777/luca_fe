@@ -10,6 +10,8 @@ export type FetchTableOpts = {
   direction?: SortDir;
 };
 
+export type ImageShape = "square" | "circle";
+
 export type ColumnType = "text" | "number" | "date" | "color" | "image" | "chips" | "custom";
 
 export type ColumnDef<T> = {
@@ -31,6 +33,9 @@ export type ColumnDef<T> = {
   // Present for confirm dialog
   labelField?: boolean;
   present?: (row: T) => string;
+
+  // Image
+  shape?: ImageShape;
 };
 
 export type TableSchema<T> = {

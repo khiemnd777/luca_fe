@@ -5,6 +5,7 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/clinic/api/clinic.api";
 import type { ClinicModel } from "@features/clinic/model/clinic.model";
+import { uploadImages } from "@core/form/image-upload-utils";
 
 export function buildClinicSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -24,6 +25,16 @@ export function buildClinicSchema(): FormSchema {
       rules: {
         maxLength: 300,
       },
+    },
+    {
+      name: "logo",
+      label: "Logo",
+      kind: "imageupload",
+      accept: "image/*",
+      maxFiles: 1,
+      multipleFiles: false,
+      helperText: "PNG/JPG ≤ 2MB. Khuyến nghị hình vuông.",
+      uploader: uploadImages,
     },
   ];
 

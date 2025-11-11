@@ -6,6 +6,15 @@ import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@root/core/types/search.types";
 
+export async function tableByStaffId(staffId: number, tableOpts: FetchTableOpts): Promise<ListResult<SectionModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/staff/${staffId}/sections`, tableOpts);
+  const result = mapper.map<any[], ListResult<SectionModel>>("Section", data, "dto_to_model");
+  return result;
+}
+
+// common api
+
 export async function table(tableOpts: FetchTableOpts): Promise<ListResult<SectionModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/section/list`, tableOpts);

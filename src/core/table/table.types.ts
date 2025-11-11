@@ -12,7 +12,24 @@ export type FetchTableOpts = {
 
 export type ImageShape = "square" | "circle";
 
-export type ColumnType = "text" | "number" | "date" | "color" | "image" | "chips" | "custom";
+export type ColumnType = "text"
+  | "number"
+  | "date"
+  | "color"
+  | "image"
+  | "chips"
+  | "boolean"
+  | "qr"
+  | "custom"
+  ;
+
+export type QROptions = {
+  size?: number;
+  tooltipSize?: number;
+  level?: "L" | "M" | "Q" | "H";
+  fgColor?: string;
+  bgColor?: string;
+};
 
 export type ColumnDef<T> = {
   key: keyof T | string;
@@ -36,6 +53,9 @@ export type ColumnDef<T> = {
 
   // Image
   shape?: ImageShape;
+
+  // QR
+  qr?: QROptions;
 };
 
 export type TableSchema<T> = {

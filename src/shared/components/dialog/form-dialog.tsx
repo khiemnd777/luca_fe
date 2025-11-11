@@ -9,7 +9,7 @@ type FormDialogProps = React.PropsWithChildren<{
   submitting?: boolean;
   onClose: () => void;
   onSubmit: () => void;
-  maxWidth?: "xs" | "sm" | "md" | "lg";
+  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false;
 }>;
 
 export function FormDialog({

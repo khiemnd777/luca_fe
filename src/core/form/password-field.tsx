@@ -2,7 +2,7 @@ import React from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { IconButton, InputAdornment, TextField } from "@mui/material";
 
-export function PasswordField({
+export default function PasswordField({
   label,
   value,
   onChange,

@@ -4,15 +4,23 @@ import type { SectionModel } from "@features/staff/model/section.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
+import type { SearchOpts, SearchResult } from "@root/core/types/search.types";
 
-export async function fetchSections(tableOpts: FetchTableOpts): Promise<ListResult<SectionModel>> {
+export async function table(tableOpts: FetchTableOpts): Promise<ListResult<SectionModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/section/list`, tableOpts);
   const result = mapper.map<any[], ListResult<SectionModel>>("Section", data, "dto_to_model");
   return result;
 }
 
-export async function fetchById(id: number): Promise<SectionModel> {
+export async function search(opts: SearchOpts): Promise<SearchResult<SectionModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.search<any[]>(`${departmentApiPath()}/section/search`, opts);
+  const result = mapper.map<any[], SearchResult<SectionModel>>("Section", data, "dto_to_model");
+  return result;
+}
+
+export async function id(id: number): Promise<SectionModel> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/section/${id}`);
   const result = mapper.map<any, SectionModel>("Section", data, "dto_to_model");
@@ -29,7 +37,7 @@ export async function update(model: SectionModel): Promise<void> {
   await apiClient.put<any>(`${departmentApiPath()}/section/${model.id}`, model);
 }
 
-export async function remove(id: number): Promise<void> {
+export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/section/${id}`);
 }

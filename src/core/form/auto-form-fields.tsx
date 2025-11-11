@@ -19,7 +19,8 @@ import dayjs from "dayjs";
 import type { FieldDef, Option } from "@core/form/types";
 import { CurrencyField } from "@core/form/currency-field";
 import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from "./image-upload-field";
-import { PasswordField } from "@core/form/password-field";
+import PasswordField from "@core/form/password-field";
+import SearchListField from "@core/form/search-list-field";
 
 type Props = {
   schema: FieldDef[];
@@ -34,12 +35,6 @@ function toMap(options?: Option[]) {
   (options ?? []).forEach((o) => map.set(o.value, o));
   return map;
 }
-
-// function useToggle(initial = false) {
-//   const [v, setV] = React.useState(initial);
-//   const toggle = React.useCallback(() => setV(s => !s), []);
-//   return { v, toggle, setV };
-// }
 
 export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Props) {
   return (
@@ -367,6 +362,41 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
                   }}
                 />
               )}
+            />
+          );
+        }
+
+        // SEARCHLIST
+        if (f.kind === "searchlist") {
+          const list = Array.isArray(values[f.name]) ? values[f.name] : [];
+          return (
+            <SearchListField
+              key={f.name}
+              label={f.label}
+              values={values}
+              placeholder={f.placeholder}
+              size={f.size ?? "small"}
+              fullWidth={f.fullWidth ?? true}
+              helperText={f.helperText}
+              error={errors?.[f.name] ?? null}
+              selectedIds={list}
+              onChange={(next) => setValue(f.name, next)}
+              search={f.search!}
+              searchPage={f.searchPage}
+              getOptionLabel={f.getOptionLabel!}
+              getOptionValue={f.getOptionValue!}
+              // tuỳ chọn
+              fetchList={f.fetchList}
+              onAdd={f.onAdd}
+              onDelete={f.onDelete}
+              renderItem={f.renderItem}
+              allowDuplicate={f.allowDuplicate}
+              dedupeFn={f.dedupeFn as any}
+              maxItems={f.maxItems}
+              disableDelete={f.disableDelete}
+              onOpenCreate={f.onOpenCreate}
+              refreshKey={f.refreshKey}
+              pageLimit={f.pageLimit}
             />
           );
         }

@@ -183,7 +183,6 @@ export function ImageUploadField(props: ImageUploadFieldProps) {
       return;
     }
 
-    // Không có uploader → remove File trong value
     if (!uploader) {
       const newFiles = files.filter((_, i) => i !== idx);
       const next = multiple ? [...urls, ...newFiles] : (urls[0] ?? newFiles[0] ?? null);
@@ -191,7 +190,6 @@ export function ImageUploadField(props: ImageUploadFieldProps) {
       return;
     }
 
-    // Có uploader → remove optimistic đang upload
     const opt = optimistic[idx];
     if (opt) {
       URL.revokeObjectURL(opt.url);
@@ -200,7 +198,6 @@ export function ImageUploadField(props: ImageUploadFieldProps) {
     }
   };
 
-  // Previews khi KHÔNG có uploader: Files preview qua objectURL
   const filePreviewsNoUploader = React.useMemo(
     () => (!uploader ? files.map((f) => URL.createObjectURL(f)) : []),
     [files, uploader]
@@ -277,6 +274,20 @@ export function ImageUploadField(props: ImageUploadFieldProps) {
   );
 }
 
+function makeFallbackUrl(src?: string | null, defaultSeed = "user"): string {
+  let initialsSeed = defaultSeed;
+  if (src) {
+    try {
+      const parts = src.split(/[\/\\]/);
+      const last = parts[parts.length - 1];
+      initialsSeed = last?.split(".")[0] || defaultSeed;
+    } catch {
+      initialsSeed = defaultSeed;
+    }
+  }
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(initialsSeed)}`;
+}
+
 function Thumb({
   src,
   alt,
@@ -286,10 +297,23 @@ function Thumb({
   src: string;
   alt?: string;
   onRemove: () => void;
-  progress?: number; // nếu có → hiển thị overlay progress
+  progress?: number;
 }) {
   const uploading = typeof progress === "number" && progress >= 0 && progress < 100;
-  const displayUrl = useDisplayUrl(src);
+  const resolved = useDisplayUrl(src);
+
+  const [imgSrc, setImgSrc] = React.useState<string>(() => {
+    return resolved && resolved.trim().length > 0 ? resolved : makeFallbackUrl(src);
+  });
+
+  React.useEffect(() => {
+    setImgSrc(resolved && resolved.trim().length > 0 ? resolved : makeFallbackUrl(src));
+  }, [resolved, src]);
+
+  const handleError = React.useCallback(() => {
+    const fallback = makeFallbackUrl(src);
+    if (imgSrc !== fallback) setImgSrc(fallback);
+  }, [imgSrc, src]);
 
   return (
     <Box
@@ -305,8 +329,9 @@ function Thumb({
       }}
     >
       <img
-        src={displayUrl}
+        src={imgSrc}
         alt={alt ?? ""}
+        onError={handleError}
         style={{
           width: "100%",
           height: "100%",

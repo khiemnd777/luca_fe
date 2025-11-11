@@ -17,7 +17,7 @@ export function PageToolbar({ title, subtitle, actions }: PageToolbarProps) {
       sx={{ mb: 2 }}
     >
       <Box>
-        <Typography variant="h5" fontWeight={700}>{title}</Typography>
+        <Typography variant="h5" fontWeight={700} textTransform={"capitalize"}>{title}</Typography>
         {subtitle && (
           <Typography variant="body2" color="text.secondary">{subtitle}</Typography>
         )}

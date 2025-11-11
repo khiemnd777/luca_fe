@@ -1,9 +1,6 @@
-import React from "react";
-import type { ModuleDescriptor } from "@root/core/module/types";
-import { registerModule } from "@root/core/module/registry";
+import type { ModuleDescriptor } from "@core/module/types";
+import { registerModule } from "@core/module/registry";
 import ContactEmergencyIcon from '@mui/icons-material/ContactEmergency';
-
-const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
 const mod: ModuleDescriptor = {
   id: "dentist",
@@ -12,8 +9,8 @@ const mod: ModuleDescriptor = {
       key: "dentist",
       label: "Nha sĩ",
       title: "Nha sĩ",
+      subtitle: "Bác sĩ chuyên ngành răng hàm mặt, thực hiện việc khám, tư vấn và điều trị các bệnh lý răng miệng cho bệnh nhân.",
       path: "/dentist",
-      element: <UnderConstructionPage />,
       icon: <ContactEmergencyIcon />,
       priority: 94,
     },

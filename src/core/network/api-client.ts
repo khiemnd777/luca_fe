@@ -10,6 +10,7 @@ import { refreshAccessToken } from "@core/network/auth-api";
 import type { FetchTableOpts } from "@core/table/table.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { getIdemKeyFor } from "@core/network/api-client.utils";
+import type { SearchOpts } from "../types/search.types";
 
 /** =========================
  *  Global (singleton + state)
@@ -280,8 +281,12 @@ export class ApiClient {
     return this.withRetry(() => this.instance.get<T>(url, config));
   }
   async getTable<T>(url: string, tableOpts: FetchTableOpts, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const tableOptsDto = mapper.map<FetchTableOpts, any>("FetchTableOpts", tableOpts, "model_to_dto");
+    const tableOptsDto = mapper.map<FetchTableOpts, any>("TableOpts", tableOpts, "model_to_dto");
     return this.withRetry(() => this.instance.get<T>(url, { params: tableOptsDto, ...config }));
+  }
+  async search<T>(url: string, opts: SearchOpts, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const searchOptsDto = mapper.map<SearchOpts, any>("SearchOpts", opts, "model_to_dto");
+    return this.withRetry(() => this.instance.get<T>(url, { params: searchOptsDto, ...config }));
   }
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.withRetry(() => this.instance.post<T>(url, data, config));

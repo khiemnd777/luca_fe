@@ -16,7 +16,8 @@ export type FieldKind =
   | "autocomplete"
   | "fileupload"
   | "imageupload"
-  | "custom";
+  | "custom"
+  | "searchlist";
 
 export type DeriveMode = "always" | "whenEmpty" | "untilManual";
 
@@ -61,6 +62,15 @@ export type CustomRenderCtx = {
   error?: string | null;
   field: FieldDef;
 };
+
+// searchlist
+export type SearchListSearchFn = (keyword: string) => Promise<any[]>;
+export type SearchListSearchPageFn = (keyword: string, page: number, limit: number) => Promise<any[]>;
+export type SearchListFetchListFn = (values: Record<string, any>) => Promise<any[]>;
+export type SearchListHydrateFn = (
+  ids: Array<string | number>,
+  values: Record<string, any>
+) => Promise<any[]>;
 
 export type FieldDef = {
   name: string;
@@ -110,6 +120,34 @@ export type FieldDef = {
      **/
     mode?: DeriveMode; // default: "untilManual"
   };
+
+  // searchlist
+  search?: SearchListSearchFn;                                   // search(kw): T[]
+  searchPage?: SearchListSearchPageFn;                           // searchPage(kw, page, limit): T[]
+  fetchList?: SearchListFetchListFn;                             // hydrate list hiện có theo ngữ cảnh (values): T[]
+  hydrateByIds?: SearchListHydrateFn;                            // map IDs -> T[] khi field đã có sẵn IDs
+
+  onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search
+  onDelete?: (item: any) => Promise<void> | void;
+
+  // Extractors (áp dụng cho searchlist)
+  getOptionLabel?: (item: any) => string;                        // T -> label
+  getOptionValue?: (item: any) => string | number;               // T -> ID
+
+  // UI render item (không chứa nút delete)
+  renderItem?: (item: any, index: number) => React.ReactNode;
+
+  // Behavior
+  allowDuplicate?: boolean;                                      // default false (ẩn item đã chọn)
+  dedupeFn?: (a: any, b: any) => boolean;                        // custom so sánh
+  maxItems?: number;
+  disableDelete?: (item: any) => boolean;
+  
+  // Create flow via FormDialog
+  onOpenCreate?: () => void;                                     // mở FormDialog tạo mới
+  refreshKey?: any;                                              // trigger refetch list hiện có
+  autoLoadAllOnMount?: boolean;                                  // rỗng → load ALL ngay từ mount (default false)
+  pageLimit?: number;
 };
 
 // tuỳ chọn cho hook, gồm global async validate

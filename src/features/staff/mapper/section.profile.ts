@@ -5,7 +5,11 @@ mapper.register<SectionModel>({
   name: "Section",
   dtoToModelNaming: "snake_to_camel",
   modelToDtoNaming: "camel_to_snake",
-  defaultModel() {
-    return { id: 0, name: "", code: "", description: "", active: true };
-  },
+  defaultModel: () => ({
+    id: 0,
+    name: "",
+    code: "",
+    description: "",
+    active: true,
+  }),
 });

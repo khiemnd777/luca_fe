@@ -5,7 +5,7 @@ import { fetchRoles } from "@root/features/rbac/api/rbac.api";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
 
 const columns: ColumnDef<RoleModel>[] = [
-  { key: "id", header: "ID", width: 80, sortable: true },
+  // { key: "id", header: "ID", width: 80, sortable: true },
   { key: "displayName", header: "Tên Hiển Thị", sortable: true },
   { key: "roleName", header: "Tên Hệ Thống", width: 220, sortable: true, },
   { key: "brief", header: "Mô Tả" },

@@ -43,19 +43,17 @@ function DialogInstance({ payload }: { payload: Payload }) {
     let cancelled = false;
     (async () => {
       const schema = getSchema(payload.name);
-      if (!schema) return; // sẽ hiển thị thông báo schema missing ở render
+      if (!schema) return;
       setResolvingInitial(true);
       try {
-        const base = payload.options?.initial; // không ép null để dễ debug
-        console.debug(`[FormDialogHost:${payload.id}] options.initial =`, base);
-
+        const base = payload.options?.initial; // đọc 1 lần
         const resolved = schema?.initialResolver
           ? await Promise.resolve(schema.initialResolver(base))
           : base;
 
         const finalInitial =
           base && resolved && typeof base === "object" && typeof resolved === "object"
-            ? { ...base, ...resolved } // merge giữ id từ base
+            ? { ...base, ...resolved }
             : (resolved ?? base ?? {});
 
         if (!cancelled) setResolvedInitial(finalInitial);
@@ -63,10 +61,15 @@ function DialogInstance({ payload }: { payload: Payload }) {
         if (!cancelled) setResolvingInitial(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [payload.id, payload.name, payload.options?.initial]);
+    return () => { cancelled = true; };
+    // chỉ id + name để cố định vòng đời per-dialog
+  }, [payload.id, payload.name]);
+
+  React.useEffect(() => {
+    console.log("[DialogInstance] mount:", payload.id);
+    return () => console.log("[DialogInstance] unmount:", payload.id);
+  }, [payload.id]);
+
 
   // ---- schema/defaults/derived ----
   const name = payload.name;
@@ -148,7 +151,7 @@ function DialogInstance({ payload }: { payload: Payload }) {
         <div>Loading…</div>
       ) : (
         <AutoForm
-          key={`${payload.id}:${name}:${resolvedInitial?.id ?? "new"}`}
+          key={payload.id}
           ref={autoRef}
           schema={schema}
           name={name}

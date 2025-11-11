@@ -8,6 +8,8 @@ mapper.register<ClinicModel>({
   defaultModel: () => ({
     id: 0,
     name: "",
+    address: "",
+    phoneNumber: "",
     active: true,
     brief: "",
     logo: "",

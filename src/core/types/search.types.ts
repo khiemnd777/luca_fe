@@ -8,7 +8,7 @@ export interface SearchResult<T> {
 }
 
 export type SearchOpts = {
-  keyworkd: number;
+  keyword: string;
   limit: number;
   page: number;
   orderBy?: string | null;

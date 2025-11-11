@@ -10,6 +10,7 @@ import "@root/mapper/index";
 import.meta.glob("@features/**/index.tsx", { eager: true });
 // Auto-load form schemas
 import.meta.glob("@features/**/schemas/*.schema.ts", { eager: true });
+import.meta.glob("@features/**/schemas/*.schema.tsx", { eager: true });
 // Auto-load tables
 import.meta.glob("@features/**/tables/*.table.ts", { eager: true });
 // Auto-load widgets

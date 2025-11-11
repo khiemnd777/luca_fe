@@ -18,6 +18,23 @@ export function buildDentistSchema(): FormSchema {
       },
     },
     {
+      name: "phoneNumber",
+      label: "Số điện thoại",
+      kind: "text",
+      placeholder: "+84xxxxxxxxx",
+      rules: {
+        async: async (val: string | null) => {
+          if (!val) return null;
+          const ok = /^\+?\d{8,15}$/.test(val);
+          if (!ok) {
+            return "Sai định dạng số điện thoại";
+          }
+          return null;
+        },
+      },
+      helperText: "Có thể nhập +84 hoặc không.",
+    },
+    {
       name: "brief",
       label: "Mô tả",
       kind: "textarea",

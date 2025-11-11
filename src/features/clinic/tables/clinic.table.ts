@@ -9,6 +9,7 @@ const columns: ColumnDef<ClinicModel>[] = [
   // { key: "id", header: "ID", width: 50, sortable: true },
   { key: "logo", header: "Logo", type: "image", shape: "circle", width: 56 },
   { key: "name", header: "Tên Nha Khoa", sortable: true, labelField: true },
+  { key: "phoneNumber", header: "Số Điện Thoại", },
   { key: "brief", header: "Mô Tả", width: 500 },
 ];
 

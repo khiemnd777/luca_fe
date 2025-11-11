@@ -8,6 +8,7 @@ mapper.register<DentistModel>({
   defaultModel: () => ({
     id: 0,
     name: "",
+    phoneNumber: "",
     active: true,
     brief: "",
     clinicIds: [],

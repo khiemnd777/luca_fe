@@ -185,6 +185,10 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
         v = v ?? (f.freeSolo ? "" : "");
         break;
       }
+      case "searchlist": {
+        v = Array.isArray(v) ? v : [];
+        break;
+      }
       case "datetime": {
         if (v == null || v === "") v = "";
         else {

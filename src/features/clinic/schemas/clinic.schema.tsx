@@ -6,6 +6,8 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/clinic/api/clinic.api";
 import type { ClinicModel } from "@features/clinic/model/clinic.model";
 import { uploadImages } from "@core/form/image-upload-utils";
+import { openFormDialog } from "@root/core/form/form-dialog.service";
+import { search as searchDentist, tableByClinicId } from "@root/features/dentist/api/dentist.api";
 
 export function buildClinicSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -16,6 +18,31 @@ export function buildClinicSchema(): FormSchema {
       rules: {
         required: "Yêu cầu nhập tên nha khoa",
         maxLength: 50,
+      },
+    },
+    {
+      name: "phoneNumber",
+      label: "Số điện thoại",
+      kind: "text",
+      placeholder: "+84xxxxxxxxx",
+      rules: {
+        async: async (val: string | null) => {
+          if (!val) return null;
+          const ok = /^\+?\d{8,15}$/.test(val);
+          if (!ok) {
+            return "Sai định dạng số điện thoại";
+          }
+          return null;
+        },
+      },
+      helperText: "Có thể nhập +84 hoặc không.",
+    },
+    {
+      name: "address",
+      label: "Địa chỉ",
+      kind: "text",
+      rules: {
+        maxLength: 128,
       },
     },
     {
@@ -36,6 +63,54 @@ export function buildClinicSchema(): FormSchema {
       helperText: "PNG/JPG ≤ 2MB. Khuyến nghị hình vuông.",
       uploader: uploadImages,
     },
+    {
+      name: "dentistIds",
+      label: "Nha sĩ",
+      kind: "searchlist",
+      placeholder: "Tìm nha sĩ...",
+      fullWidth: true,
+
+      getOptionLabel: (d: any) => d.name,
+      getOptionValue: (d: any) => d.id,
+
+      async searchPage(kw: string, page, limit) {
+        const searched = await searchDentist({
+          keyword: kw,
+          limit: limit,
+          page: page,
+          orderBy: "name",
+        });
+        return searched.items;
+      },
+
+      pageLimit: 20,
+
+      async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+        if (!ids || ids.length === 0) return [];
+        const table = await tableByClinicId(values.id, {
+          limit: 10000,
+          page: 1,
+          orderBy: "name",
+        });
+        const set = new Set(ids.map(String));
+        return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
+      },
+
+      async fetchList(values: Record<string, any>) {
+        const table = await tableByClinicId(values.id, {
+          limit: 20,
+          page: 1,
+          orderBy: "name",
+        });
+        return table.items;
+      },
+
+      renderItem: (d: any) => (<>{d.name}</>),
+      disableDelete: (d: any) => d.locked === true,
+      onOpenCreate: () => openFormDialog("dentist"),
+      autoLoadAllOnMount: true,
+    }
+    ,
   ];
 
   return {

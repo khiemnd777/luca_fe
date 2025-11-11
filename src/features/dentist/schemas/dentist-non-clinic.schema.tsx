@@ -6,7 +6,7 @@ import { reloadTable } from "@core/table/table-reload";
 import type { DentistModel } from "@features/dentist/model/dentist.model";
 import { create, id, update } from "@features/dentist/api/dentist.api";
 
-export function buildDentistSchema(): FormSchema {
+export function buildDentistNonClinicSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "name",
@@ -92,7 +92,7 @@ export function buildDentistSchema(): FormSchema {
   };
 }
 
-registerFormDialog("dentist", buildDentistSchema, {
+registerFormDialog("dentist-non-clinic", buildDentistNonClinicSchema, {
   title: { create: "Thêm nha sĩ", update: "Cập nhật nha sĩ" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",

@@ -3,20 +3,20 @@ import type { FormSchema } from "@core/form/form.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/clinic/api/clinic.api";
-import type { ClinicModel } from "@features/clinic/model/clinic.model";
-import { uploadImages } from "@core/form/image-upload-utils";
-import { openFormDialog } from "@root/core/form/form-dialog.service";
-import { search as searchDentist, tableByClinicId } from "@root/features/dentist/api/dentist.api";
+import type { DentistModel } from "@features/dentist/model/dentist.model";
+import { create, id, update } from "@features/dentist/api/dentist.api";
+import { search as searchClinic, tableByDentistId } from "@root/features/clinic/api/clinic.api";
+import { openFormDialog } from "@core/form/form-dialog.service";
+import { Badge } from "@root/shared/components/ui/badge";
 
-export function buildClinicSchema(): FormSchema {
+export function buildDentistSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "name",
-      label: "Tên nha khoa",
+      label: "Tên nha sĩ",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập tên nha khoa",
+        required: "Yêu cầu nhập tên nha sĩ",
         maxLength: 50,
       },
     },
@@ -38,14 +38,6 @@ export function buildClinicSchema(): FormSchema {
       helperText: "Có thể nhập +84 hoặc không.",
     },
     {
-      name: "address",
-      label: "Địa chỉ",
-      kind: "text",
-      rules: {
-        maxLength: 128,
-      },
-    },
-    {
       name: "brief",
       label: "Mô tả",
       kind: "textarea",
@@ -54,27 +46,17 @@ export function buildClinicSchema(): FormSchema {
       },
     },
     {
-      name: "logo",
-      label: "Logo",
-      kind: "imageupload",
-      accept: "image/*",
-      maxFiles: 1,
-      multipleFiles: false,
-      helperText: "PNG/JPG ≤ 2MB. Khuyến nghị hình vuông.",
-      uploader: uploadImages,
-    },
-    {
-      name: "dentistIds",
-      label: "Nha sĩ",
+      name: "clinicIds",
+      label: "Nha khoa",
       kind: "searchlist",
-      placeholder: "Tìm nha sĩ...",
+      placeholder: "Tìm nha khoa...",
       fullWidth: true,
 
       getOptionLabel: (d: any) => d.name,
       getOptionValue: (d: any) => d.id,
 
       async searchPage(kw: string, page, limit) {
-        const searched = await searchDentist({
+        const searched = await searchClinic({
           keyword: kw,
           limit: limit,
           page: page,
@@ -87,8 +69,8 @@ export function buildClinicSchema(): FormSchema {
 
       async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
         if (!ids || ids.length === 0) return [];
-        const table = await tableByClinicId(values.id, {
-          limit: 10000,
+        const table = await tableByDentistId(values.id, {
+          limit: 20,
           page: 1,
           orderBy: "name",
         });
@@ -97,7 +79,7 @@ export function buildClinicSchema(): FormSchema {
       },
 
       async fetchList(values: Record<string, any>) {
-        const table = await tableByClinicId(values.id, {
+        const table = await tableByDentistId(values.id, {
           limit: 20,
           page: 1,
           orderBy: "name",
@@ -105,12 +87,13 @@ export function buildClinicSchema(): FormSchema {
         return table.items;
       },
 
-      renderItem: (d: any) => (<>{d.name}</>),
+      renderItem: (d: any) => (
+        <> <Badge badge={{ name: d.name, avatar: d.logo }} /> </>
+      ),
       disableDelete: (d: any) => d.locked === true,
-      onOpenCreate: () => openFormDialog("dentist-non-clinic"),
+      onOpenCreate: () => openFormDialog("clinic-non-dentist"),
       autoLoadAllOnMount: true,
     }
-    ,
   ];
 
   return {
@@ -120,14 +103,14 @@ export function buildClinicSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as ClinicModel);
+          await create(values as DentistModel);
           return values;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as ClinicModel);
+          await update(values as DentistModel);
           return values;
         },
       },
@@ -136,12 +119,12 @@ export function buildClinicSchema(): FormSchema {
     toasts: {
       saved: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo nha khoa "${values?.name ?? ""}" thành công!`
-          : `Cập nhật nha khoa "${values?.name ?? ""}" thành công!`,
+          ? `Tạo nha sĩ "${values?.name ?? ""}" thành công!`
+          : `Cập nhật nha sĩ "${values?.name ?? ""}" thành công!`,
       failed: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo nha khoa "${values?.name ?? ""}" thất bại, xin thử lại!`
-          : `Cập nhật nha khoa "${values?.name ?? ""}" thất bại, xin thử lại!`,
+          ? `Tạo nha sĩ "${values?.name ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật nha sĩ "${values?.name ?? ""}" thất bại, xin thử lại!`,
     },
 
     async initialResolver(data: any) {
@@ -152,17 +135,17 @@ export function buildClinicSchema(): FormSchema {
     },
 
     async afterSaved() {
-      reloadTable("clinics");
+      reloadTable("dentists");
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Clinic", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Dentist", v, "model_to_dto"),
     },
   };
 }
 
-registerFormDialog("clinic", buildClinicSchema, {
-  title: { create: "Thêm nha khoa", update: "Cập nhật nha khoa" },
+registerFormDialog("dentist", buildDentistSchema, {
+  title: { create: "Thêm nha sĩ", update: "Cập nhật nha sĩ" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",
 });

@@ -9,6 +9,7 @@ export interface StaffModel {
   avatar?: string;
   qrCode?: string;
   sectionIds?: number[];
+  roleIds?: number[];
   createdAt: string;
   updatedAt: string;
 }

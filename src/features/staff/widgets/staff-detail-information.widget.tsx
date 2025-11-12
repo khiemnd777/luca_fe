@@ -7,7 +7,7 @@ import { SafeButton } from "@shared/components/button/safe-button";
 import { registerSlot } from "@root/core/module/registry";
 import { useParams } from "react-router-dom";
 
-function StaffDetailWidget() {
+function StaffDetailInformationWidget() {
   const {staffId} = useParams();
   const formStaffInformationRef = React.useRef<AutoFormRef>(null);
   return (
@@ -22,8 +22,8 @@ function StaffDetailWidget() {
 }
 
 registerSlot({
-  id: "staff-detail",
+  id: "staff-detail-information",
   name: "staff-detail:left",
   priority: 2,
-  render: () => <StaffDetailWidget />,
+  render: () => <StaffDetailInformationWidget />,
 });

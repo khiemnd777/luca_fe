@@ -189,9 +189,16 @@ async function doRefreshOnce(): Promise<string | null> {
 /** =========================
  *  ApiClient (singleton)
  *  ========================= */
+
+
+type DedupConfig = AxiosRequestConfig & {
+  dedupKey?: string | false;
+};
+
 export class ApiClient {
   private readonly instance: AxiosInstance;
   private constructor(axiosInstance: AxiosInstance) { this.instance = axiosInstance; }
+  private inflight = new Map<string, Promise<AxiosResponse<any>>>();
 
   static create(): ApiClient {
     // Singleton thật sự (chống HMR/dev tạo nhiều instance gây flicker do request lặp)
@@ -277,25 +284,89 @@ export class ApiClient {
   }
 
   // ====== Wrapped HTTP (with retry) ======
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.withRetry(() => this.instance.get<T>(url, config));
+  async get<T>(url: string, config?: DedupConfig): Promise<AxiosResponse<T>> {
+    const exec = () => this.instance.get<T>(url, config);
+    return this.requestWithDedup<T>("GET", url, exec, { params: config?.params }, config?.dedupKey);
+
   }
-  async getTable<T>(url: string, tableOpts: FetchTableOpts, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async getTable<T>(
+    url: string,
+    tableOpts: FetchTableOpts,
+    config?: DedupConfig
+  ): Promise<AxiosResponse<T>> {
     const tableOptsDto = mapper.map<FetchTableOpts, any>("TableOpts", tableOpts, "model_to_dto");
-    return this.withRetry(() => this.instance.get<T>(url, { params: tableOptsDto, ...config }));
+    const cfg = { params: tableOptsDto, ...config };
+    const exec = () => this.instance.get<T>(url, cfg);
+    return this.requestWithDedup<T>("GET", url, exec, { params: tableOptsDto }, config?.dedupKey);
   }
-  async search<T>(url: string, opts: SearchOpts, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const searchOptsDto = mapper.map<SearchOpts, any>("SearchOpts", opts, "model_to_dto");
-    return this.withRetry(() => this.instance.get<T>(url, { params: searchOptsDto, ...config }));
+  async search<T>(
+    url: string,
+    opts: SearchOpts,
+    config?: DedupConfig
+  ): Promise<AxiosResponse<T>> {
+    const dto = mapper.map<SearchOpts, any>("SearchOpts", opts, "model_to_dto");
+    const cfg = { params: dto, ...config };
+    const exec = () => this.instance.get<T>(url, cfg);
+    return this.requestWithDedup<T>("GET", url, exec, { params: dto }, config?.dedupKey);
   }
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.withRetry(() => this.instance.post<T>(url, data, config));
+  async post<T>(url: string, data?: any, config?: DedupConfig): Promise<AxiosResponse<T>> {
+    const exec = () => this.instance.post<T>(url, data, config);
+    return this.requestWithDedup<T>("POST", url, exec, { data, params: config?.params }, config?.dedupKey);
   }
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.withRetry(() => this.instance.put<T>(url, data, config));
+  async put<T>(url: string, data?: any, config?: DedupConfig): Promise<AxiosResponse<T>> {
+    const exec = () => this.instance.put<T>(url, data, config);
+    return this.requestWithDedup<T>("PUT", url, exec, { data, params: config?.params }, config?.dedupKey);
   }
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.withRetry(() => this.instance.delete<T>(url, config));
+  async delete<T>(url: string, config?: DedupConfig): Promise<AxiosResponse<T>> {
+    const exec = () => this.instance.delete<T>(url, config);
+    return this.requestWithDedup<T>(
+      "DELETE",
+      url,
+      exec,
+      { data: (config as any)?.data, params: config?.params },
+      config?.dedupKey
+    );
+  }
+
+  private async requestWithDedup<T>(
+    method: string,
+    url: string,
+    factory: () => Promise<AxiosResponse<T>>,
+    keyParts: Record<string, any>,
+    dedupKey?: string | false
+  ): Promise<AxiosResponse<T>> {
+    // Cho phép tắt dedup hoặc đặt key tùy chỉnh
+    const key =
+      dedupKey === false
+        ? null
+        : (dedupKey || this.buildDedupKey(method, url, keyParts));
+
+    if (!key) {
+      return this.withRetry(factory);
+    }
+
+    const existed = this.inflight.get(key);
+    if (existed) return existed as Promise<AxiosResponse<T>>;
+
+    const p = this.withRetry(factory).finally(() => {
+      this.inflight.delete(key);
+    }) as Promise<AxiosResponse<T>>;
+
+    this.inflight.set(key, p);
+    return p;
+  }
+
+  private buildDedupKey(method: string, url: string, parts: Record<string, any>): string {
+    const stable = this.stableStringify(parts ?? {});
+    return `${method.toUpperCase()} ${url} :: ${stable}`;
+  }
+
+  // JSON stringify ổn định theo thứ tự key (đệ quy)
+  private stableStringify(v: any): string {
+    if (v === null || typeof v !== "object") return JSON.stringify(v);
+    if (Array.isArray(v)) return `[${v.map((x) => this.stableStringify(x)).join(",")}]`;
+    const keys = Object.keys(v).sort();
+    return `{${keys.map((k) => JSON.stringify(k) + ":" + this.stableStringify(v[k])).join(",")}}`;
   }
 
   private async withRetry<T>(

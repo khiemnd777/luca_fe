@@ -5,6 +5,14 @@ import { apiClient } from "@core/network/api-client";
 import type { ListResult } from "@core/types/list-result";
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { MatrixPermission } from "@core/network/rbac.types";
+import type { SearchOpts, SearchResult } from "@core/types/search.types";
+
+export async function fetchRolesByUserId(userId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<RoleModel>> {
+  userId = userId === undefined ? -1 : userId;
+  const { data } = await apiClient.getTable<any[]>(`${env.apiBasePath}/rbac/user/${userId}/roles`, tableOpts);
+  const result = mapper.map<any[], ListResult<RoleModel>>("Role", data, "dto_to_model");
+  return result;
+}
 
 export async function fetchRoles(tableOpts: FetchTableOpts): Promise<ListResult<RoleModel>> {
   const { data } = await apiClient.getTable<any[]>(`${env.apiBasePath}/rbac/roles`, tableOpts);
@@ -15,6 +23,12 @@ export async function fetchRoles(tableOpts: FetchTableOpts): Promise<ListResult<
 export async function fetchRoleByID(id: number): Promise<RoleModel> {
   const { data } = await apiClient.get<any>(`${env.apiBasePath}/rbac/roles/${id}`);
   const result = mapper.map<any, RoleModel>("Role", data, "dto_to_model");
+  return result;
+}
+
+export async function search(opts: SearchOpts): Promise<SearchResult<RoleModel>> {
+  const { data } = await apiClient.search<any[]>(`${env.apiBasePath}/rbac/roles/search`, opts);
+  const result = mapper.map<any[], SearchResult<RoleModel>>("Role", data, "dto_to_model");
   return result;
 }
 

@@ -5,7 +5,7 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
 import type { DentistModel } from "@features/dentist/model/dentist.model";
 import { create, id, update } from "@features/dentist/api/dentist.api";
-import { search as searchClinic, tableByDentistId } from "@root/features/clinic/api/clinic.api";
+import { search as searchClinic, tableByDentistId } from "@features/clinic/api/clinic.api";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import { Badge } from "@root/shared/components/ui/badge";
 

@@ -6,7 +6,8 @@ import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
 
-export async function tableByClinicId(clinicId: number, tableOpts: FetchTableOpts): Promise<ListResult<DentistModel>> {
+export async function tableByClinicId(clinicId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<DentistModel>> {
+  clinicId = clinicId === undefined ? - 1 : clinicId;
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/clinic/${clinicId}/dentists`, tableOpts);
   const result = mapper.map<any[], ListResult<DentistModel>>("Dentist", data, "dto_to_model");

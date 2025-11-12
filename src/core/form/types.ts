@@ -150,11 +150,7 @@ export type FieldDef = {
   pageLimit?: number;
 };
 
-// tuỳ chọn cho hook, gồm global async validate
 export type AutoFormOptions = {
-  // Validate server-level toàn form (ví dụ: conflict nhiều field)
-  // Return mảng lỗi theo field name.
   asyncValidate?: (values: Record<string, any>) => Promise<Partial<Record<string, string | null>>>;
-  // Debounce khi validate async theo field (ms). Mặc định 300.
   asyncDebounceMs?: number;
 };

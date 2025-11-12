@@ -105,7 +105,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     onChange,
 
     search,
-    searchPage,               // NEW
+    searchPage,
     fetchList,
     hydrateByIds,
 
@@ -125,7 +125,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     refreshKey,
     autoLoadAllOnMount = false,
     fetchDeps,
-    pageLimit = 20,           // NEW
+    pageLimit = 20,
   } = props;
 
   const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
@@ -198,7 +198,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, depsForFetch);
-
+  
   // refreshKey → refetch list hiện có
   const doFetchList = React.useCallback(async () => {
     if (!fetchList) return;
@@ -230,7 +230,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     [allowDuplicate, items, eq]
   );
 
-  // Dedup options by ID khi nối trang
   const dedupById = React.useCallback(
     (arr: T[]) => {
       const seen = new Set<string>();
@@ -246,7 +245,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     [getOptionValue]
   );
 
-  // Load trang đầu tiên (reset)
   const loadFirstPage = React.useCallback(
     async (kw: string) => {
       setLoading(true);
@@ -258,7 +256,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
           setOptions(filtered);
           setHasMore((data?.length ?? 0) >= pageLimit);
         } else {
-          // fallback: không có paging → 1 lần duy nhất
           const data = await search(kw);
           const filtered = filterOutSelected(data ?? []);
           setOptions(filtered);
@@ -274,7 +271,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   // Load trang kế tiếp
   const loadNextPage = React.useCallback(
     async () => {
-      if (!searchPage) return;           // không hỗ trợ nếu không có searchPage
+      if (!searchPage) return;
       if (loadingMore || !hasMore) return;
 
       setLoadingMore(true);
@@ -366,7 +363,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     try {
       if (onOpenCreate) {
         await onOpenCreate();
-        await doFetchList(); // sẽ emit nếu khác lần trước
+        await doFetchList();
         loadFirstPage(keyword).catch(() => void 0);
       }
     } catch {

@@ -18,8 +18,10 @@ import {
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
+import QRCode from "react-qr-code";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -77,7 +79,7 @@ function getContrastText(bg: string): "#000" | "#fff" {
 }
 
 /* ================= Components ================= */
-function ImageCell(props: { src: string; shape?: ImageShape }) {
+export function ImageCell(props: { src: string; shape?: ImageShape }) {
   const { src, shape } = props;
   const displayUrl = useDisplayUrl(src);
 
@@ -91,34 +93,112 @@ function ImageCell(props: { src: string; shape?: ImageShape }) {
       initialsSeed = "user";
     }
   }
-  const fallbackUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(initialsSeed)}`;
 
+  const fallbackUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
+    initialsSeed
+  )}`;
   const finalUrl = displayUrl || fallbackUrl;
 
-  const rectW = 48, rectH = 36;
+  const rectW = 48,
+    rectH = 36;
   const squareSize = 40;
 
   const isSquare = shape === "square";
   const isCircle = shape === "circle";
 
   return (
-    <Box
-      component="img"
-      src={finalUrl}
-      alt=""
-      sx={{
-        width: isSquare || isCircle ? squareSize : rectW,
-        height: isSquare || isCircle ? squareSize : rectH,
-        objectFit: "cover",
-        borderRadius: isCircle ? "50%" : 0.75,
-        border: "1px solid",
-        borderColor: "divider",
-        backgroundColor: "background.default",
+    <Tooltip
+      placement="right"
+      componentsProps={{
+        tooltip: {
+          sx: {
+            bgcolor: "transparent",
+            p: 0,
+            m: 0,
+          },
+        },
       }}
-    />
+      title={
+        <Box
+          component="img"
+          src={finalUrl}
+          alt="preview"
+          sx={{
+            width: 200,
+            height: "auto",
+            objectFit: "contain",
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper",
+          }}
+        />
+      }
+    >
+      <Box
+        component="img"
+        src={finalUrl}
+        alt=""
+        sx={{
+          width: isSquare || isCircle ? squareSize : rectW,
+          height: isSquare || isCircle ? squareSize : rectH,
+          objectFit: "cover",
+          borderRadius: isCircle ? "50%" : 0.75,
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.default",
+          cursor: "pointer",
+        }}
+      />
+    </Tooltip>
   );
 }
 
+function QRCell({
+  value,
+  size = 64,
+  tooltipSize = 200,
+  level = "M",
+  fgColor,
+  bgColor,
+}: {
+  value: string;
+  size?: number;
+  tooltipSize?: number;
+  level?: "L" | "M" | "Q" | "H";
+  fgColor?: string;
+  bgColor?: string;
+}) {
+  if (!value) return null;
+  const small = (
+    <Box
+      sx={{
+        p: 0.5,
+        borderRadius: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        display: "inline-flex",
+        bgcolor: bgColor ?? "background.paper",
+      }}
+    >
+      <QRCode value={value} size={size} level={level} fgColor={fgColor} bgColor={bgColor} />
+    </Box>
+  );
+
+  return (
+    <Tooltip
+      title={
+        <Box sx={{ p: 1, bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
+          <QRCode value={value} size={tooltipSize} level={level} fgColor={fgColor} bgColor={bgColor} />
+        </Box>
+      }
+      arrow
+      placement="top"
+    >
+      {small}
+    </Tooltip>
+  );
+}
 
 /* ================= Core ================= */
 
@@ -296,6 +376,27 @@ export function EditTable<T extends { id?: string | number }>({
         );
       }
 
+      case "qr": {
+        const s = col.qr?.size ?? 64;
+        const tooltipS = col.qr?.tooltipSize ?? 200;
+        const level = col.qr?.level ?? "M";
+        const fg = col.qr?.fgColor;
+        const bg = col.qr?.bgColor;
+        const v = String(val ?? "");
+        if (!v) return null;
+        return <QRCell value={v} size={s} tooltipSize={tooltipS} level={level} fgColor={fg} bgColor={bg} />;
+      }
+
+      case "boolean": {
+        const v = Boolean(val);
+        if (!v) return null;
+        return (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <CheckRoundedIcon fontSize="small" color="success" />
+          </Box>
+        );
+      }
+
       case "number":
       case "date":
       case "text":
@@ -372,13 +473,33 @@ export function EditTable<T extends { id?: string | number }>({
             {loading ? (
               <TableRow>
                 <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                  Đang tải…
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "40px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Đang tải…
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : sortedRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                  Không có dữ liệu
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "40px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Không có dữ liệu
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : (

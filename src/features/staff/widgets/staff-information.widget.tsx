@@ -16,13 +16,13 @@ function StaffDetailWidget() {
         Lưu
       </SafeButton>
     }>
-      <AutoForm name="staff" ref={formStaffInformationRef} initial={{id: staffId}} />
+      <AutoForm name="staff-detail" ref={formStaffInformationRef} initial={{id: staffId}} />
     </SectionCard>
   );
 }
 
 registerSlot({
-  id: "staff-information",
+  id: "staff-detail",
   name: "staff-detail:left",
   priority: 2,
   render: () => <StaffDetailWidget />,

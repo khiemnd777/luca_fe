@@ -11,7 +11,7 @@ function StaffWidget() {
       <SectionCard extra={
         <>
           <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-            openFormDialog("staff");
+            openFormDialog("staff-create");
           }} >Thêm nhân sự</Button>
         </>
       }>

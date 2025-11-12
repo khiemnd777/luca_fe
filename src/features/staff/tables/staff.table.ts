@@ -29,7 +29,7 @@ registerTable("staffs", () =>
     initialPageSize: 20,
     initialSort: { by: "id", dir: "asc" },
     onEdit(row) {
-      openFormDialog("staff-non-password", { initial: { id: row.id } });
+      openFormDialog("staff-edit-dialog", { initial: { id: row.id } });
     },
     onView(row) {
       navigate(`/staff/${row.id}`);

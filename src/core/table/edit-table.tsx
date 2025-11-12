@@ -79,7 +79,7 @@ function getContrastText(bg: string): "#000" | "#fff" {
 }
 
 /* ================= Components ================= */
-function ImageCell(props: { src: string; shape?: ImageShape }) {
+export function ImageCell(props: { src: string; shape?: ImageShape }) {
   const { src, shape } = props;
   const displayUrl = useDisplayUrl(src);
 
@@ -93,31 +93,64 @@ function ImageCell(props: { src: string; shape?: ImageShape }) {
       initialsSeed = "user";
     }
   }
-  const fallbackUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(initialsSeed)}`;
 
+  const fallbackUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
+    initialsSeed
+  )}`;
   const finalUrl = displayUrl || fallbackUrl;
 
-  const rectW = 48, rectH = 36;
+  const rectW = 48,
+    rectH = 36;
   const squareSize = 40;
 
   const isSquare = shape === "square";
   const isCircle = shape === "circle";
 
   return (
-    <Box
-      component="img"
-      src={finalUrl}
-      alt=""
-      sx={{
-        width: isSquare || isCircle ? squareSize : rectW,
-        height: isSquare || isCircle ? squareSize : rectH,
-        objectFit: "cover",
-        borderRadius: isCircle ? "50%" : 0.75,
-        border: "1px solid",
-        borderColor: "divider",
-        backgroundColor: "background.default",
+    <Tooltip
+      placement="right"
+      componentsProps={{
+        tooltip: {
+          sx: {
+            bgcolor: "transparent",
+            p: 0,
+            m: 0,
+          },
+        },
       }}
-    />
+      title={
+        <Box
+          component="img"
+          src={finalUrl}
+          alt="preview"
+          sx={{
+            width: 200,
+            height: "auto",
+            objectFit: "contain",
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "background.paper",
+          }}
+        />
+      }
+    >
+      <Box
+        component="img"
+        src={finalUrl}
+        alt=""
+        sx={{
+          width: isSquare || isCircle ? squareSize : rectW,
+          height: isSquare || isCircle ? squareSize : rectH,
+          objectFit: "cover",
+          borderRadius: isCircle ? "50%" : 0.75,
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.default",
+          cursor: "pointer",
+        }}
+      />
+    </Tooltip>
   );
 }
 

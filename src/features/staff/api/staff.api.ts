@@ -6,20 +6,23 @@ import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
 
-export async function tableBySectionId(sectionId: number, tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
+export async function tableBySectionId(sectionId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
+  sectionId = sectionId === undefined ? - 1 : sectionId;
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/section/${sectionId}/staffs`, tableOpts);
   const result = mapper.map<any[], ListResult<StaffModel>>("Staff", data, "dto_to_model");
   return result;
 }
 
-export async function existsPhone({ id, phone }: { id: number, phone: string }): Promise<boolean> {
+export async function existsPhone({ id, phone }: { id: number | undefined, phone: string }): Promise<boolean> {
+  id = id === undefined ? -1 : id;
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.post<boolean>(`${departmentApiPath()}/staff/${id}/exists-phone`, { phone });
   return data;
 }
 
-export async function existsEmail({ id, email }: { id: number, email: string }): Promise<boolean> {
+export async function existsEmail({ id, email }: { id: number | undefined, email: string }): Promise<boolean> {
+  id = id === undefined ? -1 : id;
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.post<boolean>(`${departmentApiPath()}/staff/${id}/exists-email`, { email });
   return data;

@@ -30,8 +30,6 @@ export function buildStaffNonPasswordSchema(): FormSchema {
         maxLength: 300,
         async: async (val: string | null, { id }) => {
           if (!val) return null;
-          if (val) {
-          }
           const existed = await existsEmail({ id, email: val });
           return existed ? `Email ${val} đã tồn tại, vui lòng chọn email khác.` : null;
         }

@@ -14,7 +14,7 @@ export type FormDialogDefaults = {
 type Builder = () => FormSchema;
 
 const dialogRegistry = new Map<string, { build?: Builder; defaults?: FormDialogDefaults }>();
-const dialogCache = new Map<string, FormSchema>(); // <-- thêm cache
+const dialogCache = new Map<string, FormSchema>();
 
 export function registerFormDialog(name: string, build?: Builder, defaults?: FormDialogDefaults) {
   dialogRegistry.set(name, { build, defaults });

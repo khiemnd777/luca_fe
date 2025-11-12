@@ -1,4 +1,5 @@
 import { useAuth } from "@core/auth/use-auth";
+import { useAuthStore } from "@root/store/auth-store";
 import React from "react";
 
 export function useRoleChecks() {
@@ -24,4 +25,11 @@ export function usePermissionChecks() {
   );
 
   return { isLoggedIn, hasPermission, hasAnyPermissions, hasAllPermissions };
+}
+
+export function hasAnyPermissions(...perms: Perm[]) {
+  if (!perms || perms.length === 0) return true;
+  const { hasPermission } = useAuthStore.getState();
+  return perms.some((p) => hasPermission?.(p));
+
 }

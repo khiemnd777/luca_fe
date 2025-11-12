@@ -6,17 +6,20 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { SafeButton } from "@shared/components/button/safe-button";
 import { registerSlot } from "@root/core/module/registry";
 import { useParams } from "react-router-dom";
+import { IfPermission } from "@root/core/auth/if-permission";
 
 function StaffDetailInformationWidget() {
-  const {staffId} = useParams();
+  const { staffId } = useParams();
   const formStaffInformationRef = React.useRef<AutoFormRef>(null);
   return (
     <SectionCard title={"Thông tin nhân sự"} extra={
-      <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formStaffInformationRef.current?.submit()}>
-        Lưu
-      </SafeButton>
+      <IfPermission permissions={["staff.update"]}>
+        <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formStaffInformationRef.current?.submit()}>
+          Lưu
+        </SafeButton>
+      </IfPermission>
     }>
-      <AutoForm name="staff-detail" ref={formStaffInformationRef} initial={{id: staffId}} />
+      <AutoForm name="staff-detail" ref={formStaffInformationRef} initial={{ id: staffId }} />
     </SectionCard>
   );
 }

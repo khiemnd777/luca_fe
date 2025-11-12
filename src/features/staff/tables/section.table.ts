@@ -6,7 +6,6 @@ import { table, unlink } from "@features/staff/api/section.api";
 import { reloadTable } from "@root/core/table/table-reload";
 
 const columns: ColumnDef<SectionModel>[] = [
-  // { key: "id", header: "ID", width: 80, sortable: true },
   { key: "name", header: "Tên Bộ Phận", sortable: true, labelField: true },
   { key: "description", header: "Mô Tả" },
 ];
@@ -17,6 +16,8 @@ registerTable("sections", () =>
     fetch: async (opts: FetchTableOpts) => await table(opts),
     initialPageSize: 10,
     initialSort: { by: "id", dir: "asc" },
+    allowUpdating: ["staff.update"],
+    allowDeleting: ["staff.delete"],
     onEdit(row) {
       openFormDialog("section", { initial: { id: row.id } });
     },

@@ -5,6 +5,7 @@ import { AutoForm } from "@root/core/form/auto-form";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { SafeButton } from "@shared/components/button/safe-button";
 import { registerSlot } from "@root/core/module/registry";
+import { IfPermission } from "@root/core/auth/if-permission";
 
 function DepartmentSettingsWidget() {
   const formRef = React.useRef<AutoFormRef>(null);
@@ -12,7 +13,9 @@ function DepartmentSettingsWidget() {
   return (
     <>
       <SectionCard title="Thông tin trang" extra={
-        <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formRef.current?.submit()}>Lưu</SafeButton>
+        <IfPermission permissions={["settings.update"]}>
+          <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formRef.current?.submit()}>Lưu</SafeButton>
+        </IfPermission>
       }>
         <AutoForm name="department-settings" ref={formRef} />
       </SectionCard>

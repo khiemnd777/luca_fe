@@ -18,6 +18,8 @@ registerTable("dentists", () =>
     fetch: async (opts: FetchTableOpts) => await table(opts),
     initialPageSize: 10,
     initialSort: { by: "id", dir: "asc" },
+    allowUpdating: ["clinic.update"],
+    allowDeleting: ["clinic.delete"],
     onEdit(row) {
       openFormDialog("dentist", { initial: { id: row.id } });
     },

@@ -28,6 +28,8 @@ registerTable("staffs", () =>
     fetch: async (opts: FetchTableOpts) => await table(opts),
     initialPageSize: 20,
     initialSort: { by: "id", dir: "asc" },
+    allowUpdating: ["staff.update"],
+    allowDeleting: ["staff.delete"],
     onEdit(row) {
       openFormDialog("staff-edit-dialog", { initial: { id: row.id } });
     },

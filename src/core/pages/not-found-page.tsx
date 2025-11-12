@@ -16,9 +16,9 @@ export default function NotFoundPage() {
       <Typography variant="h3" fontWeight={600}>
         404
       </Typography>
-      <Typography variant="h6">Page Not Found</Typography>
+      <Typography variant="h6">Không tìm thấy trang này!</Typography>
       <Button component={RouterLink} to="/" variant="outlined">
-        Go Home
+        Trở về trang chủ
       </Button>
       <Button
         variant="contained"

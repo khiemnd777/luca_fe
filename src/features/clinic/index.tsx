@@ -7,6 +7,7 @@ const mod: ModuleDescriptor = {
   routes: [
     {
       key: "clinic",
+      permissions: ["clinic.view"],
       label: "Nha khoa",
       title: "Nha khoa",
       subtitle: "Cơ sở y tế chuyên khám, chẩn đoán và điều trị các vấn đề về răng, nướu và khoang miệng.",

@@ -1,16 +1,10 @@
 import * as React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { type Perm, useRoleChecks, usePermissionChecks } from "@core/auth/rbac-utils";
 import { getRefreshToken } from "@core/network/token-utils";
 import { hasUsableAccessToken, isAuthRefreshing, didLastRefreshFail } from "@core/network/api-client";
 import { Box, LinearProgress } from "@mui/material";
 
-/**
- * Anti-flicker strategy:
- * - Không bao giờ return null khi đang refresh → giữ UI hiện tại.
- * - Chỉ redirect khi (không có RT) hoặc (refresh đã fail/timeout).
- * - Hiển thị thanh tiến trình mảnh ở top để báo trạng thái (nhưng không unmount trang).
- */
 type RequireAuthProps = {
   roles?: string[];
   permissions?: Perm[];
@@ -30,67 +24,70 @@ export default function RequireAuth({
 }: RequireAuthProps) {
   const { hasAnyRole, hasAllRoles } = useRoleChecks();
   const { hasAnyPermissions } = usePermissionChecks();
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Auth state
   const usable = hasUsableAccessToken();
   const hasRT = !!getRefreshToken();
   const refreshing = isAuthRefreshing();
   const refreshFailed = didLastRefreshFail();
 
-  const redirectingRef = React.useRef(false);
-
-  // Điều kiện phải login nhưng không có AT usable
   const mustLogin = requireLogin && !usable;
 
-  // Trường hợp cần login:
-  // - Nếu có RT và CHƯA fail refresh: GIỮ UI (không return null, không redirect).
-  // - Nếu KHÔNG có RT hoặc đã fail refresh: redirect về login.
-  const shouldRedirectToLogin =
-    mustLogin &&
-    (!hasRT || refreshFailed) &&
-    !redirectingRef.current;
+  const redirectTo = React.useMemo(() => {
+    if (mustLogin && (!hasRT || refreshFailed)) {
+      const params = new URLSearchParams(window.location.search);
+      const loc = window.location;
+      const raw = params.get("redirect") ?? (loc.pathname + loc.search);
+      const safeRedirect = raw.startsWith(loginPath) ? "/" : raw;
+      return `${loginPath}?redirect=${encodeURIComponent(safeRedirect)}`;
+    }
+
+
+    if (refreshing) return null;
+    if (roles?.length) {
+      const ok = requireAll ? hasAllRoles(roles) : hasAnyRole(roles);
+      if (!ok) return forbiddenPath;
+    }
+    if (permissions?.length) {
+      const ok = hasAnyPermissions(permissions);
+      if (!ok) return forbiddenPath;
+    }
+    return null;
+  }, [
+    mustLogin,
+    hasRT,
+    refreshFailed,
+    refreshing,
+    roles,
+    permissions,
+    requireAll,
+    hasAllRoles,
+    hasAnyRole,
+    hasAnyPermissions,
+    loginPath,
+    forbiddenPath,
+  ]);
 
   React.useEffect(() => {
-    if (!shouldRedirectToLogin) return;
-    redirectingRef.current = true;
+    if (!redirectTo) return;
+    if (location.pathname + location.search === redirectTo) return;
+    if (redirectTo === forbiddenPath && location.pathname === forbiddenPath) return;
+    navigate(redirectTo, { replace: true });
+  }, [redirectTo, navigate, location.pathname, location.search, forbiddenPath]);
 
-    const params = new URLSearchParams(window.location.search);
-    const loc = window.location;
-    const raw = params.get("redirect") ?? (loc.pathname + loc.search);
-    const safeRedirect = raw.startsWith(loginPath) ? "/" : raw;
-    navigate(`${loginPath}?redirect=${encodeURIComponent(safeRedirect)}`, { replace: true });
-  }, [shouldRedirectToLogin, navigate, loginPath]);
-
-  // Không render gì thêm khi đã bắt đầu điều hướng
-  // (vẫn KHÔNG unmount nội dung trước khi navigate chạy xong frame hiện tại)
-  // => tránh "nháy" ở 1 frame.
-  // Không return null ở các case chờ refresh nữa.
-
-  // Role/permission checks: nếu không đạt → điều hướng forbidden nhưng vẫn giữ khung trang hiện tại tới khi navigate.
-  if (roles?.length) {
-    const ok = requireAll ? hasAllRoles(roles) : hasAnyRole(roles);
-    if (!ok && !redirectingRef.current) {
-      redirectingRef.current = true;
-      navigate(forbiddenPath, { replace: true });
-    }
-  }
-  if (permissions?.length) {
-    const ok = hasAnyPermissions(permissions);
-    if (!ok && !redirectingRef.current) {
-      redirectingRef.current = true;
-      navigate(forbiddenPath, { replace: true });
-    }
-  }
+  const blocking = !!redirectTo;
 
   return (
     <Box sx={{ position: "relative", minHeight: 0 }}>
-      {/* Thanh tiến trình rất mảnh ở top: báo đang refresh, không làm nhấp nháy layout */}
-      {mustLogin && hasRT && !refreshFailed && (refreshing) && (
+      {(blocking || (mustLogin && hasRT && !refreshFailed && refreshing)) && (
         <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 13000 }}>
           <LinearProgress />
         </Box>
       )}
-      <Outlet />
+      {!blocking && <Outlet />}
     </Box>
   );
 }

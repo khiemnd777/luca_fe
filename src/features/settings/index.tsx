@@ -7,6 +7,7 @@ const mod: ModuleDescriptor = {
   routes: [
     {
       key: "settings",
+      permissions: ["settings.view"],
       label: "Thiết lập",
       title: "Thiết lập",
       subtitle: "Cấu hình thông tin trang quản lý và giao diện",

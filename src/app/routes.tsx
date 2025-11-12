@@ -1,8 +1,9 @@
 import * as React from "react";
 import { useMemo } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { listRoutes } from "@core/module/registry";
 import RequireAuth from "@core/auth/require-auth";
+import NavigatorBinder from "@core/navigation/navigator-binder";
 
 const LoginPage = React.lazy(() => import("@core/pages/login-page"));
 const ForbiddenPage = React.lazy(() => import("@core/pages/forbidden-page"));
@@ -10,6 +11,16 @@ const NotFoundPage = React.lazy(() => import("@core/pages/not-found-page"));
 
 function withSuspense(node: React.ReactNode) {
   return <React.Suspense fallback={null}>{node}</React.Suspense>;
+}
+
+function RootLayout() {
+  // Mount 1 lần trong Router context
+  return (
+    <>
+      <NavigatorBinder />
+      <Outlet />
+    </>
+  );
 }
 
 function useAppRouter() {
@@ -42,7 +53,12 @@ function useAppRouter() {
 
     const notFound = [{ path: "*", element: withSuspense(<NotFoundPage />) }];
 
-    return createBrowserRouter([...publicRoutes, ...protectedGroups, ...notFound]);
+    return createBrowserRouter([
+      {
+        element: <RootLayout />,
+        children: [...publicRoutes, ...protectedGroups, ...notFound],
+      },
+    ]);
   }, []);
 
   return router;

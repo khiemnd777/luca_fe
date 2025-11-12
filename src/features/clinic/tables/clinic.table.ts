@@ -13,18 +13,20 @@ const columns: ColumnDef<ClinicModel>[] = [
   { key: "brief", header: "Mô Tả", width: 500 },
 ];
 
-registerTable("clinics", () =>
-  createTableSchema<ClinicModel>({
+registerTable("clinics", () => {
+  return createTableSchema<ClinicModel>({
     columns,
     fetch: async (opts: FetchTableOpts) => await table(opts),
     initialPageSize: 10,
     initialSort: { by: "id", dir: "asc" },
-    onEdit(row) {
+    allowUpdating: ["clinic.update"],
+    allowDeleting: ["clinic.delete"],
+    onEdit(row: ClinicModel) {
       openFormDialog("clinic", { initial: { id: row.id } });
     },
     async onDelete(row) {
       await unlink(row.id);
       reloadTable("clinics");
     },
-  })
-);
+  });
+});

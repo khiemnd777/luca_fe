@@ -56,7 +56,6 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
   ({ name, schema: schemaProp, initial, onSaved, notifier }, ref) => {
     const toasts = notifier ?? toast;
 
-    // 1) Resolve schema (ưu tiên prop để backward-compatible)
     const schema = React.useMemo(() => {
       if (schemaProp) return schemaProp;
       if (name) return getFormSchema(name);
@@ -67,26 +66,29 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       return <div>Schema {name ? `"${name}"` : ""} chưa được đăng ký.</div>;
     }
 
-    // 2) Resolve initial:
-    // - Nếu có prop initial → dùng ngay
-    // - Nếu không → thử schema.initialResolver
     const [resolvedInitial, setResolvedInitial] = React.useState<Record<string, any> | null>(
       initial ?? null
     );
 
+    const [resolvingInitial, setResolvingInitial] = React.useState(false);
+
     React.useEffect(() => {
       let cancelled = false;
       async function load() {
-        if (initial != null) { setResolvedInitial(initial); return; }
-        if (schema.initialResolver) {
-          try {
-            const v = await Promise.resolve(schema.initialResolver());
-            if (!cancelled) setResolvedInitial(v ?? {});
-          } catch {
-            if (!cancelled) setResolvedInitial({});
-          }
-        } else {
-          setResolvedInitial({});
+        setResolvingInitial(true);
+        try {
+          const resolved = schema.initialResolver
+            ? await Promise.resolve(schema.initialResolver(initial))
+            : initial;
+
+          const finalInitial =
+            initial && resolved && typeof initial === "object" && typeof resolved === "object"
+              ? { ...initial, ...resolved }
+              : (resolved ?? initial ?? {});
+
+          if (!cancelled) setResolvedInitial(finalInitial);
+        } finally {
+          if (!cancelled) setResolvingInitial(false);
         }
       }
       load();
@@ -148,12 +150,16 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
     return (
       <Stack spacing={2}>
-        <AutoFormFields
-          schema={schema.fields}
-          values={values}
-          setValue={setValue}
-          errors={errors}
-        />
+        {resolvingInitial ? (
+          <div>Đang tải…</div>
+        ) :
+          (<AutoFormFields
+            schema={schema.fields}
+            values={values}
+            setValue={setValue}
+            errors={errors}
+          />)
+        }
       </Stack>
     );
   }

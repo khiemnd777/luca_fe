@@ -4,6 +4,7 @@ import type { TableSchema, SortDir } from "@core/table/table.types";
 import { subscribeTableReload } from "@core/table/table-reload";
 import { resolveRowLabel } from "@core/table/table-utils";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
+import { hasAnyPermissions } from "../auth/rbac-utils";
 
 export type SchemaTableRef = { reload: () => void };
 
@@ -115,9 +116,9 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         stickyTopOffset={schema.stickyTopOffset ?? 0}
 
         // actions
-        onView={schema.onView}
-        onEdit={schema.onEdit}
-        onDelete={schema.onDelete ? askDelete : undefined}
+        onView={hasAnyPermissions(...(schema.allowUpdating ?? [])) ? schema.onView : undefined}
+        onEdit={hasAnyPermissions(...(schema.allowUpdating ?? [])) ? schema.onEdit : undefined}
+        onDelete={hasAnyPermissions(...(schema.allowDeleting ?? [])) ? (schema.onDelete ? askDelete : undefined) : undefined}
       />
       {schema.onDelete && (
         <ConfirmDialog

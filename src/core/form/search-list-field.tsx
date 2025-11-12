@@ -130,6 +130,8 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
 
+  const listInset = 3; // 14px
+
   const [items, setItems] = React.useState<T[]>([]);
   const deriveIds = React.useCallback(
     (arr: T[]) => arr.map((x) => getOptionValue(x)),
@@ -198,7 +200,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, depsForFetch);
-  
+
   // refreshKey → refetch list hiện có
   const doFetchList = React.useCallback(async () => {
     if (!fetchList) return;
@@ -453,7 +455,13 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         ) : null}
 
         {/* List đã chọn */}
-        <Box>
+        <Box
+          sx={(t) => ({
+            alignSelf: "flex-end",
+            ml: listInset,
+            width: `calc(100% - ${t.spacing(listInset)})`,
+          })}
+        >
           {items.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               {`Chưa có ${label?.toLocaleLowerCase()} nào.`}

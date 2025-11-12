@@ -1,13 +1,18 @@
 import {
   Box, Paper, Table, TableHead, TableRow, TableCell, TableBody, Checkbox, CircularProgress, Typography,
-  debounce
+  debounce,
+  TableContainer
 } from "@mui/material";
 import type { MatrixPermission } from "@root/core/network/rbac.types";
 import { fetchRBACMatrix, replaceRBAC } from "@features/rbac/api/rbac.api";
 import { EV_RBAC_MATRIX_INVALIDATE } from "@features/rbac/model/rbac.events";
 import { useEventInvalidation } from "@root/core/module/event-invalidation";
 
+const ROLE_COL_W = 160;
+const PERM_COL_W = 220;
+
 export function RBACMatrix() {
+
   const { data: matrix, setData, loading, error } = useEventInvalidation<MatrixPermission | null>({
     fetcher: () => fetchRBACMatrix(),
     invalidateEvent: EV_RBAC_MATRIX_INVALIDATE,
@@ -34,8 +39,8 @@ export function RBACMatrix() {
       const enabledPermIds = next.permissions
         .map((p, idx) => (row.flags[idx] ? p.id : null))
         .filter((id): id is number => id !== null);
-      
-        saveRolePermissions(row.roleId, enabledPermIds);
+
+      saveRolePermissions(row.roleId, enabledPermIds);
 
       return next;
     });
@@ -47,30 +52,84 @@ export function RBACMatrix() {
 
   return (
     <Paper>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: "bold" }}>Vai trò / Quyền hạn</TableCell>
-            {matrix.permissions.map((perm) => (
-              <TableCell key={perm.id} align="center" sx={{ fontWeight: "bold" }}>
-                {perm.name}
+      <TableContainer sx={{ overflowX: "auto", maxWidth: "100%" }}>
+        <Table
+          size="small"
+          stickyHeader
+          sx={{
+            minWidth: PERM_COL_W + ROLE_COL_W * matrix.roles.length,
+            tableLayout: "fixed",
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell
+                sx={{
+                  fontWeight: "bold",
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 2,
+                  bgcolor: "background.paper",
+                  minWidth: PERM_COL_W,
+                  width: PERM_COL_W,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Quyền hạn / Vai trò
               </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {matrix.roles.map((role, rIdx) => (
-            <TableRow key={role.roleId}>
-              <TableCell sx={{ fontWeight: 500 }}>{role.displayName}</TableCell>
-              {matrix.permissions.map((_, pIdx) => (
-                <TableCell key={pIdx} align="center">
-                  <Checkbox checked={role.flags[pIdx]} onChange={() => toggle(rIdx, pIdx)} />
+
+              {matrix.roles.map((role) => (
+                <TableCell
+                  key={role.roleId}
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    minWidth: ROLE_COL_W,
+                    width: ROLE_COL_W,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {role.displayName}
                 </TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+
+          <TableBody>
+            {matrix.permissions.map((perm, pIdx) => (
+              <TableRow key={perm.id} hover>
+                {/* Permission name - sticky left */}
+                <TableCell
+                  sx={{
+                    fontWeight: 500,
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 1,
+                    bgcolor: "background.paper",
+                    minWidth: PERM_COL_W,
+                    width: PERM_COL_W,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {perm.name}
+                </TableCell>
+
+                {/* Role columns */}
+                {matrix.roles.map((_, rIdx) => (
+                  <TableCell key={rIdx} align="center" sx={{ minWidth: ROLE_COL_W, width: ROLE_COL_W }}>
+                    <Checkbox
+                      size="small"
+                      checked={matrix.roles[rIdx].flags[pIdx]}
+                      onChange={() => toggle(rIdx, pIdx)}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
+
   );
 }

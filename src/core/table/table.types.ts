@@ -76,6 +76,10 @@ export type TableSchema<T> = {
   onEdit?: (row: T) => void | Promise<void>;
   onDelete?: (row: T) => void | Promise<void>;
 
+  // Permissions
+  allowUpdating?: string[] | undefined,
+  allowDeleting?: string[] | undefined,
+
   // lifecycle
   afterReload?: (ctx: FetchTableOpts & { total: number }) => void | Promise<void>;
 };

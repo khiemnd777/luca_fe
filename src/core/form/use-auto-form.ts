@@ -93,7 +93,7 @@ function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: 
     }
   }
 
-  if (typeof value === "string") {
+  if (typeof value === "string" && String(value).trim() !== '') {
     if (rules.minLength != null && value.length < rules.minLength)
       return `${label ?? "This field"} must be at least ${rules.minLength} characters`;
     if (rules.maxLength != null && value.length > rules.maxLength)

@@ -11,14 +11,21 @@ import { fetchRolesByUserId, search as searchRoles } from "@root/features/rbac/a
 
 type Options = {
   withPassword: boolean;
+  passwordRequired?: boolean;
 };
 
-function passwordField(): FieldDef {
+function passwordField(opts: Options): FieldDef {
   return {
     name: "password",
     label: "Password",
     kind: "password",
-    rules: { required: "Yêu cầu nhập mật khẩu", minLength: 6, maxLength: 128 },
+    rules: {
+      ...(opts.withPassword && opts.passwordRequired ? {
+        required: "Yêu cầu nhập mật khẩu",
+      } : {}),
+      minLength: 6,
+      maxLength: 128
+    },
   };
 }
 
@@ -151,7 +158,7 @@ export function buildStaffSchemaShared(opts: Options): FormSchema {
   const fields = [...commonFields()];
   if (opts.withPassword) {
     // chèn password ngay sau phone (index 2 là phone, vậy password ở 3)
-    fields.splice(3, 0, passwordField());
+    fields.splice(3, 0, passwordField(opts));
   }
 
   return {

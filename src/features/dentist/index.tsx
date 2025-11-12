@@ -7,6 +7,7 @@ const mod: ModuleDescriptor = {
   routes: [
     {
       key: "dentist",
+      permissions: ["clinic.view"],
       label: "Nha sĩ",
       title: "Nha sĩ",
       subtitle: "Bác sĩ chuyên ngành răng hàm mặt, thực hiện việc khám, tư vấn và điều trị các bệnh lý răng miệng cho bệnh nhân.",

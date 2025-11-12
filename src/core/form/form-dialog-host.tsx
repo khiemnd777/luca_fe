@@ -47,16 +47,17 @@ function DialogInstance({ payload }: { payload: Payload }) {
       setResolvingInitial(true);
       try {
         const base = payload.options?.initial; // đọc 1 lần
-        const resolved = schema?.initialResolver
-          ? await Promise.resolve(schema.initialResolver(base))
-          : base;
+        // const resolved = schema?.initialResolver
+        //   ? await Promise.resolve(schema.initialResolver(base))
+        //   : base;
 
-        const finalInitial =
-          base && resolved && typeof base === "object" && typeof resolved === "object"
-            ? { ...base, ...resolved }
-            : (resolved ?? base ?? {});
+        // const finalInitial =
+        //   base && resolved && typeof base === "object" && typeof resolved === "object"
+        //     ? { ...base, ...resolved }
+        //     : (resolved ?? base ?? {});
 
-        if (!cancelled) setResolvedInitial(finalInitial);
+        // if (!cancelled) setResolvedInitial(finalInitial);
+        if (!cancelled) setResolvedInitial(base ?? {});
       } finally {
         if (!cancelled) setResolvingInitial(false);
       }

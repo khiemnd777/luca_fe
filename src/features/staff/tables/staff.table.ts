@@ -4,6 +4,7 @@ import { openFormDialog } from "@core/form/form-dialog.service";
 import type { StaffModel } from "@features/staff/model/staff.model";
 import { table, unlink } from "@features/staff/api/staff.api";
 import { reloadTable } from "@core/table/table-reload";
+import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<StaffModel>[] = [
   { key: "avatar", header: "Ảnh Đại Diện", type: "image", shape: "circle", width: 56 },
@@ -29,6 +30,9 @@ registerTable("staffs", () =>
     initialSort: { by: "id", dir: "asc" },
     onEdit(row) {
       openFormDialog("staff-non-password", { initial: { id: row.id } });
+    },
+    onView(row) {
+      navigate(`/staff/${row.id}`);
     },
     async onDelete(row) {
       await unlink(row.id);

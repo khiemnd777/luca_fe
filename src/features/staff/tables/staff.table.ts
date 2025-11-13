@@ -7,19 +7,20 @@ import { reloadTable } from "@core/table/table-reload";
 import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<StaffModel>[] = [
-  { key: "avatar", header: "Ảnh Đại Diện", type: "image", shape: "circle", width: 56 },
+  { key: "avatar", header: "Avatar", type: "image", shape: "circle", width: 30 },
   { key: "name", header: "Tên Nhân Sự", sortable: true, labelField: true, width: 80 },
+  { key: "sectionNames", header: "Bộ Phận", width: 260, type: "chips" },
   { key: "email", header: "Email", sortable: true, width: 80 },
   { key: "phone", header: "Số Điện Thoại" },
   { key: "active", header: "Kích hoạt?", sortable: true, type: "boolean", },
-  {
-    key: "qrCode", header: "Mã QR", type: "qr", width: 56,
-    qr: {
-      size: 56,
-      tooltipSize: 220,
-      level: "M",
-    }
-  },
+  // {
+  //   key: "qrCode", header: "Mã QR", type: "qr", width: 56,
+  //   qr: {
+  //     size: 56,
+  //     tooltipSize: 220,
+  //     level: "M",
+  //   }
+  // },
 ];
 
 registerTable("staffs", () =>

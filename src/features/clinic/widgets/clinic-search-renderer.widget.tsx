@@ -2,9 +2,9 @@ import { Box, Chip } from "@mui/material";
 import { registerSearchRenderer, type SearchRenderer } from "@core/search";
 import SearchItem from "@root/core/search/search-item";
 import { Badge } from "@shared/components/ui/badge";
-import BadgeIcon from '@mui/icons-material/Badge';
+import EmergencyIcon from '@mui/icons-material/Emergency';
 
-const StaffSearchRenderer: SearchRenderer = (o, { highlight }) => (
+const ClinicSearchRenderer: SearchRenderer = (o, { highlight }) => (
   <SearchItem
     title={highlight(o.title)}
     subtitle={
@@ -17,13 +17,8 @@ const StaffSearchRenderer: SearchRenderer = (o, { highlight }) => (
         }
       </Box>
     }
-    right={<Badge badge={{ avatar: o.attributes?.["avatar"] }} />}
+    right={<Badge badge={{ avatar: o.attributes?.["logo"] }} />}
   />
 );
 
-registerSearchRenderer("staff",
-  "Nhân sự",
-  StaffSearchRenderer,
-  <BadgeIcon color="primary" />,
-  (i) => `/staff/${i.entityId}`
-);
+registerSearchRenderer("clinic", "Nha khoa", ClinicSearchRenderer, <EmergencyIcon color="primary" />, (_) => "/clinic");

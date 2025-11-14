@@ -3,18 +3,19 @@ import {
   Autocomplete,
   TextField,
   CircularProgress,
+  Box,
+  Stack,
 } from "@mui/material";
 import type { SearchModel } from "@core/search/search.model";
 import { getSearchRenderer } from "@core/search/search-renderer";
 import { search } from "@core/search/search.api";
-import { LABELS } from "./search-utils";
 
 type SearchBoxProps = {
   placeholder?: string;
   autoFocus?: boolean;
   minChars?: number;
   debounceMs?: number;
-  onSelect?: (item: SearchModel) => void;
+  onSelect?: (item: SearchModel, href: string) => void;
   fullWidth?: boolean;
 };
 
@@ -74,14 +75,40 @@ export default function SearchBox({
       filterOptions={(x) => x}
       getOptionLabel={(o) => o?.title ?? ""}
       isOptionEqualToValue={(a, b) => a.entityType === b.entityType && a.entityId === b.entityId}
-      groupBy={(o) => LABELS[o.entityType]}
-      onChange={(_e, val) => val && onSelect?.(val)}
+      groupBy={(o) => {
+        const entry =
+          getSearchRenderer(o.entityType) ||
+          getSearchRenderer("__default__");
+        return entry?.label ?? o.entityType;
+      }}
+      onChange={(_e, val) => {
+        if (!val) return;
+        const entry =
+          getSearchRenderer(val.entityType) ||
+          getSearchRenderer("__default__");
+        const href = entry?.getHref?.(val) ?? "";
+        onSelect?.(val, href);
+      }}
       renderOption={(props, option) => {
+        const entry =
+          getSearchRenderer(option.entityType) ||
+          getSearchRenderer("__default__");
+
         const renderer =
-          getSearchRenderer(option.entityType) || getSearchRenderer("__default__")!;
+          entry?.renderer ??
+          ((opt: SearchModel, ctx: { q: string; highlight: (t: string) => React.ReactNode }) =>
+            ctx.highlight(opt.title ?? ""));
+
+        const icon = entry?.icon;
+
         return (
           <li {...props} key={`${option.entityType}:${option.entityId}`}>
-            {renderer(option, { q: debouncedQuery, highlight })}
+            <Stack direction="row" spacing={1} alignItems="center">
+              {icon ? <Box sx={{ display: "flex", alignItems: "center" }}>{icon}</Box> : null}
+              <Box sx={{ flex: 1 }}>
+                {renderer(option, { q: debouncedQuery, highlight })}
+              </Box>
+            </Stack>
           </li>
         );
       }}

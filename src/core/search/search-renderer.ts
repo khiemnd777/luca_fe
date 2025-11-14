@@ -8,12 +8,27 @@ export type SearchRenderCtx = {
 
 export type SearchRenderer = (option: SearchModel, ctx: SearchRenderCtx) => React.ReactNode;
 
-const registry = new Map<string, SearchRenderer>();
+export type SearchRendererEntry = {
+  label: string;
+  renderer: SearchRenderer;
+  icon: React.ReactNode;
+  getHref: (item: SearchModel) => string;
+};
 
-export function registerSearchRenderer(entityType: string, renderer: SearchRenderer) {
-  registry.set(entityType, renderer);
+const registry = new Map<string, SearchRendererEntry>();
+
+export function registerSearchRenderer(
+  entityType: string,
+  label: string,
+  renderer: SearchRenderer,
+  icon: React.ReactNode,
+  getHref: (item: SearchModel) => string
+) {
+  registry.set(entityType, { label, renderer, icon, getHref });
 }
 
-export function getSearchRenderer(entityType: string): SearchRenderer | undefined {
+export function getSearchRenderer(
+  entityType: string
+): SearchRendererEntry | undefined {
   return registry.get(entityType);
 }

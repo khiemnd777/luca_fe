@@ -1,6 +1,7 @@
 import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import BadgeIcon from '@mui/icons-material/Badge';
+import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
   id: "staff",
@@ -12,6 +13,7 @@ const mod: ModuleDescriptor = {
       title: "Nhân sự",
       subtitle: "Quản lý nhân sự",
       path: "/staff",
+      element: <OneColumnPage />,
       icon: <BadgeIcon />,
       priority: 94,
       children: [

@@ -1,6 +1,7 @@
 import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import EmergencyIcon from '@mui/icons-material/Emergency';
+import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
   id: "clinic",
@@ -8,6 +9,7 @@ const mod: ModuleDescriptor = {
     {
       key: "clinic",
       permissions: ["clinic.view"],
+      element: <OneColumnPage />,
       label: "Nha khoa",
       title: "Nha khoa",
       subtitle: "Cơ sở y tế chuyên khám, chẩn đoán và điều trị các vấn đề về răng, nướu và khoang miệng.",

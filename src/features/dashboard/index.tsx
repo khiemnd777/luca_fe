@@ -1,23 +1,22 @@
 import React from "react";
 import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 const SamplePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-page"));
 const SampleTablePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-table-page"));
 const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
-
 const mod: ModuleDescriptor = {
   id: "dashboard",
   routes: [
     {
-      key: "home",
+      key: "dashboard",
       label: "Dashboard",
       title: "Dashboard",
       path: "/",
       element: <UnderConstructionPage />,
-      icon: <HomeRoundedIcon />,
+      icon: <LeaderboardIcon />,
       priority: 100,
       children: [
         {

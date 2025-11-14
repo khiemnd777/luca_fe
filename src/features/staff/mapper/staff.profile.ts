@@ -13,6 +13,7 @@ mapper.register<StaffModel>({
     avatar: "",
     qrCode: "",
     sectionIds: [],
+    sectionNames: [],
     roleIds: [],
     active: false,
   }),

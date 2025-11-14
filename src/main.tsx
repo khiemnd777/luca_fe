@@ -5,6 +5,7 @@ import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from "@root/app/theme";
 import "@root/mapper/index";
+import "@core/search/index";
 
 // Auto-load modules
 import.meta.glob("@features/**/index.tsx", { eager: true });

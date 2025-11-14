@@ -4,7 +4,7 @@ import { Link as RouterLink, useInRouterContext } from "react-router-dom";
 import { useDisplayUrl } from "@core/photo/use-display-url";
 
 type BadgeParams = {
-  name: string;
+  name?: string;
   avatar?: string;
 };
 
@@ -103,7 +103,7 @@ export function Badge({
         }}
       />
 
-      {!collapsed && (
+      {(!collapsed && badge?.name) && (
         <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="subtitle2"

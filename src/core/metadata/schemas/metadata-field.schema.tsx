@@ -71,9 +71,9 @@ export function buildMetadataFieldSchema(): FormSchema {
       kind: "select",
       rules: { required: "Please choose a kind of visibility" },
       options: [
-        { label: "Public", value: "public" },
-        { label: "Hidden", value: "hidden" },
-        { label: "Readonly", value: "readonly" },
+        { label: "public", value: "public" },
+        { label: "hidden", value: "hidden" },
+        { label: "readonly", value: "readonly" },
       ],
       helperText: 'e.g. "public", "hidden", "readonly"',
     },

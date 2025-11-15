@@ -19,9 +19,9 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import QRCode from "react-qr-code";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
-import QRCode from "react-qr-code";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -300,7 +300,7 @@ export function EditTable<T extends { id?: string | number }>({
 
     switch (col.type) {
       case "color": {
-        // Hỗ trợ string hoặc { color: '#FFF', text?: 'Trắng' }
+        // string hoặc { color: '#FFF', text?: 'Trắng' }
         let color = "";
         let text = "";
         if (typeof val === "string") {

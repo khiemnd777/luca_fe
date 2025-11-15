@@ -15,9 +15,10 @@ import {
 
 const columns: ColumnDef<FieldModel>[] = [
   { key: "orderIndex", header: "Order", width: 60, sortable: true },
-  { key: "name", header: "Name", sortable: true, labelField: true },
   { key: "label", header: "Label", sortable: true },
+  { key: "name", header: "Name", sortable: true, labelField: true },
   { key: "type", header: "Type", width: 100 },
+  { key: "visibility", header: "Visibility", width: 100 },
   {
     key: "required",
     header: "Required?",

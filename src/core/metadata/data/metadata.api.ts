@@ -13,12 +13,14 @@ export type ListCollectionsParams = {
   limit?: number;
   offset?: number;
   withFields?: boolean;
+  table?: boolean;
+  form?: boolean;
 };
 
 export async function listCollections(
   params: ListCollectionsParams = {}
 ): Promise<{ data: CollectionWithFieldsModel[]; total: number }> {
-  const { query = "", limit = 20, offset = 0, withFields = true } = params;
+  const { query = "", limit = 20, offset = 0, withFields = true, table = true, form = true } = params;
   const { data } = await apiClient.get<{
     data: CollectionWithFieldsModel[];
     total: number;
@@ -28,6 +30,8 @@ export async function listCollections(
       limit,
       offset,
       with_fields: withFields,
+      table,
+      form
     },
   });
   const result = mapper.map<any[], CollectionWithFieldsModel[]>("Common", data.data, "dto_to_model");
@@ -36,12 +40,29 @@ export async function listCollections(
 
 export async function getCollection(
   idOrSlug: string | number,
-  withFields = true
+  withFields = true,
+  table = false,
+  form = false,
 ): Promise<CollectionWithFieldsModel> {
   const res = await apiClient.get<CollectionWithFieldsModel>(
     `${env.apiBasePath}/metadata/collections/${idOrSlug}`,
     {
-      params: { withFields },
+      params: { withFields, table, form },
+    }
+  );
+  return res.data;
+}
+
+export async function getAvailableCollection(
+  idOrSlug: string | number,
+  withFields = true,
+  table = false,
+  form = false,
+): Promise<CollectionWithFieldsModel> {
+  const res = await apiClient.get<CollectionWithFieldsModel>(
+    `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`,
+    {
+      params: { withFields, table, form },
     }
   );
   return res.data;

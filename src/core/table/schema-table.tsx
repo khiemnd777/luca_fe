@@ -1,10 +1,62 @@
 import * as React from "react";
 import { EditTable } from "@core/table/edit-table";
-import type { TableSchema, SortDir } from "@core/table/table.types";
+import type { TableSchema, SortDir, ColumnDef, ColumnType } from "@core/table/table.types";
 import { subscribeTableReload } from "@core/table/table-reload";
 import { resolveRowLabel } from "@core/table/table-utils";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { hasAnyPermissions } from "../auth/rbac-utils";
+import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+
+async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<ColumnDef<T>[]> {
+  const result: ColumnDef<T>[] = [];
+
+  for (const col of columns) {
+    if (col.type !== "metadata" || !col.metadata) {
+      result.push(col);
+      continue;
+    }
+
+    const { collection, mode = "whole", fields } = col.metadata;
+    const schema = await getAvailableCollection(collection, true, true, false);
+
+    let fieldsToUse = schema.fields;
+    if (mode === "partial" && fields?.length) {
+      fieldsToUse = schema.fields?.filter(f => fields.includes(f.name));
+    }
+
+    if (fieldsToUse != null) {
+      for (const f of fieldsToUse) {
+        result.push({
+          key: `customFields.${f.name}`,
+          header: f.label ?? f.name,
+          type: mapFieldTypeToColumnType(f.type),
+          accessor: (row: any) => row.customFields?.[f.name],
+          sortable: false,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+function mapFieldTypeToColumnType(type: string): ColumnType {
+  switch (type) {
+    case "text":
+    case "textarea":
+      return "text";
+    case "number":
+      return "number";
+    case "date":
+    case "datetime":
+      return "date";
+    case "boolean":
+      return "boolean";
+    default:
+      return "text";
+  }
+}
+
 
 export type SchemaTableRef = { reload: () => void };
 
@@ -95,11 +147,26 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
     [targetRow, schema.columns]
   );
 
+  const [expandedColumns, setExpandedColumns] = React.useState<ColumnDef<T>[]>(schema.columns);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      const cols = await expandMetadataColumns(schema.columns);
+      if (mounted) setExpandedColumns(cols);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [schema.columns]);
+
   return (
     <>
       <EditTable<T>
         rows={rows}
-        columns={schema.columns}
+        columns={expandedColumns}
         page={page}
         pageSize={pageSize}
         total={total}

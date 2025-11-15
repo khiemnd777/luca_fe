@@ -10,6 +10,14 @@ const columns: ColumnDef<ClinicModel>[] = [
   { key: "logo", header: "Logo", type: "image", shape: "circle", width: 56 },
   { key: "name", header: "Tên Nha Khoa", sortable: true, labelField: true },
   { key: "phoneNumber", header: "Số Điện Thoại", },
+  {
+    key: "customFields",
+    type: "metadata",
+    metadata: {
+      collection: "clinics",
+      mode: "whole",
+    }
+  },
   { key: "brief", header: "Mô Tả", width: 500 },
 ];
 

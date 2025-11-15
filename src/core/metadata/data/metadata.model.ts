@@ -37,6 +37,8 @@ export type FieldModel = {
   type: FieldType | string;
   required: boolean;
   unique: boolean;
+  table: boolean;
+  form: boolean;
   defaultValue?: string | null;
   options?: string | null;
   orderIndex: number;
@@ -46,6 +48,7 @@ export type FieldModel = {
 
 export type CollectionWithFieldsModel = CollectionModel & {
   fields?: FieldModel[];
+  fieldsCount: number;
 };
 
 export type FieldDto = {
@@ -55,6 +58,8 @@ export type FieldDto = {
   type: string;
   required: boolean;
   unique: boolean;
+  table: boolean;
+  form: boolean;
   default_value?: any;
   options?: any;
   order_index: number;

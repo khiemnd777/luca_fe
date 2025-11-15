@@ -51,7 +51,7 @@ registerTable("metadata-collections", () =>
         query: "",
         limit: limit,
         offset: page,
-        withFields: true,
+        withFields: false,
       });
 
       return {

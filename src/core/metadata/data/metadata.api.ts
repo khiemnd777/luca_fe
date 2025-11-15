@@ -19,7 +19,7 @@ export async function listCollections(
   params: ListCollectionsParams = {}
 ): Promise<{ data: CollectionWithFieldsModel[]; total: number }> {
   const { query = "", limit = 20, offset = 0, withFields = true } = params;
-  const res = await apiClient.get<{
+  const { data } = await apiClient.get<{
     data: CollectionWithFieldsModel[];
     total: number;
   }>(`${env.apiBasePath}/metadata/collections`, {
@@ -30,7 +30,8 @@ export async function listCollections(
       with_fields: withFields,
     },
   });
-  return res.data;
+  const result = mapper.map<any[], CollectionWithFieldsModel[]>("Common", data.data, "dto_to_model");
+  return { data: result, total: data.total };
 }
 
 export async function getCollection(

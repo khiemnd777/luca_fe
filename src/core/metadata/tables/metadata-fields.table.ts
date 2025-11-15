@@ -22,13 +22,25 @@ const columns: ColumnDef<FieldModel>[] = [
     key: "required",
     header: "Required?",
     type: "boolean",
-    width: 60,
+    width: 30,
   },
   {
     key: "unique",
     header: "Unique?",
     type: "boolean",
-    width: 70,
+    width: 30,
+  },
+  {
+    key: "table",
+    header: "Table?",
+    type: "boolean",
+    width: 30,
+  },
+  {
+    key: "form",
+    header: "Form?",
+    type: "boolean",
+    width: 30,
   },
 ];
 
@@ -39,7 +51,7 @@ registerTable('metadata-fields', () =>
       const list = await listFieldsByCollection(opts.collectionId as number);
       return {
         items: list,
-        total: list.length,
+        total: list?.length ?? 0,
       };
     },
 

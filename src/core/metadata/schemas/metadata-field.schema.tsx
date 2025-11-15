@@ -48,6 +48,16 @@ export function buildMetadataFieldSchema(): FormSchema {
       kind: "switch",
     },
     {
+      name: "table",
+      label: "Table",
+      kind: "switch",
+    },
+    {
+      name: "form",
+      label: "Form",
+      kind: "switch",
+    },
+    {
       name: "orderIndex",
       label: "Order index",
       kind: "number",
@@ -58,7 +68,13 @@ export function buildMetadataFieldSchema(): FormSchema {
     {
       name: "visibility",
       label: "Visibility",
-      kind: "text",
+      kind: "select",
+      rules: { required: "Please choose a kind of visibility" },
+      options: [
+        { label: "Public", value: "public" },
+        { label: "Hidden", value: "hidden" },
+        { label: "Readonly", value: "readonly" },
+      ],
       helperText: 'e.g. "public", "hidden", "readonly"',
     },
     {

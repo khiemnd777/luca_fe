@@ -32,6 +32,7 @@ export const FIELD_TYPES: FieldType[] = [
 export type FieldModel = {
   id: number;
   collectionId: number;
+  collectionSlug: string;
   name: string;
   label: string;
   type: FieldType | string;
@@ -53,6 +54,7 @@ export type CollectionWithFieldsModel = CollectionModel & {
 
 export type FieldDto = {
   collection_id: number;
+  collection_slug: string;
   name: string;
   label: string;
   type: string;

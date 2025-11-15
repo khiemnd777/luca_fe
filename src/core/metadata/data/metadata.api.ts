@@ -1,4 +1,4 @@
-import { apiClient } from "@core/network/api-client";
+import { apiClient, invalidateApiCache } from "@core/network/api-client";
 import type {
   CollectionModel,
   CollectionWithFieldsModel,
@@ -63,6 +63,9 @@ export async function getAvailableCollection(
     `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`,
     {
       params: { withFields, table, form },
+      cacheMode: "cache-first",
+      cacheTTL: 6.048e+8, // ~7d
+      cacheTags: [`metadata:collection:${idOrSlug}`],
     }
   );
   return res.data;
@@ -86,11 +89,12 @@ export async function updateCollection(
   id: number,
   input: UpdateCollectionInput
 ): Promise<CollectionModel> {
-  const res = await apiClient.put<CollectionModel>(
+  const { data } = await apiClient.put<CollectionModel>(
     `${env.apiBasePath}/metadata/collections/${id}`,
     input
   );
-  return res.data;
+  invalidateApiCache([`metadata:collection:${data.slug}`]);
+  return data;
 }
 
 export async function deleteCollection(id: number): Promise<void> {
@@ -112,6 +116,7 @@ export async function listFieldsByCollection(
 export async function createField(input: FieldDto): Promise<FieldModel> {
   const { data } = await apiClient.post<FieldDto>(`${env.apiBasePath}/metadata/fields`, input);
   const result = mapper.map<FieldDto, FieldModel>("Common", data, "dto_to_model")
+  invalidateApiCache([`metadata:collection:${result.collectionSlug}`]);
   return result;
 }
 
@@ -121,6 +126,7 @@ export async function updateField(
 ): Promise<FieldModel> {
   const { data } = await apiClient.put<FieldDto>(`${env.apiBasePath}/metadata/fields/${id}`, input);
   const result = mapper.map<FieldDto, FieldModel>("Common", data, "dto_to_model")
+  invalidateApiCache([`metadata:collection:${result.collectionSlug}`]);
   return result;
 }
 

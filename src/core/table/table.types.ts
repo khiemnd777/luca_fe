@@ -62,7 +62,7 @@ export type TableSchema<T> = {
   columns: ColumnDef<T>[];
 
   /* Mandatory */
-  fetch: (opts: FetchTableOpts) => Promise<ListResult<T>>;
+  fetch: (opts: FetchTableOpts & Record<string, any>) => Promise<ListResult<T>>;
 
   // UI options
   initialPageSize?: number;                // default 20

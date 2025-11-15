@@ -11,13 +11,14 @@ export type SchemaTableRef = { reload: () => void };
 type Props<T extends { id?: string | number }> = {
   schema: TableSchema<T>;
   schemaName?: string;
+  params?: Record<string, any>;
 };
 
 export function ForwardSchemaTable<T extends { id?: string | number }>(
   props: Props<T>,
   ref: React.ForwardedRef<SchemaTableRef>
 ) {
-  const { schema, schemaName } = props;
+  const { schema, schemaName, params } = props;
 
   const [page, setPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(schema.initialPageSize ?? 20);
@@ -40,6 +41,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         page: page,
         orderBy: sortBy ?? undefined,
         direction: sortDir,
+        ...params,
       });
       setRows(res.items ?? []);
       setTotal(res.total ?? 0);

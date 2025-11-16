@@ -1,7 +1,37 @@
 import * as React from "react";
 import type { FieldDef, FieldRules, AutoFormOptions, PasswordRules } from "@core/form/types";
+import { snakeToCamel } from "@shared/utils/string.utils";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+function normalizeCustomInitial(raw?: Record<string, any>): Record<string, any> {
+  if (!raw || typeof raw !== "object") return raw ?? {};
+
+  const out: Record<string, any> = { ...raw };
+
+  const cfSnake = raw["custom_fields"];
+  if (cfSnake && typeof cfSnake === "object") {
+    for (const [snakeName, value] of Object.entries(cfSnake as Record<string, any>)) {
+      const camelName = snakeToCamel(snakeName);
+      const flatKey = `customFields.${camelName}`;
+      if (!(flatKey in out)) {
+        out[flatKey] = value;
+      }
+    }
+  }
+
+  const cfCamel = raw["customFields"];
+  if (cfCamel && typeof cfCamel === "object") {
+    for (const [camelName, value] of Object.entries(cfCamel as Record<string, any>)) {
+      const flatKey = `customFields.${camelName}`;
+      if (!(flatKey in out)) {
+        out[flatKey] = value;
+      }
+    }
+  }
+
+  return out;
+}
 
 function getReqMsg(r?: boolean | string) {
   if (!r) return null;
@@ -143,6 +173,8 @@ function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
 
 // --- Normalize initial values for schema kinds ---
 function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>) {
+  const source = normalizeCustomInitial(raw);
+
   const obj: Record<string, any> = {};
   for (const f of schema) {
     const defaultFallback =
@@ -151,7 +183,10 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
           f.kind === "checkbox" || f.kind === "switch" ? false :
             f.kind === "multiselect" ? [] : "";
 
-    let v = raw && f.name in (raw ?? {}) ? raw![f.name] : (f as any).defaultValue ?? defaultFallback;
+    let v =
+      source && f.name in (source ?? {})
+        ? source![f.name]
+        : (f as any).defaultValue ?? defaultFallback;
 
     switch (f.kind) {
       case "fileupload":
@@ -317,16 +352,18 @@ export function useAutoForm(
   }, [schemaNames]);
 
   const setAllValues = React.useCallback((next: Record<string, any>) => {
+    const normalized = normalizeCustomInitial(next);
+
     const base: Record<string, any> = {};
     const extras: Record<string, any> = {};
-    for (const [k, v] of Object.entries(next)) {
+    for (const [k, v] of Object.entries(normalized)) {
       if (schemaNames.has(k)) base[k] = v;
       else extras[k] = v;
     }
     setFormValues(base);
     extrasRef.current = extras;
     setExtrasTick((t) => t + 1);
-    // KHÔNG đánh dấu manual ở đây
+    // KHÔNG đánh dấu manual
   }, [schemaNames]);
 
   const setFieldError = React.useCallback((name: string, msg: string | null) => {

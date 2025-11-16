@@ -6,6 +6,7 @@ import { resolveRowLabel } from "@core/table/table-utils";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { hasAnyPermissions } from "../auth/rbac-utils";
 import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+import { snakeToCamel } from "@root/shared/utils/string.utils";
 
 async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<ColumnDef<T>[]> {
   const result: ColumnDef<T>[] = [];
@@ -16,12 +17,23 @@ async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<Column
       continue;
     }
 
-    const { collection, mode = "whole", fields } = col.metadata;
+    const { collection, mode = "whole", fields, ignoreFields } = col.metadata;
     const schema = await getAvailableCollection(collection, true, true, false);
 
     let fieldsToUse = schema.fields;
+    fieldsToUse = fieldsToUse?.map((f) => ({
+      ...f,
+      name: snakeToCamel(f.name)
+    }));
+
+    const camelIgnores = ignoreFields?.map(snakeToCamel);
+
     if (mode === "partial" && fields?.length) {
-      fieldsToUse = schema.fields?.filter(f => fields.includes(f.name));
+      fieldsToUse = fieldsToUse?.filter(f => fields.includes(f.name));
+    }
+
+    if (mode === "whole" && camelIgnores?.length) {
+      fieldsToUse = fieldsToUse?.filter(mf => !camelIgnores.includes(mf.name));
     }
 
     if (fieldsToUse != null) {
@@ -56,7 +68,6 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
       return "text";
   }
 }
-
 
 export type SchemaTableRef = { reload: () => void };
 

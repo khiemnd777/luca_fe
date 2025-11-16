@@ -29,6 +29,7 @@ export type MetadataColumnOptions = {
   collection: number | string;
   mode?: MetadataColumnMode;
   fields?: string[];
+  ignoreFields?: string[];
 };
 
 export type QROptions = {

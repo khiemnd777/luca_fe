@@ -1,3 +1,5 @@
+import { camelToSnake, snakeToCamel } from "@shared/utils/string.utils";
+
 export type ConvertFn<S = any, T = any> = (value: any, source: S) => T;
 
 export type FieldRule =
@@ -31,15 +33,6 @@ export interface Profile<TModel = any, TDto = any> {
   pruneRoot?: boolean;    // default false (keep other root fields like 'total')
 }
 
-export function snakeToCamel(s: string) {
-  return s.replace(/_+([a-zA-Z0-9])/g, (_, c) => c.toUpperCase());
-}
-export function camelToSnake(s: string) {
-  return s
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[-\s]+/g, "_")
-    .toLowerCase();
-}
 export function applyNaming(key: string, strategy: NamingStrategy) {
   switch (strategy) {
     case "snake_to_camel": return snakeToCamel(key);

@@ -1,11 +1,10 @@
 import type { ListResult } from "@core/types/list-result";
 
-// @core/table/table.types.ts
 export type SortDir = "asc" | "desc";
 
 export type FetchTableOpts = {
-  limit: number;            // 0-based
-  page: number;
+  limit: number;
+  page: number; // 0-based
   orderBy?: string | null;
   direction?: SortDir;
 };
@@ -21,7 +20,17 @@ export type ColumnType = "text"
   | "boolean"
   | "qr"
   | "custom"
+  | "metadata"
   ;
+
+export type MetadataColumnMode = "whole" | "partial";
+
+export type MetadataColumnOptions = {
+  collection: number | string;
+  mode?: MetadataColumnMode;
+  fields?: string[];
+  ignoreFields?: string[];
+};
 
 export type QROptions = {
   size?: number;
@@ -33,7 +42,7 @@ export type QROptions = {
 
 export type ColumnDef<T> = {
   key: keyof T | string;
-  header: string;
+  header?: string;
   width?: number | string;
   type?: ColumnType;
   render?: (row: T) => React.ReactNode;
@@ -56,13 +65,16 @@ export type ColumnDef<T> = {
 
   // QR
   qr?: QROptions;
+
+  // Metadata
+  metadata?: MetadataColumnOptions;
 };
 
 export type TableSchema<T> = {
   columns: ColumnDef<T>[];
 
   /* Mandatory */
-  fetch: (opts: FetchTableOpts) => Promise<ListResult<T>>;
+  fetch: (opts: FetchTableOpts & Record<string, any>) => Promise<ListResult<T>>;
 
   // UI options
   initialPageSize?: number;                // default 20

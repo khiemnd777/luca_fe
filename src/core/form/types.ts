@@ -17,7 +17,9 @@ export type FieldKind =
   | "fileupload"
   | "imageupload"
   | "custom"
-  | "searchlist";
+  | "searchlist"
+  | "metadata"
+  ;
 
 export type DeriveMode = "always" | "whenEmpty" | "untilManual";
 
@@ -129,10 +131,17 @@ export type FieldDef = {
 
   onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search
   onDelete?: (item: any) => Promise<void> | void;
-
   // Extractors (áp dụng cho searchlist)
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
+
+  // metadata
+  metadata?: {
+    collection: string;
+    mode?: "whole" | "partial";
+    fields?: string[];
+    ignoreFields?: string[];
+  };
 
   // UI render item (không chứa nút delete)
   renderItem?: (item: any, index: number) => React.ReactNode;
@@ -142,7 +151,7 @@ export type FieldDef = {
   dedupeFn?: (a: any, b: any) => boolean;                        // custom so sánh
   maxItems?: number;
   disableDelete?: (item: any) => boolean;
-  
+
   // Create flow via FormDialog
   onOpenCreate?: () => void;                                     // mở FormDialog tạo mới
   refreshKey?: any;                                              // trigger refetch list hiện có

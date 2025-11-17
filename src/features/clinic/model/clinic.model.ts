@@ -7,6 +7,7 @@ export interface ClinicModel {
   logo?: string;
   active: boolean;
   dentistIds?: number[];
+  customeFields?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
 }

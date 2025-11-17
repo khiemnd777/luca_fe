@@ -19,9 +19,10 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import QRCode from "react-qr-code";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
-import QRCode from "react-qr-code";
+import { camelToSnake } from "@shared/utils/string.utils";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -217,9 +218,16 @@ function defaultCompare(a: unknown, b: unknown) {
 
 export function EditTable<T extends { id?: string | number }>({
   rows, columns, page, pageSize, total = null, loading = false,
-  onPageChange, onPageSizeChange, onView, onEdit, onDelete,
-  stickyHeader = true, dense = true,
-  onSortChange, sortBy: controlledSortBy, sortDirection: controlledSortDir,
+  onPageChange, 
+  onPageSizeChange, 
+  onView, 
+  onEdit, 
+  onDelete,
+  stickyHeader = true, 
+  dense = true,
+  onSortChange, 
+  sortBy: controlledSortBy, 
+  sortDirection: controlledSortDir,
   stickyTopOffset = 0,
 }: EditTableProps<T>) {
 
@@ -236,7 +244,8 @@ export function EditTable<T extends { id?: string | number }>({
   }, [controlledSortDir]);
 
   const handleSortClick = (col: ColumnDef<T>) => {
-    const key = String(col.key);
+    let key = String(col.key);
+    key = camelToSnake(key)
     let nextDir: SortDir = "asc";
     if ((controlledSortBy ?? orderBy) === key) {
       nextDir = (controlledSortDir ?? order) === "asc" ? "desc" : "asc";
@@ -300,7 +309,7 @@ export function EditTable<T extends { id?: string | number }>({
 
     switch (col.type) {
       case "color": {
-        // Hỗ trợ string hoặc { color: '#FFF', text?: 'Trắng' }
+        // string hoặc { color: '#FFF', text?: 'Trắng' }
         let color = "";
         let text = "";
         if (typeof val === "string") {

@@ -14,5 +14,6 @@ mapper.register<ClinicModel>({
     brief: "",
     logo: "",
     dentistIds: [],
+    customFields: null,
   }),
 });

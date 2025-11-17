@@ -38,6 +38,15 @@ export function buildClinicSchema(): FormSchema {
       helperText: "Có thể nhập +84 hoặc không.",
     },
     {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "clinics",
+        mode: "whole",
+      }
+    },
+    {
       name: "address",
       label: "Địa chỉ",
       kind: "text",

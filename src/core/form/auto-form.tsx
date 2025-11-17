@@ -5,6 +5,78 @@ import { useAutoForm } from "@core/form/use-auto-form";
 import type { AutoFormRef, AutoFormProps, SubmitDef, FormSchema, FormMode, ModeText } from "@core/form/form.types";
 import { getFormSchema } from "@core/form/form-registry";
 import toast from "react-hot-toast";
+import type { FieldDef, FieldKind } from "@core/form/types";
+import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+import type { FieldModel } from "@core/metadata/data/metadata.model";
+import { snakeToCamel } from "@root/shared/utils/string.utils";
+
+// metadata
+function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
+  switch (t) {
+    case "text":
+    case "textarea":
+      return "text";
+    case "number":
+      return "number";
+    case "date":
+    case "datetime":
+      return "datetime";
+    case "boolean":
+      return "switch";
+    case "select":
+      return "select";
+    case "multiselect":
+      return "multiselect";
+    case "image":
+      return "imageupload";
+    default:
+      return "text";
+  }
+}
+
+async function expandMetadataFields(schemaFields: FieldDef[]): Promise<FieldDef[]> {
+  const result: FieldDef[] = [];
+
+  for (const f of schemaFields) {
+    if (f.kind !== "metadata" || !f.metadata) {
+      result.push(f);
+      continue;
+    }
+
+    const { collection, mode = "whole", fields, ignoreFields } = f.metadata;
+    const coll = await getAvailableCollection(collection, true, false, true);
+
+    let fieldsToUse: FieldModel[] | undefined = coll.fields;
+    fieldsToUse = fieldsToUse?.map((f) => ({
+      ...f,
+      name: snakeToCamel(f.name)
+    }));
+
+    const camelIgnores = ignoreFields?.map(snakeToCamel);
+
+    if (mode === "partial" && fields?.length) {
+      fieldsToUse = coll.fields?.filter((mf) => fields.includes(mf.name));
+    }
+
+    if (mode === "whole" && camelIgnores?.length) {
+      fieldsToUse = fieldsToUse?.filter(mf => !camelIgnores.includes(mf.name));
+    }
+
+    if (!fieldsToUse) continue;
+
+    for (const mf of fieldsToUse) {
+      result.push({
+        name: `customFields.${mf.name}`,
+        label: mf.label ?? mf.name,
+        kind: mapMetadataFieldTypeToFieldKind(mf.type),
+        fullWidth: true,
+        rules: mf.required ? { required: true } : undefined,
+      });
+    }
+  }
+
+  return result;
+}
 
 const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
 
@@ -28,11 +100,40 @@ function renderModeText(t?: ModeText, ctx?: { mode: FormMode; values: any; resul
   return t[ctx!.mode];
 }
 
+function normalizeCustomFieldsPayload(input: any): any {
+  if (!input || typeof input !== "object") return input;
+
+  const dto: Record<string, any> = { ...input };
+  const custom: Record<string, any> = dto.custom_fields && typeof dto.custom_fields === "object"
+    ? { ...dto.custom_fields }
+    : {};
+
+  for (const [key, value] of Object.entries(dto)) {
+    if (key.startsWith("custom_fields.")) {
+      const fieldName = key.substring("custom_fields.".length);
+      custom[fieldName] = value;
+      delete dto[key];
+    }
+  }
+
+  if (Object.keys(custom).length > 0) {
+    dto.custom_fields = custom;
+  }
+
+  return dto;
+}
+
 async function runSubmit(def: SubmitDef, values: Record<string, any>) {
-  if (def.type === "fn") return def.run(values);
+  values = normalizeCustomFieldsPayload(values);
+
+  if (def.type === "fn") {
+    return def.run(values);
+  }
+
   const method = def.method ?? "PATCH";
   const fetcher = def.fetcher ?? defaultFetcher;
-  const payload = def.transform ? def.transform(values) : values;
+  let payload = def.transform ? def.transform(values) : values;
+  payload = normalizeCustomFieldsPayload(payload);
   const res = await fetcher(def.url, {
     method,
     headers: { "Content-Type": "application/json", ...(def.headers ?? {}) },
@@ -97,9 +198,28 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
     const stableInitial = React.useMemo(() => resolvedInitial ?? {}, [resolvedInitial]);
 
+    // metadata
+    const [expandedFields, setExpandedFields] = React.useState<FieldDef[]>(schema.fields);
+    React.useEffect(() => {
+      let cancelled = false;
+      async function load() {
+        try {
+          const expanded = await expandMetadataFields(schema.fields as FieldDef[]);
+          if (!cancelled) setExpandedFields(expanded);
+        } catch (e) {
+          // Nếu lỗi, fallback schema gốc cho an toàn
+          if (!cancelled) setExpandedFields(schema.fields as FieldDef[]);
+        }
+      }
+      load();
+      return () => {
+        cancelled = true;
+      };
+    }, [schema.fields]);
+
     // 3) Form state
     const { values, setValue, setAllValues, errors, setErrors, validateAll } = useAutoForm(
-      schema.fields,
+      expandedFields,
       stableInitial,
       { asyncValidate: schema.hooks?.asyncValidate }
     );
@@ -154,7 +274,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           <div>Đang tải…</div>
         ) :
           (<AutoFormFields
-            schema={schema.fields}
+            schema={expandedFields}
             values={values}
             setValue={setValue}
             errors={errors}

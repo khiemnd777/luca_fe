@@ -11,7 +11,7 @@ const columns: ColumnDef<ClinicModel>[] = [
   { key: "name", header: "Tên Nha Khoa", sortable: true, labelField: true },
   { key: "phoneNumber", header: "Số Điện Thoại", },
   {
-    key: "customFields",
+    key: "",
     type: "metadata",
     metadata: {
       collection: "clinics",

@@ -68,6 +68,15 @@ function commonFields(): FieldDef[] {
       helperText: "Có thể nhập +84 hoặc không.",
     },
     {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "staff",
+        mode: "whole",
+      }
+    },
+    {
       name: "avatar",
       label: "Ảnh đại diện",
       kind: "imageupload",

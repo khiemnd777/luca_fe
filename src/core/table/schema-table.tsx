@@ -60,8 +60,9 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
     case "number":
       return "number";
     case "date":
-    case "datetime":
       return "date";
+    case "datetime":
+      return "datetime";
     case "boolean":
       return "boolean";
     case "image":

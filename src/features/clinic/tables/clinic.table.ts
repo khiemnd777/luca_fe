@@ -14,7 +14,7 @@ const columns: ColumnDef<ClinicModel>[] = [
     key: "",
     type: "metadata",
     metadata: {
-      collection: "clinics",
+      collection: "clinic",
       mode: "whole",
     }
   },

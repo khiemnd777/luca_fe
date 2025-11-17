@@ -23,6 +23,7 @@ import QRCode from "react-qr-code";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
 import { camelToSnake } from "@shared/utils/string.utils";
+import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -408,6 +409,9 @@ export function EditTable<T extends { id?: string | number }>({
 
       case "number":
       case "date":
+        return formatDate(val);
+      case "datetime":
+        return formatDateTime(val);
       case "text":
       default:
         return val as any;

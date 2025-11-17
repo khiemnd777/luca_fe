@@ -19,6 +19,7 @@ function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
     case "number":
       return "number";
     case "date":
+      return "date";
     case "datetime":
       return "datetime";
     case "boolean":

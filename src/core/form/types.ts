@@ -5,6 +5,7 @@ export type FieldKind =
   | "change-password"
   | "email"
   | "textarea"
+  | "date"
   | "datetime"
   | "color"
   | "currency"

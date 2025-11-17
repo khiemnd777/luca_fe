@@ -14,6 +14,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Autocomplete } from "@mui/material";
 import dayjs from "dayjs";
 import type { FieldDef, Option } from "@core/form/types";
@@ -175,6 +176,32 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
               label={f.label}
               value={val}
               onChange={(d) => setValue(f.name, d ? d.toISOString() : "")}
+              slotProps={{
+                textField: {
+                  size: f.size ?? "small",
+                  fullWidth: f.fullWidth ?? true,
+                  error: !!errors?.[f.name],
+                  helperText: errors?.[f.name] ?? f.helperText,
+                },
+              }}
+            />
+          );
+        }
+
+        // DATE
+        if (f.kind === "date") {
+          const iso: string | "" = values[f.name] ?? "";
+          const val = iso ? dayjs(iso) : null;
+
+          return (
+            <DatePicker
+              key={f.name}
+              label={f.label}
+              value={val}
+              onChange={(d) => {
+                const out = d ? d.format("YYYY-MM-DD") : "";
+                setValue(f.name, out);
+              }}
               slotProps={{
                 textField: {
                   size: f.size ?? "small",

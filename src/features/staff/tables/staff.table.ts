@@ -12,6 +12,14 @@ const columns: ColumnDef<StaffModel>[] = [
   { key: "sectionNames", header: "Bộ Phận", width: 140, type: "chips" },
   { key: "email", header: "Email", sortable: true, width: 80 },
   { key: "phone", header: "Số Điện Thoại" },
+  {
+    key: "",
+    type: "metadata",
+    metadata: {
+      collection: "staff",
+      mode: "whole",
+    }
+  },
   { key: "active", header: "Kích hoạt?", sortable: true, type: "boolean", },
   // {
   //   key: "qrCode", header: "Mã QR", type: "qr", width: 56,

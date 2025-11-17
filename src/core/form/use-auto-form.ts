@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { FieldDef, FieldRules, AutoFormOptions, PasswordRules } from "@core/form/types";
 import { snakeToCamel } from "@shared/utils/string.utils";
+import dayjs from "dayjs";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -222,6 +223,14 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
       }
       case "searchlist": {
         v = Array.isArray(v) ? v : [];
+        break;
+      }
+      case "date":{
+        if (v == null || v === "") v = "";
+        else {
+          const d = new Date(v);
+          v = isNaN(+d) ? "" : dayjs(d).toISOString();
+        }
         break;
       }
       case "datetime": {

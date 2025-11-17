@@ -42,7 +42,7 @@ export function buildClinicSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "clinics",
+        collection: "clinic",
         mode: "whole",
       }
     },

@@ -1,0 +1,86 @@
+import { mapper } from "@core/mapper/auto-mapper";
+import type { FieldDef } from "@core/form/types";
+import type { FormSchema } from "@core/form/form.types";
+import { registerFormDialog } from "@core/form/form-dialog.registry";
+import { registerForm } from "@core/form/form-registry";
+import { reloadTable } from "@core/table/table-reload";
+import { create, id, update } from "@features/sample/api/sample.api";
+import type { SampleModel } from "@features/sample/model/sample.model";
+
+export function buildSampleSchema(): FormSchema {
+  const fields: FieldDef[] = [
+    {
+      name: "code",
+      label: "Mã {sample}",
+      kind: "text",
+      rules: {
+        required: "Yêu cầu nhập mã",
+        maxLength: 30,
+      },
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "sample",
+        mode: "whole",
+      }
+    },
+  ];
+
+  return {
+    idField: "id",
+    fields,
+    submit: {
+      create: {
+        type: "fn",
+        run: async (values) => {
+          await create(values as SampleModel);
+          return values;
+        },
+      },
+      update: {
+        type: "fn",
+        run: async (values) => {
+          await update(values as SampleModel);
+          return values;
+        },
+      },
+    },
+
+    toasts: {
+      saved: ({ mode, values }) =>
+        mode === "create"
+          ? `Tạo {sample} "${values?.name ?? ""}" thành công!`
+          : `Cập nhật {sample} "${values?.name ?? ""}" thành công!`,
+      failed: ({ mode, values }) =>
+        mode === "create"
+          ? `Tạo {sample} "${values?.name ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật {sample} "${values?.name ?? ""}" thất bại, xin thử lại!`,
+    },
+
+    async initialResolver(data: any) {
+      if (data) {
+        return await id(data.id);
+      }
+      return {};
+    },
+
+    async afterSaved() {
+      reloadTable("samples");
+    },
+
+    hooks: {
+      mapToDto: (v) => mapper.map("Sample", v, "model_to_dto"),
+    },
+  };
+}
+
+registerForm("sample", buildSampleSchema);
+
+registerFormDialog("sample", buildSampleSchema, {
+  title: { create: "Thêm {sample}", update: "Cập nhật {sample}" },
+  confirmText: { create: "Thêm", update: "Lưu" },
+  cancelText: "Thoát",
+});

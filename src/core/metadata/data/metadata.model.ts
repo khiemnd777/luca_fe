@@ -15,7 +15,9 @@ export type FieldType =
   | "boolean"
   | "select"
   | "multiselect"
-  | "relation";
+  | "image"
+  | "relation"
+  ;
 
 export const FIELD_TYPES: FieldType[] = [
   "text",
@@ -26,6 +28,7 @@ export const FIELD_TYPES: FieldType[] = [
   "boolean",
   "select",
   "multiselect",
+  "image",
   "relation",
 ];
 
@@ -40,6 +43,7 @@ export type FieldModel = {
   unique: boolean;
   table: boolean;
   form: boolean;
+  search: boolean;
   defaultValue?: string | null;
   options?: string | null;
   orderIndex: number;
@@ -62,6 +66,7 @@ export type FieldDto = {
   unique: boolean;
   table: boolean;
   form: boolean;
+  search: boolean;
   default_value?: any;
   options?: any;
   order_index: number;

@@ -58,6 +58,11 @@ export function buildMetadataFieldSchema(): FormSchema {
       kind: "switch",
     },
     {
+      name: "search",
+      label: "Search",
+      kind: "switch",
+    },
+    {
       name: "orderIndex",
       label: "Order index",
       kind: "number",

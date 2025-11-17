@@ -43,6 +43,12 @@ const columns: ColumnDef<FieldModel>[] = [
     type: "boolean",
     width: 30,
   },
+  {
+    key: "search",
+    header: "Search?",
+    type: "boolean",
+    width: 30,
+  },
 ];
 
 registerTable('metadata-fields', () =>

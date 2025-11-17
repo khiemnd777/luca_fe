@@ -27,6 +27,8 @@ function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
       return "select";
     case "multiselect":
       return "multiselect";
+    case "image":
+      return "imageupload";
     default:
       return "text";
   }

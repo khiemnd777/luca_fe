@@ -64,6 +64,8 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
       return "date";
     case "boolean":
       return "boolean";
+    case "image":
+      return "image";
     default:
       return "text";
   }

@@ -28,7 +28,7 @@ export function buildMetadataImportProfileSchema(): FormSchema {
       name: "code",
       label: "Code",
       kind: "text",
-      helperText: "Internal code, lowercase, no spaces (e.g. default, vn-2025)",
+      helperText: "Internal code, lowercase, no spaces (e.g. excel.default, excel.vn-2025, csv.default,...)",
       rules: {
         required: "Code is required",
         maxLength: 100,

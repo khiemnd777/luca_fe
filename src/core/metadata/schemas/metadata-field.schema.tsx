@@ -99,7 +99,7 @@ export function buildMetadataFieldSchema(): FormSchema {
       name: "relation",
       label: "Relation (JSON)",
       kind: "textarea",
-      helperText: 'metadata cho relation: target collection, displayField, foreignKey...',
+      helperText: 'e.g. { "target":"categories", "many":true, "fk":"category_id" }',
       rows: 2,
     },
   ];

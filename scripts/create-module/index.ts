@@ -45,13 +45,13 @@ function transformContent(content: string, ctx: any): string {
   out = out.replace(/\bSample\b/g, ctx.modulePascal);
 
   // "Sample" → "Sản phẩm"
-  out = out.replace(/"Sample"/g, `"${ctx.label}"`);
+  out = out.replace(/"Label"/g, `"${ctx.label}"`);
 
   // {Sample} → "Sản phẩm"
-  out = out.replace(/\{Sample\}/g, `${ctx.label}`);
+  out = out.replace(/\{Label\}/g, `${ctx.label}`);
 
   // {sample} → "sản phẩm"
-  out = out.replace(/\{sample\}/g, `${ctx.labelLower}`);
+  out = out.replace(/\{label\}/g, `${ctx.labelLower}`);
 
   // samples → modules
   out = out.replace(/\bsamples\b/g, ctx.modulePlural);

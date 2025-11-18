@@ -1,10 +1,10 @@
 import { Box, Chip } from "@mui/material";
 import { registerSearchRenderer } from "@core/search";
 import SearchItem from "@root/core/search/search-item";
-import { Badge } from "@shared/components/ui/badge";
-import EmergencyIcon from '@mui/icons-material/Emergency';
+import CategoryIcon from '@mui/icons-material/Category';
+import { openFormDialog } from "@root/core/form/form-dialog.service";
 
-registerSearchRenderer("sample", "Label",
+registerSearchRenderer("material", "Vật tư",
   (o, { highlight }) => (
     <SearchItem
       title={highlight(o.title)}
@@ -18,9 +18,12 @@ registerSearchRenderer("sample", "Label",
           }
         </Box>
       }
-      right={<Badge badge={{ avatar: o.attributes?.["logo"] }} />}
     />
   ),
-  <EmergencyIcon color="primary" />,
-  (_) => "/sample",
+  <CategoryIcon color="primary" />,
+  (item) => {
+    openFormDialog("material", {
+      initial: { id: item.entityId }
+    });
+  },
 );

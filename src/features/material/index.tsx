@@ -1,21 +1,33 @@
-import React from "react";
-import type { ModuleDescriptor } from "@root/core/module/types";
-import { registerModule } from "@root/core/module/registry";
+import type { ModuleDescriptor } from "@core/module/types";
+import { registerModule } from "@core/module/registry";
+import OneColumnPage from "@root/core/pages/one-column-page";
 import CategoryIcon from '@mui/icons-material/Category';
-
-const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 const mod: ModuleDescriptor = {
   id: "material",
   routes: [
     {
       key: "material",
+      permissions: ["material.view"],
+      element: <OneColumnPage />,
       label: "Vật tư",
       title: "Vật tư",
       path: "/material",
-      element: <UnderConstructionPage />,
       icon: <CategoryIcon />,
       priority: 99,
+      children: [
+        {
+          key: "supplier",
+          permissions: ["supplier.view"],
+          element: <OneColumnPage />,
+          label: "Nhà cung cấp",
+          title: "Nhà cung cấp",
+          path: "/supplier",
+          icon: <LocalShippingIcon />,
+          priority: 94,
+        }
+      ]
     },
   ],
 };

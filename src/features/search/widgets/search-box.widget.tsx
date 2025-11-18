@@ -1,17 +1,13 @@
 import { registerSlot } from "@core/module/registry";
 import SearchBox from "@core/search/search-box";
-import type { SearchModel } from "@core/search/search.model";
 import { navigate } from "@core/navigation/navigate";
 import { Box } from "@mui/material";
+import type { SearchModel } from "@core/search/search.model";
 
 function SearchBoxWidget() {
-  const handleSelect = (item: SearchModel) => {
-    switch (item.entityType) {
-      case "staff":
-        navigate(`/staff/${item.entityId}`);
-        break;
-      default:
-        navigate('/');
+  const handleSelect = (_: SearchModel, href: string | void) => {
+    if (typeof href === "string" && href.trim() !== "") {
+      navigate(href);
     }
   };
 

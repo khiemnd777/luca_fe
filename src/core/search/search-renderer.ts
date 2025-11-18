@@ -12,7 +12,7 @@ export type SearchRendererEntry = {
   label: string;
   renderer: SearchRenderer;
   icon: React.ReactNode;
-  getHref: (item: SearchModel) => string;
+  getHref: (item: SearchModel) => string | void;
 };
 
 const registry = new Map<string, SearchRendererEntry>();
@@ -22,7 +22,7 @@ export function registerSearchRenderer(
   label: string,
   renderer: SearchRenderer,
   icon: React.ReactNode,
-  getHref: (item: SearchModel) => string
+  getHref: (item: SearchModel) => string | void
 ) {
   registry.set(entityType, { label, renderer, icon, getHref });
 }

@@ -11,21 +11,21 @@ function SampleWidget() {
     <>
       <SectionCard extra={
         <>
-          <IfPermission permissions={["sample.create"]}>
+          <IfPermission permissions={["supplier.create"]}>
             <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-              openFormDialog("sample");
-            }} >Thêm {Label}</Button>
+              openFormDialog("supplier");
+            }} >Thêm Nhà cung cấp</Button>
           </IfPermission>
         </>
       }>
-        <AutoTable name="samples" />
+        <AutoTable name="suppliers" />
       </SectionCard>
     </>
   );
 }
 
 registerSlot({
-  id: "sample",
-  name: "sample:left",
+  id: "supplier",
+  name: "supplier:left",
   render: () => <SampleWidget />,
 })

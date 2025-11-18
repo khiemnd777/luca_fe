@@ -234,7 +234,7 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
             <CurrencyField
               key={f.name}
               {...(common as any)}
-              value={values[f.name] ?? 0}
+              value={values[f.name]}
               onChange={(n) => setValue(f.name, n)}
               prefix="₫"
               decimalScale={0}

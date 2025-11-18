@@ -18,6 +18,8 @@ function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
       return "text";
     case "number":
       return "number";
+    case "currency":
+      return "currency";
     case "date":
       return "date";
     case "datetime":

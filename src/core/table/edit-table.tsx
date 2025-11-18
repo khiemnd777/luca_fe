@@ -24,6 +24,7 @@ import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
 import { camelToSnake } from "@shared/utils/string.utils";
 import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
+import { NumericFormat } from "react-number-format";
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -219,15 +220,15 @@ function defaultCompare(a: unknown, b: unknown) {
 
 export function EditTable<T extends { id?: string | number }>({
   rows, columns, page, pageSize, total = null, loading = false,
-  onPageChange, 
-  onPageSizeChange, 
-  onView, 
-  onEdit, 
+  onPageChange,
+  onPageSizeChange,
+  onView,
+  onEdit,
   onDelete,
-  stickyHeader = true, 
+  stickyHeader = true,
   dense = true,
-  onSortChange, 
-  sortBy: controlledSortBy, 
+  onSortChange,
+  sortBy: controlledSortBy,
   sortDirection: controlledSortDir,
   stickyTopOffset = 0,
 }: EditTableProps<T>) {
@@ -407,11 +408,29 @@ export function EditTable<T extends { id?: string | number }>({
         );
       }
 
-      case "number":
       case "date":
         return formatDate(val);
       case "datetime":
         return formatDateTime(val);
+      case "currency":
+        return (
+          <NumericFormat
+            value={String(val ?? "")}
+            displayType="text"
+            thousandSeparator={true}
+            prefix={'đ '}
+            readOnly={true}
+          />
+        );
+      case "number":
+        return (
+          <NumericFormat
+            value={String(val ?? "")}
+            displayType="text"
+            thousandSeparator={true}
+            readOnly={true}
+          />
+        );
       case "text":
       default:
         return val as any;

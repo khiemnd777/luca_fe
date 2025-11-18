@@ -59,6 +59,8 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
       return "text";
     case "number":
       return "number";
+    case "currency":
+      return "currency";
     case "date":
       return "date";
     case "datetime":

@@ -13,6 +13,7 @@ export type ImageShape = "square" | "circle";
 
 export type ColumnType = "text"
   | "number"
+  | "currency"
   | "date"
   | "datetime"
   | "color"

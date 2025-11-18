@@ -5,6 +5,8 @@ export type ImportFieldProfileModel = {
   scope: ImportProfileScope;
   code: string;
   name: string;
+  pivotField?: string;
+  permission?: string;
   description?: string | null;
   isDefault: boolean;
 };

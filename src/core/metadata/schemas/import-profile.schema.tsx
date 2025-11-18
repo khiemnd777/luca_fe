@@ -44,6 +44,24 @@ export function buildMetadataImportProfileSchema(): FormSchema {
       },
     },
     {
+      name: "pivotField",
+      label: "Pivot field",
+      kind: "text",
+      rules: {
+        required: "Pivot field is required",
+        maxLength: 30,
+      },
+    },
+    {
+      name: "permission",
+      label: "Permission",
+      kind: "text",
+      rules: {
+        maxLength: 200,
+      },
+      helperText: "Permissions can be separated by commas, for example: staff.import, staff.export.",
+    },
+    {
       name: "description",
       label: "Description",
       kind: "textarea",

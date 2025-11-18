@@ -13,11 +13,10 @@ import {
   deleteImportFieldMapping,
 } from "@core/metadata/data/import.api";
 
-// Tạm thời chưa define chi tiết columns để khỏi đoán sai cấu trúc ColumnDef
 const columns: ColumnDef<ImportFieldMappingModel>[] = [
   { key: "internalKind", header: "Kind" },
   { key: "internalPath", header: "Path" },
-  { key: "internalLabel", header: "Field" },
+  { key: "internalLabel", header: "Field", labelField: true },
   { key: "excelColumn", header: "Excel Column" },
   { key: "excelHeader", header: "Excel header" },
   { key: "dataType", header: "Type" },

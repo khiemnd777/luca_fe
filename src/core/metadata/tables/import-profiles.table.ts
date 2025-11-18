@@ -13,11 +13,12 @@ import {
   deleteImportProfile,
 } from "@core/metadata/data/import.api";
 
-// Tạm để rỗng, bạn có thể thêm columns sau cho scope/code/name/isDefault
 const columns: ColumnDef<ImportFieldProfileModel>[] = [
   { key: "scope", header: "Scope" },
   { key: "code", header: "Code" },
-  { key: "name", header: "Name" },
+  { key: "name", header: "Name", labelField: true },
+  { key: "pivotField", header: "Pivot Field" },
+  { key: "permission", header: "Permission" },
   { key: "isDefault", header: "Default", type: "boolean" },
 ];
 

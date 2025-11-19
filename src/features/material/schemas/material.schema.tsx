@@ -6,8 +6,9 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/material/api/material.api";
 import type { MaterialModel } from "@features/material/model/material.model";
-import { search as searchSupplier, tableByMaterialId } from "@root/features/supplier/api/supplier.api";
+import { search as searchSupplier } from "@root/features/supplier/api/supplier.api";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
+import { rel } from "@core/relation/relation.api";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -62,7 +63,7 @@ export function buildSampleSchema(): FormSchema {
 
       async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
         if (!ids || ids.length === 0) return [];
-        const table = await tableByMaterialId(values.id, {
+        const table = await rel("material", values.id, {
           limit: 10000,
           page: 1,
           orderBy: "name",
@@ -72,8 +73,8 @@ export function buildSampleSchema(): FormSchema {
       },
 
       async fetchList(values: Record<string, any>) {
-        const table = await tableByMaterialId(values.id, {
-          limit: 20,
+        const table = await rel("material", values.id, {
+          limit: 10000,
           page: 1,
           orderBy: "name",
         });

@@ -11,6 +11,7 @@ mapper.register<MaterialModel>({
     name: "",
     active: true,
     supplierIds: [],
+    supplierNames: "",
     customFields: null,
   }),
 });

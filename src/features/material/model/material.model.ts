@@ -4,7 +4,7 @@ export interface MaterialModel {
   name?: string | null;
   active: boolean;
   supplierIds?: number[];
-  supplierNames?: string[];
+  supplierNames?: string;
   customFields?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;

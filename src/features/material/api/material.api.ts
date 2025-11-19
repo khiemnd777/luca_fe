@@ -22,6 +22,7 @@ export async function search(opts: SearchOpts): Promise<SearchResult<MaterialMod
 
 export async function id(id: number): Promise<MaterialModel> {
   const { departmentApiPath } = useAuthStore.getState();
+  id = id === undefined ? -1 : id;
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/material/${id}`);
   const result = mapper.map<any, MaterialModel>("Material", data, "dto_to_model");
   return result;

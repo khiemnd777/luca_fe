@@ -7,13 +7,10 @@ mapper.register<MaterialModel>({
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
+    code: "",
     name: "",
-    address: "",
-    phoneNumber: "",
     active: true,
-    brief: "",
-    logo: "",
-    dentistIds: [],
+    supplierIds: [],
     customFields: null,
   }),
 });

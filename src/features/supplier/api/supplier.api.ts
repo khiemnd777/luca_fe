@@ -8,6 +8,7 @@ import type { SearchOpts, SearchResult } from "@core/types/search.types";
 
 export async function tableByMaterialId(materialId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<SupplierModel>> {
   const { departmentApiPath } = useAuthStore.getState();
+  materialId = materialId === undefined ? -1 : materialId;
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/material/${materialId}/suppliers`, tableOpts);
   const result = mapper.map<any[], ListResult<SupplierModel>>("Supplier", data, "dto_to_model");
   return result;

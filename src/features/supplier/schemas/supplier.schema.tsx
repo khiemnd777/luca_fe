@@ -4,26 +4,26 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/sample/api/sample.api";
-import type { SampleModel } from "@features/sample/model/sample.model";
+import { create, id, update } from "@features/supplier/api/supplier.api";
+import type { SupplierModel } from "@features/supplier/model/supplier.model";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "code",
-      label: "Mã {label}",
+      label: "Mã nhà cung cấp",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập mã {label}",
+        required: "Yêu cầu nhập mã nhà cung cấp",
         maxLength: 30,
       },
     },
     {
       name: "name",
-      label: "Tên {label}",
+      label: "Tên nhà cung cấp",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập tên {label}",
+        required: "Yêu cầu nhập tên nhà cung cấp",
         maxLength: 200,
       },
     },
@@ -32,7 +32,7 @@ export function buildSampleSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "sample",
+        collection: "supplier",
         mode: "whole",
       }
     },
@@ -45,14 +45,14 @@ export function buildSampleSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as SampleModel);
+          await create(values as SupplierModel);
           return values;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as SampleModel);
+          await update(values as SupplierModel);
           return values;
         },
       },
@@ -61,12 +61,12 @@ export function buildSampleSchema(): FormSchema {
     toasts: {
       saved: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo {label} "${values?.name ?? ""}" thành công!`
-          : `Cập nhật {label} "${values?.name ?? ""}" thành công!`,
+          ? `Tạo nhà cung cấp "${values?.name ?? ""}" thành công!`
+          : `Cập nhật nhà cung cấp "${values?.name ?? ""}" thành công!`,
       failed: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo {label} "${values?.name ?? ""}" thất bại, xin thử lại!`
-          : `Cập nhật {label} "${values?.name ?? ""}" thất bại, xin thử lại!`,
+          ? `Tạo nhà cung cấp "${values?.name ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật nhà cung cấp "${values?.name ?? ""}" thất bại, xin thử lại!`,
     },
 
     async initialResolver(data: any) {
@@ -77,19 +77,19 @@ export function buildSampleSchema(): FormSchema {
     },
 
     async afterSaved() {
-      reloadTable("samples");
+      reloadTable("suppliers");
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Sample", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Supplier", v, "model_to_dto"),
     },
   };
 }
 
-registerForm("sample", buildSampleSchema);
+registerForm("supplier", buildSampleSchema);
 
-registerFormDialog("sample", buildSampleSchema, {
-  title: { create: "Thêm {label}", update: "Cập nhật {label}" },
+registerFormDialog("supplier", buildSampleSchema, {
+  title: { create: "Thêm nhà cung cấp", update: "Cập nhật nhà cung cấp" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",
 });

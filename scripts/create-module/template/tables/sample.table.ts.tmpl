@@ -6,7 +6,8 @@ import type { SampleModel } from "@features/sample/model/sample.model";
 import { table, unlink } from "@features/sample/api/sample.api";
 
 const columns: ColumnDef<SampleModel>[] = [
-  { key: "code", header: "Mã {Sample}", sortable: true, labelField: true },
+  { key: "code", header: "Mã {label}", sortable: true, },
+  { key: "name", header: "Tên {label}", sortable: true, labelField: true },
   {
     key: "",
     type: "metadata",

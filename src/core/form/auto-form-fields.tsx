@@ -242,6 +242,21 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
             />
           );
         }
+        
+        // CURRENCY EQUATION
+        if (f.kind === "currency-equation") {
+          return (
+            <CurrencyField
+              key={f.name}
+              {...(common as any)}
+              value={values[f.name]}
+              onChange={(n) => setValue(f.name, n)}
+              prefix="₫"
+              decimalScale={0}
+              inputProps={{ inputMode: "decimal" }}
+            />
+          );
+        }
 
         // NUMBER
         if (f.kind === "number") {
@@ -251,15 +266,15 @@ export function AutoFormFields({ schema, values, setValue, errors, gap = 2 }: Pr
               key={f.name}
               {...common}
               type="number"
-              value={raw ?? 0}
+              value={raw}
               onChange={(e) => {
                 const v = e.target.value;
                 if (v === "" || v === null) {
-                  setValue(f.name, 0);
+                  setValue(f.name, null);
                   return;
                 }
                 const n = Number(v);
-                setValue(f.name, Number.isFinite(n) ? n : 0);
+                setValue(f.name, Number.isFinite(n) ? n : null);
               }}
               inputProps={{
                 inputMode: "decimal",

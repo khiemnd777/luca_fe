@@ -350,13 +350,40 @@ export function EditTable<T extends { id?: string | number }>({
       }
 
       case "chips": {
-        // Hỗ trợ: string[] | number[] | string | number | { color?: string; text: string } | Array<...>
-        const toItems = (v: any): Array<string | { color?: string; text: string }> => {
+        // Hỗ trợ:
+        // - string[] 
+        // - number[]
+        // - string (có thể dạng "a,b,c" hoặc "a|b|c")
+        // - number
+        // - object { color?: string; text: string }
+        // - array mix
+        const toItems = (
+          v: any
+        ): Array<string | { color?: string; text: string }> => {
           if (Array.isArray(v)) return v as any[];
+
           if (v == null) return [];
-          if (typeof v === "object" && "text" in v) return [v as any];
+
+          // object dạng { text, color }
+          if (typeof v === "object" && "text" in v) return [v];
+
+          // string: hỗ trợ tách bằng "," hoặc "|"
+          if (typeof v === "string") {
+            // Trim và split theo , hoặc |
+            const parts = v
+              .split(/[,|]/g)
+              .map((s) => s.trim())
+              .filter(Boolean); // loại bỏ rỗng
+            return parts;
+          }
+
+          // number → convert to string
+          if (typeof v === "number") return [String(v)];
+
+          // fallback
           return [String(v)];
         };
+
         const items = toItems(val);
 
         return (
@@ -365,9 +392,11 @@ export function EditTable<T extends { id?: string | number }>({
               if (typeof it === "string") {
                 return <Chip key={idx} size="small" label={it} />;
               }
+
               // { color?: string; text: string }
               const bg = it.color ?? "";
               const fg = bg ? getContrastText(bg) : undefined;
+
               return (
                 <Chip
                   key={idx}
@@ -386,6 +415,7 @@ export function EditTable<T extends { id?: string | number }>({
           </Stack>
         );
       }
+
 
       case "qr": {
         const s = col.qr?.size ?? 64;

@@ -136,7 +136,6 @@ export function buildMetadataFieldSchema(): FormSchema {
     },
 
     async initialResolver(data: any) {
-      console.log(data);
       if (data) {
         return data;
       }

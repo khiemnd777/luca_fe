@@ -86,8 +86,10 @@ export default function SearchBox({
         const entry =
           getSearchRenderer(val.entityType) ||
           getSearchRenderer("__default__");
-        const href = entry?.getHref?.(val) ?? "";
-        onSelect?.(val, href);
+        const href = entry?.getHref?.(val);
+        if (typeof href === "string" && href.trim() !== "") {
+          onSelect?.(val, href);
+        }
       }}
       renderOption={(props, option) => {
         const entry =

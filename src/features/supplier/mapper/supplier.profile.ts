@@ -1,8 +1,8 @@
 import { mapper } from "@root/core/mapper/auto-mapper";
-import type { SampleModel } from "@features/sample/model/sample.model";
+import type { SupplierModel } from "@features/supplier/model/supplier.model";
 
-mapper.register<SampleModel>({
-  name: "Sample",
+mapper.register<SupplierModel>({
+  name: "Supplier",
   dtoToModelNaming: "snake_to_camel",
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({

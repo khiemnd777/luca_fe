@@ -1,4 +1,4 @@
-export interface SampleModel {
+export interface SupplierModel {
   id: number;
   code: string;
   name?: string | null;

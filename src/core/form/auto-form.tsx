@@ -20,6 +20,8 @@ function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
       return "number";
     case "currency":
       return "currency";
+    case "currency_equation":
+      return "currency-equation";
     case "date":
       return "date";
     case "datetime":
@@ -68,10 +70,26 @@ async function expandMetadataFields(schemaFields: FieldDef[]): Promise<FieldDef[
     if (!fieldsToUse) continue;
 
     for (const mf of fieldsToUse) {
+      const kind = mapMetadataFieldTypeToFieldKind(mf.type);
+      if (kind === "currency-equation") {
+        const rawExpr = mf.defaultValue ?? "";
+        const camelExpr = snakeToCamel(rawExpr);
+
+        result.push({
+          name: `customFields.${mf.name}`,
+          label: mf.label ?? mf.name,
+          kind: "currency-equation",
+          fullWidth: true,
+          currencyEquation: camelExpr,
+          rules: undefined,
+        });
+
+        continue;
+      }
       result.push({
         name: `customFields.${mf.name}`,
         label: mf.label ?? mf.name,
-        kind: mapMetadataFieldTypeToFieldKind(mf.type),
+        kind,
         fullWidth: true,
         rules: mf.required ? { required: true } : undefined,
       });

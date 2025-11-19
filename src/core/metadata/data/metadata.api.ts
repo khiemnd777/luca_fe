@@ -50,6 +50,7 @@ export async function getCollection(
       params: { withFields, table, form },
     }
   );
+  
   return res.data;
 }
 
@@ -68,7 +69,8 @@ export async function getAvailableCollection(
       cacheTags: [`metadata:collection:${idOrSlug}`],
     }
   );
-  return res.data;
+  const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");
+  return result;
 }
 
 export type CreateCollectionInput = {

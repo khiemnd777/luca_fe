@@ -2,6 +2,7 @@ import * as React from "react";
 import type { FieldDef, FieldRules, AutoFormOptions, PasswordRules } from "@core/form/types";
 import { snakeToCamel } from "@shared/utils/string.utils";
 import dayjs from "dayjs";
+import { extractVars } from "@shared/utils/equation.utils";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -225,7 +226,7 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
         v = Array.isArray(v) ? v : [];
         break;
       }
-      case "date":{
+      case "date": {
         if (v == null || v === "") v = "";
         else {
           const d = new Date(v);
@@ -327,17 +328,17 @@ export function useAutoForm(
 
   const { base: initBase, extras: initExtras } = React.useMemo(() => computeInit(), [computeInit]);
 
-  const [formValues, setFormValues] = React.useState<Record<string, any>>(initBase); // only schema keys
-  const extrasRef = React.useRef<Record<string, any>>(initExtras);                   // non-schema keys
-  const [extrasTick, setExtrasTick] = React.useState(0); // trigger rerender when extras change
+  const [formValues, setFormValues] = React.useState<Record<string, any>>(initBase);
+  const extrasRef = React.useRef<Record<string, any>>(initExtras);
+  const [extrasTick, setExtrasTick] = React.useState(0);
 
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const [validating, setValidating] = React.useState<Record<string, boolean>>({});
 
-  // ✅ track fields user edited (for derive.mode = "untilManual")
+  // track fields manually edited
   const manualEditedRef = React.useRef<Set<string>>(new Set());
 
-  // hydrate on initial/schema change
+  // hydrate
   React.useEffect(() => {
     if (!hydrateOnInitialChange) return;
     const { base, extras } = computeInit();
@@ -346,10 +347,10 @@ export function useAutoForm(
     setExtrasTick((t) => t + 1);
     setErrors({});
     setValidating({});
-    manualEditedRef.current.clear(); // reset manual flags on hydrate
+    manualEditedRef.current.clear();
   }, [computeInit, hydrateOnInitialChange]);
 
-  // public setters
+  // setters
   const setValue = React.useCallback((name: string, v: any, meta?: { user?: boolean }) => {
     if (schemaNames.has(name)) {
       setFormValues((s) => ({ ...s, [name]: v }));
@@ -372,20 +373,20 @@ export function useAutoForm(
     setFormValues(base);
     extrasRef.current = extras;
     setExtrasTick((t) => t + 1);
-    // KHÔNG đánh dấu manual
   }, [schemaNames]);
 
   const setFieldError = React.useCallback((name: string, msg: string | null) => {
     setErrors((e) => ({ ...e, [name]: msg }));
   }, []);
 
-  // values = extras + formValues (memoized)
   const values = React.useMemo(
     () => ({ ...extrasRef.current, ...formValues }),
     [formValues, extrasTick]
   );
 
-  // ✅ DERIVE ENGINE
+  // ==========================================
+  // DERIVE ENGINE
+  // ==========================================
   React.useEffect(() => {
     if (deriveRules.size === 0) return;
 
@@ -401,14 +402,12 @@ export function useAutoForm(
         const srcVal = prev[source];
         const curVal = prev[target];
 
-        // quyết định có ghi đè?
         let shouldWrite = false;
         if (mode === "always") {
           shouldWrite = true;
         } else if (mode === "whenEmpty") {
           shouldWrite = curVal == null || curVal === "";
         } else {
-          // untilManual
           shouldWrite = !manualEditedRef.current.has(target);
         }
 
@@ -423,9 +422,49 @@ export function useAutoForm(
 
       return next;
     });
-  }, [deriveRules, values]); // re-run khi values đổi (nguồn thay đổi)
+  }, [deriveRules, values]);
 
-  // ---- validations (schema fields only)
+  // ==========================================
+  // EQUATION ENGINE
+  // ==========================================
+  React.useEffect(() => {
+    const eqFields = schema.filter((f) => f.kind === "currency-equation" && f.currencyEquation);
+    if (eqFields.length === 0) return;
+
+    setFormValues((prev) => {
+      let next = prev;
+
+      for (const f of eqFields) {
+        const expr = f.currencyEquation!;
+        try {
+          const vars = extractVars(expr);
+
+          const argValues = vars.map((name) => {
+            if (name in values) return values[name];
+            const cf = `customFields.${name}`;
+            return values[cf];
+          });
+
+          const fn = new Function(...vars, `return (${expr});`);
+          let result = fn(...argValues);
+
+          if (result == null || Number.isNaN(result)) result = 0;
+
+          if (prev[f.name] !== result) {
+            if (next === prev) next = { ...prev };
+            next[f.name] = result;
+          }
+        } catch (e) {
+          console.error("EQUATION ERROR:", e);
+        }
+      }
+
+      return next;
+    });
+  }, [schema, values]);
+  // ==========================================
+
+  // validations
   const validate = React.useCallback(() => {
     const err: Record<string, string | null> = {};
     for (const f of schema) {
@@ -515,7 +554,7 @@ export function useAutoForm(
 
   return {
     values,
-    setValue,              // <-- nhận meta { user?: true } để chặn derive untilManual
+    setValue,
     setAllValues,
     errors,
     setErrors,

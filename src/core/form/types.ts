@@ -9,6 +9,7 @@ export type FieldKind =
   | "datetime"
   | "color"
   | "currency"
+  | "currency-equation"
   | "select"
   | "checkbox"
   | "switch"
@@ -158,6 +159,9 @@ export type FieldDef = {
   refreshKey?: any;                                              // trigger refetch list hiện có
   autoLoadAllOnMount?: boolean;                                  // rỗng → load ALL ngay từ mount (default false)
   pageLimit?: number;
+
+  // equation
+  currencyEquation?: string; // price_original * vat
 };
 
 export type AutoFormOptions = {

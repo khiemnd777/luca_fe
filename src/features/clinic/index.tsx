@@ -8,6 +8,7 @@ const mod: ModuleDescriptor = {
   id: "clinic",
   routes: [
     {
+      hidden: true,
       key: "clinic",
       permissions: ["clinic.view"],
       element: <OneColumnPage />,

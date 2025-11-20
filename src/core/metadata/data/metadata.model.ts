@@ -16,6 +16,7 @@ export type FieldType =
   | "select"
   | "multiselect"
   | "image"
+  | "email"
   | "currency"
   | "currency_equation"
   | "relation"
@@ -31,6 +32,7 @@ export const FIELD_TYPES: FieldType[] = [
   "select",
   "multiselect",
   "image",
+  "email",
   "currency",
   "currency_equation",
   "relation",

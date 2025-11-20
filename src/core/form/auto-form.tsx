@@ -9,13 +9,17 @@ import type { FieldDef, FieldKind } from "@core/form/types";
 import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import type { FieldModel } from "@core/metadata/data/metadata.model";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
+import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 
 // metadata
 function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
   switch (t) {
     case "text":
-    case "textarea":
       return "text";
+    case "textarea":
+      return "textarea";
+    case "email":
+      return "email";
     case "number":
       return "number";
     case "currency":
@@ -76,12 +80,29 @@ async function expandMetadataFields(schemaFields: FieldDef[]): Promise<FieldDef[
         const camelExpr = snakeToCamel(rawExpr);
 
         result.push({
+          kind: "currency-equation",
           name: `customFields.${mf.name}`,
           label: mf.label ?? mf.name,
-          kind: "currency-equation",
           fullWidth: true,
           currencyEquation: camelExpr,
           rules: undefined,
+        });
+
+        continue;
+      }
+      if (kind === "select") {
+        const rawExpr = mf.options ?? "[]";
+        let dfv = [];
+
+        if (isJSON(rawExpr)) {
+          dfv = parseJSON(rawExpr);
+        }
+        result.push({
+          kind: "select",
+          name: `customFields.${mf.name}`,
+          label: mf.label ?? mf.name,
+          fullWidth: true,
+          options: dfv,
         });
 
         continue;

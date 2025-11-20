@@ -486,7 +486,7 @@ export function EditTable<T extends { id?: string | number }>({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Actions
+                  <span></span>
                 </TableCell>
               )}
 

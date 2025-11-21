@@ -50,8 +50,10 @@ export async function getCollection(
       params: { withFields, table, form },
     }
   );
+
+  const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");
   
-  return res.data;
+  return result;
 }
 
 export async function getAvailableCollection(
@@ -59,9 +61,12 @@ export async function getAvailableCollection(
   withFields = true,
   table = false,
   form = false,
+  entityData?: any,
 ): Promise<CollectionWithFieldsModel> {
-  const res = await apiClient.get<CollectionWithFieldsModel>(
-    `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`,
+  const res = await apiClient.post<CollectionWithFieldsModel>(
+    `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`, {
+      ...entityData
+    },
     {
       params: { withFields, table, form },
       cacheMode: "cache-first",

@@ -34,6 +34,13 @@ export function buildMetadataCollectionSchema(): FormSchema {
         maxLength: 200,
       },
     },
+    {
+      name: "showIf",
+      label: "Show if (JSON)",
+      kind: "textarea",
+      helperText: 'e.g. { "field": "products.customFields.productCode", "op": "equals", "value": "ABC123" }',
+      rows: 2,
+    },
   ];
 
   return {

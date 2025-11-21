@@ -143,6 +143,7 @@ export type FieldDef = {
     mode?: "whole" | "partial";
     fields?: string[];
     ignoreFields?: string[];
+    showIfFields?: string[];
   };
 
   // UI render item (không chứa nút delete)

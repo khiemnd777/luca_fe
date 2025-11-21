@@ -52,7 +52,7 @@ export async function getCollection(
   );
 
   const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");
-  
+
   return result;
 }
 
@@ -62,15 +62,32 @@ export async function getAvailableCollection(
   table = false,
   form = false,
   entityData?: any,
+  changedParams?: {
+    field: string;
+    value: any;
+  }[],
 ): Promise<CollectionWithFieldsModel> {
-  const res = await apiClient.post<CollectionWithFieldsModel>(
+  let cacheKey = `metadata:collection:${idOrSlug}`;
+
+  if (changedParams?.length) {
+    const suffix = changedParams
+      .slice()
+      .sort((a, b) => a.field.localeCompare(b.field))
+      .map(p => `${p.field}=${String(p.value)}`)
+      .join("&");
+
+    cacheKey += `:cp:${suffix}`;
+  }
+
+  const res = await apiClient.getAsPost<CollectionWithFieldsModel>(
     `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`, {
-      ...entityData
-    },
+    ...entityData
+  },
     {
       params: { withFields, table, form },
       cacheMode: "cache-first",
       cacheTTL: 6.048e+8, // ~7d
+      cacheKey,
       cacheTags: [`metadata:collection:${idOrSlug}`],
     }
   );

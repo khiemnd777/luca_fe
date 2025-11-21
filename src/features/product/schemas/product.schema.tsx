@@ -40,6 +40,24 @@ export function buildSampleSchema(): FormSchema {
       }
     },
     {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-a",
+        mode: "whole",
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-b",
+        mode: "whole",
+      }
+    },
+    {
       name: "processIds",
       label: "Công đoạn",
       kind: "searchlist",

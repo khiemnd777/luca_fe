@@ -1,132 +1,147 @@
 import * as React from "react";
 import { Stack } from "@mui/material";
+import toast from "react-hot-toast";
+
 import { AutoFormFields } from "@core/form/auto-form-fields";
 import { useAutoForm } from "@core/form/use-auto-form";
-import type { AutoFormRef, AutoFormProps, SubmitDef, FormSchema, FormMode, ModeText } from "@core/form/form.types";
-import { getFormSchema } from "@core/form/form-registry";
-import toast from "react-hot-toast";
+
+import type {
+  AutoFormRef,
+  AutoFormProps,
+  SubmitDef,
+  FormSchema,
+  FormMode,
+  ModeText,
+} from "@core/form/form.types";
+
 import type { FieldDef, FieldKind } from "@core/form/types";
-import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import type { FieldModel } from "@core/metadata/data/metadata.model";
+
+import { getFormSchema } from "@core/form/form-registry";
+import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
+import { parseShowIfDependencies } from "@root/shared/metadata/utils";
 
-// metadata
+/* ========================================================================
+   MAP FIELD TYPE
+   ======================================================================== */
 function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
   switch (t) {
-    case "text":
-      return "text";
-    case "textarea":
-      return "textarea";
-    case "email":
-      return "email";
-    case "number":
-      return "number";
-    case "currency":
-      return "currency";
-    case "currency_equation":
-      return "currency-equation";
-    case "date":
-      return "date";
-    case "datetime":
-      return "datetime";
-    case "boolean":
-      return "switch";
-    case "select":
-      return "select";
-    case "multiselect":
-      return "multiselect";
-    case "image":
-      return "imageupload";
-    default:
-      return "text";
+    case "text": return "text";
+    case "textarea": return "textarea";
+    case "email": return "email";
+    case "number": return "number";
+    case "currency": return "currency";
+    case "currency_equation": return "currency-equation";
+    case "date": return "date";
+    case "datetime": return "datetime";
+    case "boolean": return "switch";
+    case "select": return "select";
+    case "multiselect": return "multiselect";
+    case "image": return "imageupload";
+    default: return "text";
   }
 }
 
-async function expandMetadataFields(schemaFields: FieldDef[]): Promise<FieldDef[]> {
-  const result: FieldDef[] = [];
+/* ========================================================================
+   EXPAND ONE METADATA BLOCK
+   ======================================================================== */
+async function expandOneMetadataBlock(
+  metaField: FieldDef,
+  values: any,
+  changedDeps: string[],
+): Promise<{ fields: FieldDef[]; deps: string[] }> {
+  const { collection, mode = "whole", fields, ignoreFields } = metaField.metadata!;
+  const params = changedDeps.map((dep) => ({
+    field: dep,
+    value: values[dep],
+  }));
 
-  for (const f of schemaFields) {
-    if (f.kind !== "metadata" || !f.metadata) {
-      result.push(f);
+  const coll = await getAvailableCollection(
+    collection,
+    true,
+    false,
+    true,
+    values,
+    params,
+  );
+
+  if (!coll) return { fields: [], deps: [] };
+
+  // parse showIf deps
+  let deps: string[] = [];
+  if (coll.showIf && isJSON(coll.showIf)) {
+    deps = parseShowIfDependencies(coll.showIf);
+  }
+
+  let fieldsToUse: FieldModel[] | undefined = coll.fields;
+  fieldsToUse = fieldsToUse?.map((mf) => ({
+    ...mf,
+    name: snakeToCamel(mf.name),
+  }));
+
+  const camelIgnores = ignoreFields?.map(snakeToCamel);
+
+  if (mode === "partial" && fields?.length) {
+    fieldsToUse = fieldsToUse?.filter((mf) => fields.includes(mf.name));
+  }
+
+  if (mode === "whole" && camelIgnores?.length) {
+    fieldsToUse = fieldsToUse?.filter((mf) => !camelIgnores.includes(mf.name));
+  }
+
+  const out: FieldDef[] = [];
+
+  for (const mf of fieldsToUse ?? []) {
+    const kind = mapMetadataFieldTypeToFieldKind(mf.type);
+
+    if (kind === "currency-equation") {
+      out.push({
+        kind: "currency-equation",
+        name: `customFields.${mf.name}`,
+        label: mf.label ?? mf.name,
+        currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
+        fullWidth: true,
+      });
       continue;
     }
 
-    const { collection, mode = "whole", fields, ignoreFields } = f.metadata;
-    const coll = await getAvailableCollection(collection, true, false, true);
-
-    let fieldsToUse: FieldModel[] | undefined = coll.fields;
-    fieldsToUse = fieldsToUse?.map((f) => ({
-      ...f,
-      name: snakeToCamel(f.name)
-    }));
-
-    const camelIgnores = ignoreFields?.map(snakeToCamel);
-
-    if (mode === "partial" && fields?.length) {
-      fieldsToUse = coll.fields?.filter((mf) => fields.includes(mf.name));
-    }
-
-    if (mode === "whole" && camelIgnores?.length) {
-      fieldsToUse = fieldsToUse?.filter(mf => !camelIgnores.includes(mf.name));
-    }
-
-    if (!fieldsToUse) continue;
-
-    for (const mf of fieldsToUse) {
-      const kind = mapMetadataFieldTypeToFieldKind(mf.type);
-      if (kind === "currency-equation") {
-        const rawExpr = mf.defaultValue ?? "";
-        const camelExpr = snakeToCamel(rawExpr);
-
-        result.push({
-          kind: "currency-equation",
-          name: `customFields.${mf.name}`,
-          label: mf.label ?? mf.name,
-          fullWidth: true,
-          currencyEquation: camelExpr,
-          rules: undefined,
-        });
-
-        continue;
-      }
-      if (kind === "select") {
-        const rawExpr = mf.options ?? "[]";
-        let dfv = [];
-
-        if (isJSON(rawExpr)) {
-          dfv = parseJSON(rawExpr);
-        }
-        result.push({
-          kind: "select",
-          name: `customFields.${mf.name}`,
-          label: mf.label ?? mf.name,
-          fullWidth: true,
-          options: dfv,
-        });
-
-        continue;
-      }
-      result.push({
+    if (kind === "select") {
+      const opts = isJSON(mf.options ?? "") ? parseJSON(mf.options ?? "[]") : [];
+      out.push({
+        kind: "select",
         name: `customFields.${mf.name}`,
         label: mf.label ?? mf.name,
-        kind,
+        options: opts,
         fullWidth: true,
-        rules: mf.required ? { required: true } : undefined,
       });
+      continue;
     }
+
+    out.push({
+      kind,
+      name: `customFields.${mf.name}`,
+      label: mf.label ?? mf.name,
+      fullWidth: true,
+      rules: mf.required ? { required: true } : undefined,
+    });
   }
 
-  return result;
+  return { fields: out, deps };
 }
 
+/* ========================================================================
+   HELPERS
+   ======================================================================== */
 const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
 
 function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   const idField = schema.idField ?? "id";
   if (schema.modeResolver) return schema.modeResolver(initialVals ?? {});
   const id = initialVals?.[idField];
-  return id !== null && id !== undefined && id !== "" ? "update" : "create";
+  return id ? "update" : "create";
 }
 
 function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
@@ -135,7 +150,10 @@ function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
   return schema.submit as SubmitDef;
 }
 
-function renderModeText(t?: ModeText, ctx?: { mode: FormMode; values: any; result?: any }): string | undefined {
+function renderModeText(
+  t?: ModeText,
+  ctx?: { mode: FormMode; values: any; result?: any }
+): string | undefined {
   if (!t) return undefined;
   if (typeof t === "string") return t;
   if (typeof t === "function") return t(ctx!);
@@ -146,50 +164,58 @@ function normalizeCustomFieldsPayload(input: any): any {
   if (!input || typeof input !== "object") return input;
 
   const dto: Record<string, any> = { ...input };
-  const custom: Record<string, any> = dto.custom_fields && typeof dto.custom_fields === "object"
-    ? { ...dto.custom_fields }
-    : {};
+  const custom: any =
+    dto.custom_fields && typeof dto.custom_fields === "object"
+      ? { ...dto.custom_fields }
+      : {};
 
-  for (const [key, value] of Object.entries(dto)) {
-    if (key.startsWith("custom_fields.")) {
-      const fieldName = key.substring("custom_fields.".length);
-      custom[fieldName] = value;
-      delete dto[key];
+  for (const [k, v] of Object.entries(dto)) {
+    if (k.startsWith("custom_fields.")) {
+      const name = k.substring("custom_fields.".length);
+      custom[name] = v;
+      delete dto[k];
     }
   }
 
-  if (Object.keys(custom).length > 0) {
-    dto.custom_fields = custom;
-  }
-
+  if (Object.keys(custom).length > 0) dto.custom_fields = custom;
   return dto;
 }
 
-async function runSubmit(def: SubmitDef, values: Record<string, any>) {
+async function runSubmit(def: SubmitDef, values: any) {
   values = normalizeCustomFieldsPayload(values);
 
-  if (def.type === "fn") {
-    return def.run(values);
-  }
+  if (def.type === "fn") return def.run(values);
 
   const method = def.method ?? "PATCH";
   const fetcher = def.fetcher ?? defaultFetcher;
+
   let payload = def.transform ? def.transform(values) : values;
   payload = normalizeCustomFieldsPayload(payload);
+
   const res = await fetcher(def.url, {
     method,
-    headers: { "Content-Type": "application/json", ...(def.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(def.headers ?? {}),
+    },
     body: JSON.stringify(payload),
   });
+
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try { const j = await res.json(); msg = j?.message || msg; } catch { }
+    try {
+      const json = await res.json();
+      msg = json?.message || msg;
+    } catch { }
     throw new Error(msg);
   }
-  const data = await res.json().catch(() => null);
-  return def.parseResponse ? def.parseResponse(data) : data;
+
+  return res.json().catch(() => null);
 }
 
+/* ========================================================================
+   AUTOFORM FINAL
+   ======================================================================== */
 type Props = AutoFormProps & {
   name?: string;
   notifier?: typeof toast;
@@ -199,82 +225,203 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
   ({ name, schema: schemaProp, initial, onSaved, notifier }, ref) => {
     const toasts = notifier ?? toast;
 
+    /* LOAD SCHEMA */
     const schema = React.useMemo(() => {
       if (schemaProp) return schemaProp;
       if (name) return getFormSchema(name);
-      return null as any;
+      return null;
     }, [schemaProp, name]);
 
-    if (!schema) {
-      return <div>Schema {name ? `"${name}"` : ""} chưa được đăng ký.</div>;
-    }
+    if (!schema) return <div>Schema {name} chưa đăng ký.</div>;
 
-    const [resolvedInitial, setResolvedInitial] = React.useState<Record<string, any> | null>(
-      initial ?? null
-    );
-
+    /* RESOLVE INITIAL */
+    const [resolvedInitial, setResolvedInitial] = React.useState(initial ?? {});
     const [resolvingInitial, setResolvingInitial] = React.useState(false);
 
     React.useEffect(() => {
       let cancelled = false;
-      async function load() {
+
+      (async () => {
         setResolvingInitial(true);
         try {
           const resolved = schema.initialResolver
-            ? await Promise.resolve(schema.initialResolver(initial))
+            ? await schema.initialResolver(initial)
             : initial;
 
           const finalInitial =
             initial && resolved && typeof initial === "object" && typeof resolved === "object"
               ? { ...initial, ...resolved }
-              : (resolved ?? initial ?? {});
+              : resolved ?? initial ?? {};
 
           if (!cancelled) setResolvedInitial(finalInitial);
         } finally {
           if (!cancelled) setResolvingInitial(false);
         }
-      }
-      load();
+      })();
+
       return () => { cancelled = true; };
     }, [initial, schema]);
 
-    const stableInitial = React.useMemo(() => resolvedInitial ?? {}, [resolvedInitial]);
+    const stableInitial = resolvedInitial ?? {};
 
-    // metadata
-    const [expandedFields, setExpandedFields] = React.useState<FieldDef[]>(schema.fields);
+    /* METADATA BLOCKS – PERSISTENT */
+    const metadataBlocksRef = React.useRef<
+      { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]
+    >([]);
+
+    if (metadataBlocksRef.current.length === 0) {
+      metadataBlocksRef.current = schema.fields
+        .filter((f) => f.kind === "metadata")
+        .map((meta) => ({
+          meta,
+          fields: [],
+          deps: [],
+        }));
+    }
+
+    const metadataBlocks = metadataBlocksRef.current;
+
+    /* NON-METADATA FIELDS */
+    const baseFields = React.useMemo(
+      () => schema.fields.filter((f) => f.kind !== "metadata"),
+      [schema.fields]
+    );
+
+    /* MAIN FORM STATE */
+    const {
+      values,
+      setValue,
+      setAllValues,
+      errors,
+      setErrors,
+      validateAll,
+    } = useAutoForm(baseFields, stableInitial, {
+      asyncValidate: schema.hooks?.asyncValidate,
+    });
+
+    /* SHOW-IF HASH */
+    const allDepsRef = React.useRef<string[]>([]);
+    const lastDepValuesRef = React.useRef<Record<string, any>>({});
+
+    const showIfHash = React.useMemo(() => {
+      const o: any = {};
+      for (const d of allDepsRef.current) o[d] = values[d];
+      return JSON.stringify(o);
+    }, [values]);
+
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+    /* INITIAL EXPAND */
     React.useEffect(() => {
+      if (resolvingInitial) return;
       let cancelled = false;
-      async function load() {
-        try {
-          const expanded = await expandMetadataFields(schema.fields as FieldDef[]);
-          if (!cancelled) setExpandedFields(expanded);
-        } catch (e) {
-          // Nếu lỗi, fallback schema gốc cho an toàn
-          if (!cancelled) setExpandedFields(schema.fields as FieldDef[]);
-        }
+
+      (async () => {
+        const results = await Promise.all(
+          metadataBlocks.map((b) => expandOneMetadataBlock(b.meta, values, []))
+        );
+
+        if (cancelled) return;
+
+        results.forEach((res, i) => {
+          metadataBlocks[i].fields = res.fields;
+          metadataBlocks[i].deps = res.deps;
+        });
+
+        allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
+
+        forceUpdate();
+      })();
+
+      return () => { cancelled = true; };
+    }, [resolvingInitial]);
+
+    /* HARD ISOLATE RELOAD */
+    React.useEffect(() => {
+      if (resolvingInitial) return;
+
+      const changedDeps: string[] = [];
+
+      // detect which field changed
+      for (const dep of allDepsRef.current) {
+        const prev = lastDepValuesRef.current[dep];
+        const now = values[dep];
+        if (prev !== now) changedDeps.push(dep);
       }
-      load();
+
+      // update snapshot
+      for (const dep of allDepsRef.current) {
+        lastDepValuesRef.current[dep] = values[dep];
+      }
+
+      if (changedDeps.length === 0) return;
+
+      // find blocks impacted by changedDeps
+      const reloadList = metadataBlocks
+        .map((b, i) => ({ b, i }))
+        .filter(({ b }) => b.deps.some((d) => changedDeps.includes(d)));
+
+      if (reloadList.length === 0) return;
+
+      let cancelled = false;
+
+      (async () => {
+        const results = await Promise.all(
+          reloadList.map(({ b }) =>
+            expandOneMetadataBlock(b.meta, values, changedDeps) // ⬅ đây
+          )
+        );
+
+        if (cancelled) return;
+
+        results.forEach((res, idx) => {
+          const actual = reloadList[idx].i;
+          metadataBlocks[actual].fields = res.fields;
+          metadataBlocks[actual].deps = res.deps;
+        });
+
+        allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
+
+        forceUpdate();
+      })();
+
       return () => {
         cancelled = true;
       };
-    }, [schema.fields]);
+    }, [showIfHash]);
 
-    // 3) Form state
-    const { values, setValue, setAllValues, errors, setErrors, validateAll } = useAutoForm(
-      expandedFields,
-      stableInitial,
-      { asyncValidate: schema.hooks?.asyncValidate }
-    );
 
-    const [_, setSaving] = React.useState(false);
+    /* FINAL FIELDS*/
+    const finalFields: FieldDef[] = [];
+
+    const metadataMap = new Map<FieldDef, FieldDef[]>();
+    metadataBlocksRef.current.forEach((b) => {
+      metadataMap.set(b.meta, b.fields);
+    });
+
+    for (const f of schema.fields) {
+      if (f.kind === "metadata") {
+        const fields = metadataMap.get(f) ?? [];
+        finalFields.push(...fields);
+      } else {
+        finalFields.push(f);
+      }
+    }
+
+    /* SUBMIT */
+    const [, setSaving] = React.useState(false);
 
     const doSubmit = React.useCallback(async () => {
       const ok = await validateAll();
       if (!ok) return false;
+
       setSaving(true);
-      const initialVals = stableInitial;
-      const dto = schema.hooks?.mapToDto ? schema.hooks.mapToDto(values) : values;
-      const mode = resolveMode(schema, initialVals);
+
+      const dto = schema.hooks?.mapToDto
+        ? schema.hooks.mapToDto(values)
+        : values;
+
+      const mode = resolveMode(schema, stableInitial);
 
       try {
         const submitDef = pickSubmit(schema, mode);
@@ -285,43 +432,47 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           if (uiVals && typeof uiVals === "object") setAllValues(uiVals);
         }
 
-        const savedMsg = renderModeText(schema.toasts?.saved, { mode, values, result }) ?? "Đã lưu thành công";
-        toasts?.success?.(savedMsg);
+        toasts.success(
+          renderModeText(schema.toasts?.saved, {
+            mode,
+            values,
+            result,
+          }) ?? "Đã lưu thành công"
+        );
 
-        await Promise.resolve(onSaved?.(result));
-        if (schema.afterSaved) await Promise.resolve(schema.afterSaved(result));
+        if (onSaved) await onSaved(result);
+        if (schema.afterSaved) await schema.afterSaved(result);
 
         return true;
       } catch (e: any) {
-        const failedMsg =
-          renderModeText(schema.toasts?.failed, { mode, values, result: undefined }) ??
-          (e?.message || "Lưu thất bại");
-        toasts?.error?.(failedMsg);
-        setErrors((prev) => ({ ...prev, _form: e?.message ?? "" }));
+        toasts.error(e?.message ?? "Lỗi");
+        setErrors((prev) => ({ ...prev, _form: e?.message }));
         return false;
       } finally {
         setSaving(false);
       }
-    }, [schema, values, validateAll, setAllValues, toasts, onSaved, setErrors]);
+    }, [schema, values]);
 
+    /* REF OUTPUT */
     React.useImperativeHandle(ref, () => ({
       submit: doSubmit,
       reset: () => setAllValues(stableInitial),
       values,
     }));
 
+    /* RENDER */
     return (
       <Stack spacing={2}>
         {resolvingInitial ? (
           <div>Đang tải…</div>
-        ) :
-          (<AutoFormFields
-            schema={expandedFields}
+        ) : (
+          <AutoFormFields
+            schema={finalFields}
             values={values}
             setValue={setValue}
             errors={errors}
-          />)
-        }
+          />
+        )}
       </Stack>
     );
   }

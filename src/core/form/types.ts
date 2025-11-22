@@ -80,6 +80,7 @@ export type FieldDef = {
   name: string;
   label: string;
   kind: FieldKind;
+  group?: string;                                       // default: "general"
   placeholder?: string;
   rows?: number;                                        // for textarea
   defaultValue?: any;

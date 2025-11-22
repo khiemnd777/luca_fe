@@ -11,7 +11,6 @@ import { FormDialog } from "@shared/components/dialog/form-dialog";
 import { EmptyState } from "@shared/components/ui/empty-state";
 import { AutoGrid } from "@root/shared/components/ui/auto-grid";
 import type { FieldDef } from "@core/form/types";
-import { AutoFormFields } from "@core/form/auto-form-fields";
 import { useAutoForm } from "@core/form/use-auto-form";
 import { Spacer } from "@root/shared/components/ui/spacer";
 
@@ -183,7 +182,7 @@ export default function SamplePage() {
           reset();
         }}
       >
-        <AutoFormFields schema={schema} values={values} setValue={setValue} errors={errors} />
+        {/* <AutoFormFields schema={schema} values={values} setValue={setValue} errors={errors} /> */}
       </FormDialog>
     </BasePage>
   );

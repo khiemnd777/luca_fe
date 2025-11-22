@@ -2,7 +2,7 @@ import * as React from "react";
 import { Stack } from "@mui/material";
 import toast from "react-hot-toast";
 
-import { AutoFormFields } from "@core/form/auto-form-fields";
+import { AutoFormFieldsGrouped } from "@core/form/auto-form-fields";
 import { useAutoForm } from "@core/form/use-auto-form";
 
 import type {
@@ -331,6 +331,33 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       return arr;
     }, [metadataVersion, schema.fields]);
 
+    // ========================================
+    // GROUP ENGINE
+    // ========================================
+    const groupsConfig = schema.groups ?? [{ name: "general", col: 1 }];
+
+    // gom field theo group
+    const groupMap = React.useMemo(() => {
+      const map = new Map<string, FieldDef[]>();
+
+      // init map theo groupsConfig
+      for (const g of groupsConfig) map.set(g.name, []);
+
+      // fallback cho field.group không nằm trong config
+      const ensureGroup = (name: string) => {
+        if (!map.has(name)) map.set(name, []);
+      };
+
+      for (const f of finalFields) {
+        const gname = f.group ?? "general";
+        ensureGroup(gname);
+        map.get(gname)!.push(f);
+      }
+
+      return map;
+    }, [finalFields, groupsConfig]);
+
+
     /* NON-METADATA FIELDS */
     const baseFields = React.useMemo(
       () => schema.fields.filter((f) => f.kind !== "metadata"),
@@ -546,8 +573,9 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         {resolvingInitial ? (
           <div>Đang tải…</div>
         ) : (
-          <AutoFormFields
-            schema={finalFields}
+          <AutoFormFieldsGrouped
+            groupMap={groupMap}
+            groupsConfig={groupsConfig}
             values={values}
             setValue={setValue}
             errors={errors}

@@ -61,6 +61,7 @@ export function buildSampleSchema(): FormSchema {
       name: "processIds",
       label: "Công đoạn",
       kind: "searchlist",
+      group: "process",
       placeholder: "Tìm công đoạn sản xuất...",
       fullWidth: true,
 
@@ -109,6 +110,16 @@ export function buildSampleSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    groups: [
+      {
+        name: "general",
+        col: 2,
+      },
+      {
+        name: "process",
+        col: 1,
+      }
+    ],
     submit: {
       create: {
         type: "fn",

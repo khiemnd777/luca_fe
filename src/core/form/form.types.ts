@@ -22,7 +22,10 @@ export type Notifier = {
 
 export type SubmitFn = {
   type: "fn";
-  run: (values: Record<string, any>) => Promise<any>;
+  run: (
+    values: Record<string, any>,
+    meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]
+  ) => Promise<any>;
 };
 
 export type SubmitDef = SubmitHttp | SubmitFn;

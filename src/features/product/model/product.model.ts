@@ -9,3 +9,8 @@ export interface ProductModel {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ProductUpsertModel {
+  dto: ProductModel;
+  collections?: (string | undefined)[];
+}

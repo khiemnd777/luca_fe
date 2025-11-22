@@ -1,6 +1,6 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
-import type { ProductModel } from "@features/product/model/product.model";
+import type { ProductModel, ProductUpsertModel } from "@features/product/model/product.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
@@ -28,14 +28,14 @@ export async function id(id: number): Promise<ProductModel> {
   return result;
 }
 
-export async function create(model: ProductModel): Promise<void> {
+export async function create(model: ProductUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.post<any>(`${departmentApiPath()}/product`, model);
 }
 
-export async function update(model: ProductModel): Promise<void> {
+export async function update(model: ProductUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
-  await apiClient.put<any>(`${departmentApiPath()}/product/${model.id}`, model);
+  await apiClient.put<any>(`${departmentApiPath()}/product/${model.dto.id}`, model);
 }
 
 export async function unlink(id: number): Promise<void> {

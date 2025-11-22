@@ -123,15 +123,21 @@ export function buildSampleSchema(): FormSchema {
     submit: {
       create: {
         type: "fn",
-        run: async (values) => {
-          await create(values as ProductModel);
+        run: async (values, meta) => {
+          await create({
+            dto: values as ProductModel,
+            collections: meta?.map((m) => m.meta.metadata?.collection)
+          });
           return values;
         },
       },
       update: {
         type: "fn",
-        run: async (values) => {
-          await update(values as ProductModel);
+        run: async (values, meta) => {
+          await update({
+            dto: values as ProductModel,
+            collections: meta?.map((m) => m.meta.metadata?.collection)
+          });
           return values;
         },
       },

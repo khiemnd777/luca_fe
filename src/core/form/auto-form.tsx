@@ -181,10 +181,10 @@ function normalizeCustomFieldsPayload(input: any): any {
   return dto;
 }
 
-async function runSubmit(def: SubmitDef, values: any) {
+async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
   values = normalizeCustomFieldsPayload(values);
 
-  if (def.type === "fn") return def.run(values);
+  if (def.type === "fn") return def.run(values, meta);
 
   const method = def.method ?? "PATCH";
   const fetcher = def.fetcher ?? defaultFetcher;
@@ -532,7 +532,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       try {
         const submitDef = pickSubmit(schema, mode);
-        const result = await runSubmit(submitDef, dto);
+        const result = await runSubmit(submitDef, dto, metadataBlocks);
 
         if (schema.hooks?.mapFromDto) {
           const uiVals = schema.hooks.mapFromDto(result);

@@ -145,6 +145,7 @@ export type FieldDef = {
     fields?: string[];
     ignoreFields?: string[];
     showIfFields?: string[];
+    groups?: { group: string; fields?: string[]; }[];
   };
 
   // UI render item (không chứa nút delete)

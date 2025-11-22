@@ -96,6 +96,7 @@ async function expandOneMetadataBlock(
 
   for (const mf of fieldsToUse ?? []) {
     const kind = mapMetadataFieldTypeToFieldKind(mf.type);
+    const group = resolveMetadataFieldGroup(metaField, mf.name);
 
     if (kind === "currency-equation") {
       out.push({
@@ -104,6 +105,7 @@ async function expandOneMetadataBlock(
         label: mf.label ?? mf.name,
         currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
         fullWidth: true,
+        group,
       });
       continue;
     }
@@ -116,6 +118,7 @@ async function expandOneMetadataBlock(
         label: mf.label ?? mf.name,
         options: opts,
         fullWidth: true,
+        group,
       });
       continue;
     }
@@ -126,6 +129,7 @@ async function expandOneMetadataBlock(
       label: mf.label ?? mf.name,
       fullWidth: true,
       rules: mf.required ? { required: true } : undefined,
+      group,
     });
   }
 
@@ -136,6 +140,35 @@ async function expandOneMetadataBlock(
    HELPERS
    ======================================================================== */
 const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
+
+function resolveMetadataFieldGroup(
+  metaField: FieldDef,
+  fieldName: string
+): string {
+  const groups = metaField.metadata?.groups;
+  if (!groups || groups.length === 0) {
+    return metaField.group ?? "general";
+  }
+
+  let fallbackGroup: string | null = null;
+
+  for (const g of groups) {
+    if (Array.isArray(g.fields) && g.fields.length > 0) {
+      if (g.fields.includes(`customFields.${fieldName}`) || g.fields.includes(fieldName)) {
+        return g.group;
+      }
+    }
+
+    if (!g.fields || g.fields.length === 0) {
+      fallbackGroup = g.group;
+    }
+  }
+
+  if (fallbackGroup) return fallbackGroup;
+
+  return metaField.group ?? "general";
+}
+
 
 function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   const idField = schema.idField ?? "id";

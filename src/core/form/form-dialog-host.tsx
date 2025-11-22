@@ -93,7 +93,7 @@ function DialogInstance({ payload }: { payload: Payload }) {
     ) ?? (mode === "create" ? "Create" : "Save");
 
   const cancelText = payload.options?.cancelText ?? defaults.cancelText ?? "Cancel";
-  const maxWidth = payload.options?.maxWidth ?? defaults.maxWidth ?? "sm";
+  const maxWidth = payload.options?.maxWidth ?? defaults.maxWidth ?? "md";
 
   // ---- handlers ----
   const handleClose = () => {

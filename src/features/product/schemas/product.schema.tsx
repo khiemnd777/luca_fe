@@ -37,6 +37,12 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "product",
         mode: "whole",
+        groups: [
+          {
+            group: "type",
+            fields: ["customFields.type"]
+          }
+        ],
       }
     },
     {
@@ -46,6 +52,11 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "product-a",
         mode: "whole",
+        groups: [
+          {
+            group: "type",
+          }
+        ],
       }
     },
     {
@@ -55,6 +66,11 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "product-b",
         mode: "whole",
+        groups: [
+          {
+            group: "type",
+          }
+        ],
       }
     },
     {
@@ -113,12 +129,19 @@ export function buildSampleSchema(): FormSchema {
     groups: [
       {
         name: "general",
+        label: "Thông tin chung",
         col: 2,
       },
       {
-        name: "process",
+        name: "type",
+        label: "Kiểu",
         col: 1,
-      }
+      },
+      {
+        name: "process",
+        label: "Công đoạn",
+        col: 1,
+      },
     ],
     submit: {
       create: {

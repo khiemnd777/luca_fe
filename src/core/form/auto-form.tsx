@@ -253,7 +253,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
               ? { ...initial, ...resolved }
               : resolved ?? initial ?? {};
 
-          if (!cancelled) setResolvedInitial(finalInitial);
+          // ==========================================
+          // FLATTEN customFields.* INTO customFields.*
+          // ==========================================
+          if (finalInitial?.customFields && typeof finalInitial.customFields === "object") {
+            for (const [k, v] of Object.entries(finalInitial.customFields)) {
+              const camel = snakeToCamel(k);
+              finalInitial[`customFields.${camel}`] = v;
+            }
+          }
+
+          if (!cancelled) {
+            setResolvedInitial(finalInitial);
+            setAllValues(finalInitial);
+          }
         } finally {
           if (!cancelled) setResolvingInitial(false);
         }
@@ -263,6 +276,22 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     }, [initial, schema]);
 
     const stableInitial = resolvedInitial ?? {};
+
+    // --------------------------------------
+    // FLATTEN custom_fields vào stableInitial
+    // --------------------------------------
+    const fixedInitial = React.useMemo(() => {
+      const init = { ...stableInitial };
+
+      if (init.customFields && typeof init.customFields === "object") {
+        for (const [k, v] of Object.entries(init.customFields)) {
+          const camel = snakeToCamel(k);
+          init[`customFields.${camel}`] = v;
+        }
+      }
+
+      return init;
+    }, [stableInitial]);
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
@@ -281,6 +310,27 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
     const metadataBlocks = metadataBlocksRef.current;
 
+    /* FINAL FIELDS*/
+    const [metadataVersion, setMetadataVersion] = React.useState(0);
+
+    const finalFields = React.useMemo(() => {
+      const arr: FieldDef[] = [];
+      const metadataMap = new Map<FieldDef, FieldDef[]>();
+      metadataBlocksRef.current.forEach((b) => {
+        metadataMap.set(b.meta, b.fields);
+      });
+
+      for (const f of schema.fields) {
+        if (f.kind === "metadata") {
+          const fields = metadataMap.get(f) ?? [];
+          arr.push(...fields);
+        } else {
+          arr.push(f);
+        }
+      }
+      return arr;
+    }, [metadataVersion, schema.fields]);
+
     /* NON-METADATA FIELDS */
     const baseFields = React.useMemo(
       () => schema.fields.filter((f) => f.kind !== "metadata"),
@@ -295,7 +345,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       errors,
       setErrors,
       validateAll,
-    } = useAutoForm(baseFields, stableInitial, {
+    } = useAutoForm(baseFields, fixedInitial, {
       asyncValidate: schema.hooks?.asyncValidate,
     });
 
@@ -327,6 +377,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           metadataBlocks[i].fields = res.fields;
           metadataBlocks[i].deps = res.deps;
         });
+        setMetadataVersion(v => v + 1);
 
         allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
 
@@ -335,6 +386,52 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       return () => { cancelled = true; };
     }, [resolvingInitial]);
+
+    // ------------------------------------------------------
+    // FORCE INITIAL CHANGED DEPS (very important)
+    // ------------------------------------------------------
+    const forceInitDoneRef = React.useRef(false);
+
+    React.useEffect(() => {
+      if (resolvingInitial) return;
+      if (forceInitDoneRef.current) return;
+
+      if (allDepsRef.current.length === 0) return;
+
+      forceInitDoneRef.current = true;
+
+      const initialChanged = [...allDepsRef.current];
+
+      for (const dep of allDepsRef.current) {
+        lastDepValuesRef.current[dep] = values[dep];
+      }
+
+      (async () => {
+        const reloadList = metadataBlocks
+          .map((b, i) => ({ b, i }))
+          .filter(({ b }) =>
+            b.deps.some((d) => initialChanged.includes(d))
+          );
+
+        const results = await Promise.all(
+          reloadList.map(({ b }) =>
+            expandOneMetadataBlock(b.meta, values, initialChanged)
+          )
+        );
+
+        results.forEach((res, idx) => {
+          const actual = reloadList[idx].i;
+          metadataBlocks[actual].fields = res.fields;
+          metadataBlocks[actual].deps = res.deps;
+        });
+
+        allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
+        setMetadataVersion((x) => x + 1);
+        forceUpdate();
+      })();
+
+    }, [metadataVersion, resolvingInitial]);
+
 
     /* HARD ISOLATE RELOAD */
     React.useEffect(() => {
@@ -368,7 +465,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       (async () => {
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandOneMetadataBlock(b.meta, values, changedDeps) // ⬅ đây
+            expandOneMetadataBlock(b.meta, values, changedDeps)
           )
         );
 
@@ -379,6 +476,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           metadataBlocks[actual].fields = res.fields;
           metadataBlocks[actual].deps = res.deps;
         });
+        setMetadataVersion(v => v + 1);
 
         allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
 
@@ -389,24 +487,6 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         cancelled = true;
       };
     }, [showIfHash]);
-
-
-    /* FINAL FIELDS*/
-    const finalFields: FieldDef[] = [];
-
-    const metadataMap = new Map<FieldDef, FieldDef[]>();
-    metadataBlocksRef.current.forEach((b) => {
-      metadataMap.set(b.meta, b.fields);
-    });
-
-    for (const f of schema.fields) {
-      if (f.kind === "metadata") {
-        const fields = metadataMap.get(f) ?? [];
-        finalFields.push(...fields);
-      } else {
-        finalFields.push(f);
-      }
-    }
 
     /* SUBMIT */
     const [, setSaving] = React.useState(false);

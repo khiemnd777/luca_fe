@@ -99,7 +99,7 @@ export function buildMetadataFieldSchema(): FormSchema {
       name: "relation",
       label: "Relation (JSON)",
       kind: "textarea",
-      helperText: 'e.g. { "target":"category", "kind":"searchlist" }',
+      helperText: 'e.g. {"target":"product","form":"process","placeholder":"Tìm..."}',
       rows: 2,
     },
   ];

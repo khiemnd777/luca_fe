@@ -23,12 +23,14 @@ import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { parseShowIfDependencies } from "@root/shared/metadata/utils";
+import { rel, search } from "../relation/relation.api";
+import { openFormDialog } from "./form-dialog.service";
 
 /* ========================================================================
    MAP FIELD TYPE
    ======================================================================== */
-function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
-  switch (t) {
+function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
+  switch (type) {
     case "text": return "text";
     case "textarea": return "textarea";
     case "email": return "email";
@@ -41,6 +43,7 @@ function mapMetadataFieldTypeToFieldKind(t: string): FieldKind {
     case "select": return "select";
     case "multiselect": return "multiselect";
     case "image": return "imageupload";
+    case "relation": return "searchlist";
     default: return "text";
   }
 }
@@ -120,6 +123,60 @@ async function expandOneMetadataBlock(
         fullWidth: true,
         group,
       });
+      continue;
+    }
+
+    if (kind === "searchlist") {
+      const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
+      out.push({
+        kind: "searchlist",
+        name: `relationFields.${mf.name}`,
+        label: mf.label ?? mf.name,
+        group,
+        placeholder: relation.placeholer ?? "",
+        fullWidth: true,
+
+        getOptionLabel: (d: any) => d.name,
+        getOptionValue: (d: any) => d.id,
+
+        async searchPage(kw: string, page, limit) {
+          const searched = await search(relation.target, {
+            keyword: kw,
+            limit: limit,
+            page: page,
+            orderBy: "name",
+          });
+          return searched.items;
+        },
+
+        pageLimit: 20,
+
+        async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+          if (!ids || ids.length === 0) return [];
+          const table = await rel(relation.target, values.id, {
+            limit: 10000,
+            page: 1,
+            orderBy: "name",
+          });
+          const set = new Set(ids.map(String));
+          return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
+        },
+
+        async fetchList(values: Record<string, any>) {
+          const table = await rel(relation.target, values.id, {
+            limit: 10000,
+            page: 1,
+            orderBy: "name",
+          });
+          return table.items;
+        },
+
+        renderItem: (d: any) => (<>{d.name}</>),
+        disableDelete: (d: any) => d.locked === true,
+        onOpenCreate: () => relation.form ? openFormDialog(relation.form) : null,
+        autoLoadAllOnMount: true,
+      });
+
       continue;
     }
 
@@ -214,7 +271,19 @@ function normalizeCustomFieldsPayload(input: any): any {
   return dto;
 }
 
+function normalizeRelationFieldsToCore(dto: any): any {
+  for (const [k, v] of Object.entries(dto)) {
+    if (k.startsWith("relation_fields.")) {
+      const coreName = k.substring("relation_fields.".length);
+      dto[coreName] = v;
+      delete dto[k];
+    }
+  }
+  return dto;
+}
+
 async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
+  values = normalizeRelationFieldsToCore(values);
   values = normalizeCustomFieldsPayload(values);
 
   if (def.type === "fn") return def.run(values, meta);
@@ -223,6 +292,7 @@ async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; f
   const fetcher = def.fetcher ?? defaultFetcher;
 
   let payload = def.transform ? def.transform(values) : values;
+  payload = normalizeRelationFieldsToCore(payload);
   payload = normalizeCustomFieldsPayload(payload);
 
   const res = await fetcher(def.url, {

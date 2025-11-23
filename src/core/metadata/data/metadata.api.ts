@@ -67,7 +67,7 @@ export async function getAvailableCollection(
     value: any;
   }[],
 ): Promise<CollectionWithFieldsModel> {
-  let cacheKey = `metadata:collection:${idOrSlug}`;
+  let cacheKey = `metadata:collection:${idOrSlug}:wf${withFields}:tbl${table}:frm${form}`;
 
   if (changedParams?.length) {
     const suffix = changedParams
@@ -89,6 +89,7 @@ export async function getAvailableCollection(
       cacheTTL: 6.048e+8, // ~7d
       cacheKey,
       cacheTags: [`metadata:collection:${idOrSlug}`],
+      dedupKey: false,
     }
   );
   const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");

@@ -3,11 +3,19 @@ import type { FetchTableOpts } from "../table/table.types";
 import type { ListResult } from "../types/list-result";
 import { apiClient } from "../network/api-client";
 import { mapper } from "../mapper/auto-mapper";
+import type { SearchOpts, SearchResult } from "../types/search.types";
 
 export async function rel<T>(key: string, mainId: number, tableOpts: FetchTableOpts): Promise<ListResult<T>> {
   const { departmentApiPath } = useAuthStore.getState();
   mainId = mainId === undefined ? -1 : mainId;
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/relation/${key}/${mainId}/list`, tableOpts);
   const result = mapper.map<any[], ListResult<T>>("Common", data, "dto_to_model");
+  return result;
+}
+
+export async function search<T>(key: string, opts: SearchOpts): Promise<SearchResult<T>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.search<any>(`${departmentApiPath()}/relation/${key}/search`, opts);
+  const result = mapper.map<any, SearchResult<T>>("Common", data, "dto_to_model");
   return result;
 }

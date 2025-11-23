@@ -11,7 +11,6 @@ mapper.register<ProductModel>({
     name: "",
     active: true,
     customFields: null,
-    processIds: [],
     processNames: "",
   }),
 });

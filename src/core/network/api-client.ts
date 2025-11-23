@@ -533,7 +533,6 @@ function invalidateCacheByTagPrefixes(prefixes: string[]) {
   invalidateCacheInternal({ tags: [], tagPrefixes: prefixes, broadcast: true });
 }
 
-/** Optional public helper nếu muốn dùng ngoài ApiClient */
 export function invalidateApiCache(tags?: string[], prefixes?: string[]) {
   if (tags && tags.length) invalidateCacheByTags(tags);
   if (prefixes && prefixes.length) invalidateCacheByTagPrefixes(prefixes);

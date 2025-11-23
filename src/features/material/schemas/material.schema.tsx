@@ -6,9 +6,8 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/material/api/material.api";
 import type { MaterialModel } from "@features/material/model/material.model";
-import { search as searchSupplier } from "@root/features/supplier/api/supplier.api";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
-import { rel } from "@core/relation/relation.api";
+import { rel, search } from "@core/relation/relation.api";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -50,7 +49,7 @@ export function buildSampleSchema(): FormSchema {
       getOptionValue: (d: any) => d.id,
 
       async searchPage(kw: string, page, limit) {
-        const searched = await searchSupplier({
+        const searched = await search("material", {
           keyword: kw,
           limit: limit,
           page: page,

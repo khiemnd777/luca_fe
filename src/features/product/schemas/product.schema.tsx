@@ -6,9 +6,6 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/product/api/product.api";
 import type { ProductModel } from "@features/product/model/product.model";
-import { search } from "@features/process/api/process.api";
-import { rel } from "@core/relation/relation.api";
-import { openFormDialog } from "@core/form/form-dialog.service";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -40,7 +37,11 @@ export function buildSampleSchema(): FormSchema {
         groups: [
           {
             group: "type",
-            fields: ["customFields.type"]
+            fields: ["customFields.type"],
+          },
+          {
+            group: "process",
+            fields: ["customFields.processIds"],
           }
         ],
       }
@@ -73,54 +74,6 @@ export function buildSampleSchema(): FormSchema {
         ],
       }
     },
-    {
-      name: "processIds",
-      label: "Công đoạn",
-      kind: "searchlist",
-      group: "process",
-      placeholder: "Tìm công đoạn sản xuất...",
-      fullWidth: true,
-
-      getOptionLabel: (d: any) => d.name,
-      getOptionValue: (d: any) => d.id,
-
-      async searchPage(kw: string, page, limit) {
-        const searched = await search({
-          keyword: kw,
-          limit: limit,
-          page: page,
-          orderBy: "name",
-        });
-        return searched.items;
-      },
-
-      pageLimit: 20,
-
-      async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
-        if (!ids || ids.length === 0) return [];
-        const table = await rel("product", values.id, {
-          limit: 10000,
-          page: 1,
-          orderBy: "name",
-        });
-        const set = new Set(ids.map(String));
-        return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
-      },
-
-      async fetchList(values: Record<string, any>) {
-        const table = await rel("product", values.id, {
-          limit: 10000,
-          page: 1,
-          orderBy: "name",
-        });
-        return table.items;
-      },
-
-      renderItem: (d: any) => (<>{d.name}</>),
-      disableDelete: (d: any) => d.locked === true,
-      onOpenCreate: () => openFormDialog("process"),
-      autoLoadAllOnMount: true,
-    }
   ];
 
   return {

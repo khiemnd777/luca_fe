@@ -56,27 +56,50 @@ export async function getCollection(
   return result;
 }
 
+function buildCacheSuffixFromEntityData(entityData: any): string {
+  if (!entityData || typeof entityData !== "object") return "";
+
+  const flat: Record<string, any> = {};
+
+  const walk = (obj: any, prefix = "") => {
+    if (obj == null) return;
+
+    Object.entries(obj).forEach(([key, val]) => {
+      const path = prefix ? `${prefix}.${key}` : key;
+
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        walk(val, path);
+      } else {
+        flat[path] = val;
+      }
+    });
+  };
+
+  walk(entityData);
+
+  const keys = Object.keys(flat).sort();
+
+  return keys
+    .map(k => `${k}=${String(flat[k])}`)
+    .join("&");
+}
+
 export async function getAvailableCollection(
   idOrSlug: string | number,
   withFields = true,
   table = false,
   form = false,
   entityData?: any,
-  changedParams?: {
+  _changedParams?: {
     field: string;
     value: any;
   }[],
 ): Promise<CollectionWithFieldsModel> {
   let cacheKey = `metadata:collection:${idOrSlug}:wf${withFields}:tbl${table}:frm${form}`;
 
-  if (changedParams?.length) {
-    const suffix = changedParams
-      .slice()
-      .sort((a, b) => a.field.localeCompare(b.field))
-      .map(p => `${p.field}=${String(p.value)}`)
-      .join("&");
-
-    cacheKey += `:cp:${suffix}`;
+  const suffix = buildCacheSuffixFromEntityData(entityData);
+  if (suffix) {
+    cacheKey += `:ed:${suffix}`;
   }
 
   const res = await apiClient.getAsPost<CollectionWithFieldsModel>(

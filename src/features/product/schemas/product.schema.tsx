@@ -36,12 +36,59 @@ export function buildSampleSchema(): FormSchema {
         mode: "whole",
         groups: [
           {
-            group: "type",
-            fields: ["customFields.type"],
+            group: "description",
+            fields: ["customFields.description"],
+          },
+          {
+            group: "category",
+            fields: ["customFields.category"],
           },
           {
             group: "process",
             fields: ["customFields.processIds"],
+          },
+        ],
+      }
+    },
+    // CATEGORY: CROWN
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-crown",
+        mode: "whole",
+        groups: [
+          {
+            group: "crown",
+          },
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-crown-full",
+        mode: "whole",
+        groups: [
+          {
+            group: "crown",
+          },
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-crown-inlay",
+        mode: "whole",
+        groups: [
+          {
+            group: "crown",
           }
         ],
       }
@@ -51,12 +98,27 @@ export function buildSampleSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "product-a",
+        collection: "product-crown-onlay",
         mode: "whole",
         groups: [
           {
-            group: "type",
+            group: "crown",
           }
+        ],
+      }
+    },
+    // CATEGORY: DENTURE
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-denture",
+        mode: "whole",
+        groups: [
+          {
+            group: "denture",
+          },
         ],
       }
     },
@@ -65,12 +127,85 @@ export function buildSampleSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "product-b",
+        collection: "product-denture-full",
         mode: "whole",
         groups: [
           {
-            group: "type",
-          }
+            group: "denture",
+          },
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-denture-flex",
+        mode: "whole",
+        groups: [
+          {
+            group: "denture",
+          },
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-denture-partial",
+        mode: "whole",
+        groups: [
+          {
+            group: "denture",
+          },
+        ],
+      }
+    },
+    // CATEGORY: ALIGNER
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-aligner",
+        mode: "whole",
+        groups: [
+          {
+            group: "aligner",
+          },
+        ],
+      }
+    },
+    // CATEGORY: BRIDGE
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-bridge",
+        mode: "whole",
+        groups: [
+          {
+            group: "bridge",
+          },
+        ],
+      }
+    },
+    // CATEGORY: VENEER
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "product-veneer",
+        mode: "whole",
+        groups: [
+          {
+            group: "veneer",
+          },
         ],
       }
     },
@@ -86,9 +221,38 @@ export function buildSampleSchema(): FormSchema {
         col: 2,
       },
       {
-        name: "type",
-        label: "Kiểu",
+        name: "description",
         col: 1,
+      },
+      {
+        name: "category",
+        label: "Danh mục",
+        col: 1,
+      },
+      {
+        name: "crown",
+        label: "Loại crown",
+        col: 2,
+      },
+      {
+        name: "denture",
+        label: "Loại denture",
+        col: 2,
+      },
+      {
+        name: "aligner",
+        label: "Loại aligner",
+        col: 2,
+      },
+      {
+        name: "bridge",
+        label: "Loại bridge",
+        col: 2,
+      },
+      {
+        name: "veneer",
+        label: "Loại veneer",
+        col: 2,
       },
       {
         name: "process",

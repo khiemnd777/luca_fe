@@ -8,7 +8,7 @@ import { table, unlink } from "@features/material/api/material.api";
 const columns: ColumnDef<MaterialModel>[] = [
   { key: "code", header: "Mã vật tư", sortable: true, },
   { key: "name", header: "Tên vật tư", sortable: true, labelField: true },
-  { key: "supplierNames", header: "Nhà cung cấp", width: 140, type: "chips" },
+  // { key: "supplierNames", header: "Nhà cung cấp", width: 140, type: "chips" },
   {
     key: "",
     type: "metadata",

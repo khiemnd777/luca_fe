@@ -25,6 +25,7 @@ import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { parseShowIfDependencies } from "@root/shared/metadata/utils";
 import { rel, search } from "../relation/relation.api";
 import { openFormDialog } from "./form-dialog.service";
+import { extractVars } from "@root/shared/utils/equation.utils";
 
 /* ========================================================================
    MAP FIELD TYPE
@@ -32,7 +33,7 @@ import { openFormDialog } from "./form-dialog.service";
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
     case "text": return "text";
-    case "textarea": return "textarea";
+    case "textarea": case "richtext": return "textarea";
     case "email": return "email";
     case "number": return "number";
     case "currency": return "currency";
@@ -128,6 +129,7 @@ async function expandOneMetadataBlock(
 
     if (kind === "searchlist") {
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
+      const frmDlgKey = relation.form ?? relation.ref;
       out.push({
         kind: "searchlist",
         name: `relationFields.${mf.name}`,
@@ -173,7 +175,7 @@ async function expandOneMetadataBlock(
 
         renderItem: (d: any) => (<>{d.name}</>),
         disableDelete: (d: any) => d.locked === true,
-        onOpenCreate: () => relation.form ? openFormDialog(relation.form) : null,
+        onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
         autoLoadAllOnMount: true,
       });
 
@@ -617,6 +619,39 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         cancelled = true;
       };
     }, [showIfHash]);
+
+    // ==========================================
+    // EQUATION ENGINE
+    // ==========================================
+    React.useEffect(() => {
+      const eqFields = finalFields.filter(f => f.kind === "currency-equation" && f.currencyEquation);
+      if (eqFields.length === 0) return;
+
+      for (const f of eqFields) {
+        const expr = f.currencyEquation!;
+        try {
+          const vars = extractVars(expr);
+
+          const argValues = vars.map((name) => {
+            if (name in values) return values[name];
+            const cf = `customFields.${name}`;
+            return values[cf];
+          });
+
+          const fn = new Function(...vars, `return (${expr});`);
+          let result = fn(...argValues);
+
+          if (!Number.isFinite(result)) result = 0;
+
+          if (values[f.name] !== result) {
+            setValue(f.name, result);
+          }
+
+        } catch (e) {
+          console.error("EQ ERROR:", e);
+        }
+      }
+    }, [values, finalFields]);
 
     /* SUBMIT */
     const [, setSaving] = React.useState(false);

@@ -34,6 +34,12 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "process",
         mode: "whole",
+        groups: [
+          {
+            group: "description",
+            fields: ["customFields.description"],
+          }
+        ],
       }
     },
   ];
@@ -41,6 +47,16 @@ export function buildSampleSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    groups: [
+      {
+        name: "general",
+        col: 2,
+      },
+      {
+        name: "description",
+        col: 1,
+      }
+    ],
     submit: {
       create: {
         type: "fn",

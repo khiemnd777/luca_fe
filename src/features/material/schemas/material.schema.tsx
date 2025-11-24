@@ -6,8 +6,6 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/material/api/material.api";
 import type { MaterialModel } from "@features/material/model/material.model";
-import { openFormDialog } from "@root/core/form/form-dialog.service";
-import { rel, search } from "@core/relation/relation.api";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -36,60 +34,29 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "material",
         mode: "whole",
+        groups:[
+          {
+            group: "description",
+            fields: ["customFields.description"],
+          }
+        ],
       }
     },
-    {
-      name: "supplierIds",
-      label: "Nhà cung cấp",
-      kind: "searchlist",
-      placeholder: "Tìm nhà cung cấp...",
-      fullWidth: true,
-
-      getOptionLabel: (d: any) => d.name,
-      getOptionValue: (d: any) => d.id,
-
-      async searchPage(kw: string, page, limit) {
-        const searched = await search("material", {
-          keyword: kw,
-          limit: limit,
-          page: page,
-          orderBy: "name",
-        });
-        return searched.items;
-      },
-
-      pageLimit: 20,
-
-      async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
-        if (!ids || ids.length === 0) return [];
-        const table = await rel("material", values.id, {
-          limit: 10000,
-          page: 1,
-          orderBy: "name",
-        });
-        const set = new Set(ids.map(String));
-        return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
-      },
-
-      async fetchList(values: Record<string, any>) {
-        const table = await rel("material", values.id, {
-          limit: 10000,
-          page: 1,
-          orderBy: "name",
-        });
-        return table.items;
-      },
-
-      renderItem: (d: any) => (<>{d.name}</>),
-      disableDelete: (d: any) => d.locked === true,
-      onOpenCreate: () => openFormDialog("supplier"),
-      autoLoadAllOnMount: true,
-    }
   ];
 
   return {
     idField: "id",
     fields,
+    groups: [
+      {
+        name: "general",
+        col: 2,
+      },
+      {
+        name: "description",
+        col: 1,
+      },
+    ],
     submit: {
       create: {
         type: "fn",

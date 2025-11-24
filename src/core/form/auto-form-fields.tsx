@@ -3,7 +3,6 @@ import {
   Stack,
   TextField,
   InputAdornment,
-  MenuItem,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -27,6 +26,7 @@ import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from ".
 import PasswordField from "@core/form/password-field";
 import SearchListField from "@core/form/search-list-field";
 import type { GroupConfig } from "./form.types";
+import { humanize } from "@root/shared/utils/string.utils";
 
 
 // -----------------------------------------------------------
@@ -294,39 +294,102 @@ export function AutoFormFieldSingle({
 
   // SELECT
   if (f.kind === "select" && !f.multiple) {
+    const raw = values[f.name];
+    let optsFromValue: Option[] = [];
+
+    if (Array.isArray(raw)) {
+      // ["a","b"] -> [{label:"a",value:"a"}, ...]
+      optsFromValue = raw.map((v) => ({
+        label: humanize(v),
+        value: v,
+      }));
+    } else if (raw != null && raw !== "") {
+      // "a" -> [{label:"a",value:"a"}]
+      optsFromValue = [
+        {
+          label: humanize(raw),
+          value: raw,
+        },
+      ];
+    }
+
+    const schemaOpts: Option[] = (f.options ?? []).map((o) =>
+      typeof o === "string" || typeof o === "number"
+        ? { label: humanize(o), value: o }
+        : o
+    );
+
+    const mergedOpts: Option[] = [...schemaOpts];
+
+    optsFromValue.forEach((o) => {
+      if (!mergedOpts.some((x) => x.value === o.value)) {
+        mergedOpts.push(o);
+      }
+    });
+
+    const selected = optsFromValue.length > 0 ? optsFromValue[0] : null;
+
     return (
-      <TextField
-        {...common}
-        select
-        value={values[f.name] ?? ""}
-        onChange={(e) => setValue(f.name, e.target.value)}
-      >
-        {(f.options ?? []).map((opt) => (
-          <MenuItem key={`${f.name}-${String(opt.value)}`} value={opt.value as any}>
-            {opt.label}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Autocomplete
+        options={mergedOpts}
+        value={selected}
+        onChange={(_, newVal) => {
+          if (!newVal) setValue(f.name, null);
+          else setValue(f.name, (newVal as Option).value);
+        }}
+        getOptionLabel={(opt) => (opt as Option).label}
+        isOptionEqualToValue={(a, b) => a.value === b.value}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={f.label}
+            size={f.size ?? "small"}
+            fullWidth={f.fullWidth ?? true}
+            error={!!error}
+            helperText={error ?? f.helperText}
+          />
+        )}
+      />
     );
   }
 
   // MULTISELECT
   if (f.kind === "multiselect" || (f.kind === "select" && f.multiple)) {
-    const optMap = toMap(f.options);
-    const currentValues: any[] = Array.isArray(values[f.name]) ? values[f.name] : [];
-    const currentOptions = currentValues
-      .map((v) => optMap.get(v))
-      .filter(Boolean) as Option[];
+    const rawValues: any[] = Array.isArray(values[f.name]) ? values[f.name] : [];
+    const normalizedOptions: Option[] = rawValues.map((v) => {
+      if (typeof v === "object" && v !== null && "value" in v) return v as Option;
+      return {
+        label: humanize(v),
+        value: v,
+      };
+    });
+
+    const schemaOpts: Option[] = (f.options ?? []).map((o) =>
+      typeof o === "string" || typeof o === "number"
+        ? { label: humanize(o), value: o }
+        : o
+    );
+
+    const mergedOpts = [...schemaOpts];
+    normalizedOptions.forEach((o) => {
+      if (!mergedOpts.some((x) => x.value === o.value)) {
+        mergedOpts.push(o);
+      }
+    });
 
     return (
       <Autocomplete
         multiple
-        options={f.options ?? []}
-        value={currentOptions}
+        options={mergedOpts}
+        value={normalizedOptions}
         onChange={(_, newOptions) =>
-          setValue(f.name, (newOptions as Option[]).map((o) => o.value))
+          setValue(
+            f.name,
+            (newOptions as Option[]).map((o) => o.value)
+          )
         }
         getOptionLabel={(o) => (o as Option).label}
+        isOptionEqualToValue={(a, b) => a.value === b.value}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -339,7 +402,11 @@ export function AutoFormFieldSingle({
         )}
         renderTags={(tagValue, getTagProps) =>
           tagValue.map((opt, index) => (
-            <Chip {...getTagProps({ index })} key={(opt as Option).value as any} label={(opt as Option).label} />
+            <Chip
+              {...getTagProps({ index })}
+              key={(opt as Option).value as any}
+              label={(opt as Option).label}
+            />
           ))
         }
       />

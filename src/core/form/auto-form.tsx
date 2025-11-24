@@ -23,7 +23,7 @@ import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { parseShowIfDependencies } from "@root/shared/metadata/utils";
-import { rel, search } from "../relation/relation.api";
+import { relM2m, search } from "../relation/relation.api";
 import { openFormDialog } from "./form-dialog.service";
 import { extractVars } from "@root/shared/utils/equation.utils";
 
@@ -155,7 +155,7 @@ async function expandOneMetadataBlock(
 
         async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
           if (!ids || ids.length === 0) return [];
-          const table = await rel(relation.target, values.id, {
+          const table = await relM2m(relation.target, values.id, {
             limit: 10000,
             page: 1,
             orderBy: "name",
@@ -165,7 +165,7 @@ async function expandOneMetadataBlock(
         },
 
         async fetchList(values: Record<string, any>) {
-          const table = await rel(relation.target, values.id, {
+          const table = await relM2m(relation.target, values.id, {
             limit: 10000,
             page: 1,
             orderBy: "name",

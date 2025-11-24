@@ -28,14 +28,14 @@ export async function id(id: number): Promise<SampleModel> {
   return result;
 }
 
-export async function create(model: SampleModel): Promise<void> {
+export async function create(model: SampleUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.post<any>(`${departmentApiPath()}/sample`, model);
 }
 
-export async function update(model: SampleModel): Promise<void> {
+export async function update(model: SampleUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
-  await apiClient.put<any>(`${departmentApiPath()}/sample/${model.id}`, model);
+  await apiClient.put<any>(`${departmentApiPath()}/sample/${model.dto.id}`, model);
 }
 
 export async function unlink(id: number): Promise<void> {

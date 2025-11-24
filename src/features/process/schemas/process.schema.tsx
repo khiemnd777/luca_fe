@@ -4,26 +4,26 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/material/api/material.api";
-import type { MaterialModel } from "@features/material/model/material.model";
+import { create, id, update } from "@features/process/api/process.api";
+import type { ProcessModel } from "@features/process/model/process.model";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "code",
-      label: "Mã vật tư",
+      label: "Mã công đoạn",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập mã vật tư",
+        required: "Yêu cầu nhập mã công đoạn",
         maxLength: 30,
       },
     },
     {
       name: "name",
-      label: "Tên vật tư",
+      label: "Tên công đoạn",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập tên vật tư",
+        required: "Yêu cầu nhập tên công đoạn",
         maxLength: 200,
       },
     },
@@ -32,9 +32,9 @@ export function buildSampleSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "material",
+        collection: "process",
         mode: "whole",
-        groups:[
+        groups: [
           {
             group: "description",
             fields: ["customFields.description"],
@@ -55,20 +55,20 @@ export function buildSampleSchema(): FormSchema {
       {
         name: "description",
         col: 1,
-      },
+      }
     ],
     submit: {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as MaterialModel);
+          await create(values as ProcessModel);
           return values;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as MaterialModel);
+          await update(values as ProcessModel);
           return values;
         },
       },
@@ -77,12 +77,12 @@ export function buildSampleSchema(): FormSchema {
     toasts: {
       saved: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo vật tư "${values?.name ?? ""}" thành công!`
-          : `Cập nhật vật tư "${values?.name ?? ""}" thành công!`,
+          ? `Tạo công đoạn "${values?.name ?? ""}" thành công!`
+          : `Cập nhật công đoạn "${values?.name ?? ""}" thành công!`,
       failed: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo vật tư "${values?.name ?? ""}" thất bại, xin thử lại!`
-          : `Cập nhật vật tư "${values?.name ?? ""}" thất bại, xin thử lại!`,
+          ? `Tạo công đoạn "${values?.name ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật công đoạn "${values?.name ?? ""}" thất bại, xin thử lại!`,
     },
 
     async initialResolver(data: any) {
@@ -93,19 +93,19 @@ export function buildSampleSchema(): FormSchema {
     },
 
     async afterSaved() {
-      reloadTable("materials");
+      reloadTable("process");
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Material", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Process", v, "model_to_dto"),
     },
   };
 }
 
-registerForm("material", buildSampleSchema);
+registerForm("process", buildSampleSchema);
 
-registerFormDialog("material", buildSampleSchema, {
-  title: { create: "Thêm vật tư", update: "Cập nhật vật tư" },
+registerFormDialog("process", buildSampleSchema, {
+  title: { create: "Thêm công đoạn", update: "Cập nhật công đoạn" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",
 });

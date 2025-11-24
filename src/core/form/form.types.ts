@@ -22,7 +22,10 @@ export type Notifier = {
 
 export type SubmitFn = {
   type: "fn";
-  run: (values: Record<string, any>) => Promise<any>;
+  run: (
+    values: Record<string, any>,
+    meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]
+  ) => Promise<any>;
 };
 
 export type SubmitDef = SubmitHttp | SubmitFn;
@@ -41,6 +44,8 @@ export type ModeText =
   | { create: string; update: string }
   | ((ctx: { mode: FormMode; values: any; result?: any }) => string);
 
+export type GroupConfig = { name: string; label?: string; col?: number };
+
 export type FormSchema = {
   fields: FieldDef[];
   submit:
@@ -57,6 +62,9 @@ export type FormSchema = {
   showReset?: boolean;
   initialResolver?: (initial?: any) => Promise<Record<string, any> | null> | Record<string, any> | null;
   afterSaved?: (result: any) => Promise<void> | void;
+
+  // Groups
+  groups?: GroupConfig[] | null;
 };
 
 export type AutoFormProps = {

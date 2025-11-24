@@ -92,14 +92,14 @@ export function buildMetadataFieldSchema(): FormSchema {
       name: "options",
       label: "Options (JSON)",
       kind: "textarea",
-      helperText: 'e.g. ["A","B"] hoặc { "options": [...] } tuỳ convention',
+      helperText: 'e.g. ["a", "b", ...] or [{"label":"A", "value":"a"},{"label":"B", "value":"b"}, ...]',
       rows: 2,
     },
     {
       name: "relation",
       label: "Relation (JSON)",
       kind: "textarea",
-      helperText: 'e.g. { "target":"categories", "many":true, "fk":"category_id" }',
+      helperText: 'e.g. {"target":"product", ref:"process", "form":"process","placeholder":"Tìm..."}',
       rows: 2,
     },
   ];

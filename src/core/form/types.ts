@@ -80,6 +80,7 @@ export type FieldDef = {
   name: string;
   label: string;
   kind: FieldKind;
+  group?: string;                                       // default: "general"
   placeholder?: string;
   rows?: number;                                        // for textarea
   defaultValue?: any;
@@ -143,6 +144,8 @@ export type FieldDef = {
     mode?: "whole" | "partial";
     fields?: string[];
     ignoreFields?: string[];
+    showIfFields?: string[];
+    groups?: { group: string; fields?: string[]; }[];
   };
 
   // UI render item (không chứa nút delete)

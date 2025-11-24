@@ -2,7 +2,7 @@ import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import OneColumnPage from "@root/core/pages/one-column-page";
 import CategoryIcon from '@mui/icons-material/Category';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+// import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 const mod: ModuleDescriptor = {
   id: "material",
@@ -16,18 +16,18 @@ const mod: ModuleDescriptor = {
       path: "/material",
       icon: <CategoryIcon />,
       priority: 99,
-      children: [
-        {
-          key: "supplier",
-          permissions: ["supplier.view"],
-          element: <OneColumnPage />,
-          label: "Nhà cung cấp",
-          title: "Nhà cung cấp",
-          path: "/supplier",
-          icon: <LocalShippingIcon />,
-          priority: 94,
-        }
-      ]
+      // children: [
+      //   {
+      //     key: "supplier",
+      //     permissions: ["supplier.view"],
+      //     element: <OneColumnPage />,
+      //     label: "Nhà cung cấp",
+      //     title: "Nhà cung cấp",
+      //     path: "/supplier",
+      //     icon: <LocalShippingIcon />,
+      //     priority: 94,
+      //   }
+      // ]
     },
   ],
 };

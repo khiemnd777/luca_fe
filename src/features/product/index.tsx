@@ -1,21 +1,31 @@
-import React from "react";
-import type { ModuleDescriptor } from "@root/core/module/types";
-import { registerModule } from "@root/core/module/registry";
+import type { ModuleDescriptor } from "@core/module/types";
+import { registerModule } from "@core/module/registry";
 import InventoryIcon from '@mui/icons-material/Inventory';
-
-const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
+import OneColumnPage from "@root/core/pages/one-column-page";
+import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 
 const mod: ModuleDescriptor = {
   id: "product",
   routes: [
     {
       key: "product",
+      permissions: ["product.view"],
+      element: <OneColumnPage />,
       label: "Sản phẩm",
       title: "Sản phẩm",
       path: "/product",
-      element: <UnderConstructionPage />,
       icon: <InventoryIcon />,
       priority: 98,
+      children: [{
+        key: "process",
+        permissions: ["process.view"],
+        element: <OneColumnPage />,
+        label: "Công đoạn",
+        title: "Công đoạn",
+        path: "/process",
+        icon: <DeveloperBoardIcon />,
+        priority: 1,
+      }],
     },
   ],
 };

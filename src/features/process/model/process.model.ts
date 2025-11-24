@@ -1,4 +1,4 @@
-export interface SampleModel {
+export interface ProcessModel {
   id: number;
   code: string;
   name?: string | null;
@@ -6,9 +6,4 @@ export interface SampleModel {
   customFields?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SampleUpsertModel {
-  dto: SampleModel;
-  collections?: (string | undefined)[];
 }

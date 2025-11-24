@@ -2,6 +2,7 @@ export type CollectionModel = {
   id: number;
   slug: string;
   name: string;
+  showIf?: string;
 };
 
 export type FieldVisibility = "public" | "hidden" | "readonly";

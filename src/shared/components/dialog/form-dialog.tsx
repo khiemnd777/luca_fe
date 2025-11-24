@@ -21,7 +21,7 @@ export function FormDialog({
   submitting = false,
   onClose,
   onSubmit,
-  maxWidth = "sm",
+  maxWidth = "lg",
 }: FormDialogProps) {
   return (
     <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth={maxWidth}>

@@ -533,7 +533,6 @@ function invalidateCacheByTagPrefixes(prefixes: string[]) {
   invalidateCacheInternal({ tags: [], tagPrefixes: prefixes, broadcast: true });
 }
 
-/** Optional public helper nếu muốn dùng ngoài ApiClient */
 export function invalidateApiCache(tags?: string[], prefixes?: string[]) {
   if (tags && tags.length) invalidateCacheByTags(tags);
   if (prefixes && prefixes.length) invalidateCacheByTagPrefixes(prefixes);
@@ -691,6 +690,21 @@ export class ApiClient {
     );
   }
 
+  async getAsPost<T>(
+    url: string,
+    data?: any,
+    config?: DedupConfig,
+  ): Promise<AxiosResponse<T>> {
+    const exec = () => this.instance.post<T>(url, data, config);
+    return await this.requestWithDedup<T>(
+      "POST",
+      url,
+      exec,
+      { data, params: config?.params },
+      config,
+    );
+  }
+
   async getTable<T>(
     url: string,
     tableOpts: FetchTableOpts,
@@ -815,8 +829,9 @@ export class ApiClient {
     const cacheMode: CacheMode = config?.cacheMode ?? "off";
     const cacheTTL = config?.cacheTTL ?? DEFAULT_CACHE_TTL_MS;
 
-    const isGet = upperMethod === "GET";
-    const cacheEnabled = isGet && cacheMode !== "off";
+    // const isGet = upperMethod === "GET";
+    // const cacheEnabled = isGet && cacheMode !== "off";
+    const cacheEnabled = cacheMode !== "off";
 
     const cacheKey =
       config?.cacheKey ?? buildCacheKey(upperMethod, url, keyParts);

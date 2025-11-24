@@ -50,8 +50,38 @@ export async function getCollection(
       params: { withFields, table, form },
     }
   );
-  
-  return res.data;
+
+  const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");
+
+  return result;
+}
+
+function buildCacheSuffixFromEntityData(entityData: any): string {
+  if (!entityData || typeof entityData !== "object") return "";
+
+  const flat: Record<string, any> = {};
+
+  const walk = (obj: any, prefix = "") => {
+    if (obj == null) return;
+
+    Object.entries(obj).forEach(([key, val]) => {
+      const path = prefix ? `${prefix}.${key}` : key;
+
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        walk(val, path);
+      } else {
+        flat[path] = val;
+      }
+    });
+  };
+
+  walk(entityData);
+
+  const keys = Object.keys(flat).sort();
+
+  return keys
+    .map(k => `${k}=${String(flat[k])}`)
+    .join("&");
 }
 
 export async function getAvailableCollection(
@@ -59,14 +89,30 @@ export async function getAvailableCollection(
   withFields = true,
   table = false,
   form = false,
+  entityData?: any,
+  _changedParams?: {
+    field: string;
+    value: any;
+  }[],
 ): Promise<CollectionWithFieldsModel> {
-  const res = await apiClient.get<CollectionWithFieldsModel>(
-    `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`,
+  let cacheKey = `metadata:collection:${idOrSlug}:wf${withFields}:tbl${table}:frm${form}`;
+
+  const suffix = buildCacheSuffixFromEntityData(entityData);
+  if (suffix) {
+    cacheKey += `:ed:${suffix}`;
+  }
+
+  const res = await apiClient.getAsPost<CollectionWithFieldsModel>(
+    `${env.apiBasePath}/metadata/collections/available/${idOrSlug}`, {
+    ...entityData
+  },
     {
       params: { withFields, table, form },
       cacheMode: "cache-first",
       cacheTTL: 6.048e+8, // ~7d
+      cacheKey,
       cacheTags: [`metadata:collection:${idOrSlug}`],
+      dedupKey: false,
     }
   );
   const result = mapper.map<any, CollectionWithFieldsModel>("Common", res.data, "dto_to_model");

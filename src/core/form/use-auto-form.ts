@@ -2,7 +2,6 @@ import * as React from "react";
 import type { FieldDef, FieldRules, AutoFormOptions, PasswordRules } from "@core/form/types";
 import { snakeToCamel } from "@shared/utils/string.utils";
 import dayjs from "dayjs";
-import { extractVars } from "@shared/utils/equation.utils";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -423,46 +422,6 @@ export function useAutoForm(
       return next;
     });
   }, [deriveRules, values]);
-
-  // ==========================================
-  // EQUATION ENGINE
-  // ==========================================
-  React.useEffect(() => {
-    const eqFields = schema.filter((f) => f.kind === "currency-equation" && f.currencyEquation);
-    if (eqFields.length === 0) return;
-
-    setFormValues((prev) => {
-      let next = prev;
-
-      for (const f of eqFields) {
-        const expr = f.currencyEquation!;
-        try {
-          const vars = extractVars(expr);
-
-          const argValues = vars.map((name) => {
-            if (name in values) return values[name];
-            const cf = `customFields.${name}`;
-            return values[cf];
-          });
-
-          const fn = new Function(...vars, `return (${expr});`);
-          let result = fn(...argValues);
-
-          if (result == null || Number.isNaN(result)) result = 0;
-
-          if (prev[f.name] !== result) {
-            if (next === prev) next = { ...prev };
-            next[f.name] = result;
-          }
-        } catch (e) {
-          console.error("EQUATION ERROR:", e);
-        }
-      }
-
-      return next;
-    });
-  }, [schema, values]);
-  // ==========================================
 
   // validations
   const validate = React.useCallback(() => {

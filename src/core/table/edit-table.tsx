@@ -22,7 +22,7 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import QRCode from "react-qr-code";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
-import { camelToSnake } from "@shared/utils/string.utils";
+import { camelToSnake, humanize } from "@shared/utils/string.utils";
 import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 import { NumericFormat } from "react-number-format";
 
@@ -463,7 +463,7 @@ export function EditTable<T extends { id?: string | number }>({
         );
       case "text":
       default:
-        return val as any;
+        return humanize(val as string);
     }
   };
 

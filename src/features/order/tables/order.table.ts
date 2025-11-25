@@ -15,6 +15,7 @@ const columns: ColumnDef<OrderModel>[] = [
       mode: "whole",
     }
   },
+  { key: "createdAt", header: "Ngày tạo đơn", type: "datetime", sortable: true, }
 ];
 
 registerTable("orders", () => {

@@ -11,5 +11,7 @@ mapper.register<OrderModel>({
     name: "",
     active: true,
     customFields: null,
+    createdAt: "",
+    updatedAt: "",
   }),
 });

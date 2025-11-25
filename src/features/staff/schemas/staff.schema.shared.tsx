@@ -100,8 +100,8 @@ function commonFields(): FieldDef[] {
       placeholder: "Tìm vai trò phù hợp cho nhân sự…",
       fullWidth: true,
 
-      getOptionLabel: (d: any) => d.displayName,
-      getOptionValue: (d: any) => d.id,
+      getOptionLabel: (d: any) => d?.displayName,
+      getOptionValue: (d: any) => d?.id,
 
       async searchPage(kw: string, page: number, limit: number) {
         const searched = await searchRoles({ keyword: kw, limit, page, orderBy: "display_name" });

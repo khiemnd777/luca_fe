@@ -23,6 +23,7 @@ export type ColumnType = "text"
   | "qr"
   | "custom"
   | "metadata"
+  | "relation"
   ;
 
 export type MetadataColumnMode = "whole" | "partial";

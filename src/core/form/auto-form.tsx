@@ -130,7 +130,7 @@ async function expandOneMetadataBlock(
 
     if (kind === "searchlist") {
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
-      const singleChoice = relation.type ? relation.type === '1' : false;
+      const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
       out.push({
         kind: "searchlist",
@@ -140,8 +140,8 @@ async function expandOneMetadataBlock(
         placeholder: relation.placeholer ?? "",
         fullWidth: true,
 
-        getOptionLabel: (d: any) => d.name,
-        getOptionValue: (d: any) => d.id,
+        getOptionLabel: (d: any) => d?.name,
+        getOptionValue: (d: any) => d?.id,
 
         async searchPage(kw: string, page, limit) {
           const searched = await search(relation.target, {
@@ -161,6 +161,7 @@ async function expandOneMetadataBlock(
             const refName = `customFields.${mf.name}`;
             const refId = parseIntSafe(values[refName])
             const single = await rel1(relation.target, refId);
+            if (!single) return [];
             const items = [single];
             const set = new Set(ids.map(String));
             return (items ?? []).filter((d: any) => set.has(String(d.id)));
@@ -179,6 +180,7 @@ async function expandOneMetadataBlock(
             const refName = `customFields.${mf.name}`;
             const refId = parseIntSafe(values[refName])
             const single = await rel1(relation.target, refId);
+            if (!single) return [];
             return [single];
           }
           const table = await relM2m(relation.target, values.id, {
@@ -189,8 +191,8 @@ async function expandOneMetadataBlock(
           return table.items;
         },
 
-        renderItem: (d: any) => (<>{d.name}</>),
-        disableDelete: (d: any) => d.locked === true,
+        renderItem: (d: any) => (<>{d?.name}</>),
+        disableDelete: (d: any) => d?.locked === true,
         onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
         autoLoadAllOnMount: true,
         singleChoice

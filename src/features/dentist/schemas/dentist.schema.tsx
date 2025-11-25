@@ -52,8 +52,8 @@ export function buildDentistSchema(): FormSchema {
       placeholder: "Tìm nha khoa...",
       fullWidth: true,
 
-      getOptionLabel: (d: any) => d.name,
-      getOptionValue: (d: any) => d.id,
+      getOptionLabel: (d: any) => d?.name,
+      getOptionValue: (d: any) => d?.id,
 
       async searchPage(kw: string, page, limit) {
         const searched = await searchClinic({

@@ -7,6 +7,8 @@ import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { hasAnyPermissions } from "../auth/rbac-utils";
 import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
+import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
+import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 
 async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<ColumnDef<T>[]> {
   const result: ColumnDef<T>[] = [];
@@ -38,6 +40,19 @@ async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<Column
 
     if (fieldsToUse != null) {
       for (const f of fieldsToUse) {
+        if (f.type === "relation") {
+          const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+          const singleChoice = relation.type && relation.type === '1';
+          const label = mapIdFieldToNameField(f.name);
+          result.push({
+            key: `customFields.${f.name}`,
+            header: f.label ?? f.name,
+            type: singleChoice ? 'text' : 'chips',
+            accessor: (row: any) => row.customFields?.[label] ?? row.customFields?.[f.name],
+            sortable: false,
+          });
+          continue;
+        }
         result.push({
           key: `customFields.${f.name}`,
           header: f.label ?? f.name,
@@ -70,6 +85,7 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
       return "boolean";
     case "image":
       return "image";
+    case "relation": return "relation";
     default:
       return "text";
   }

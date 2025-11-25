@@ -27,6 +27,7 @@ import PasswordField from "@core/form/password-field";
 import SearchListField from "@core/form/search-list-field";
 import type { GroupConfig } from "./form.types";
 import { humanize } from "@root/shared/utils/string.utils";
+import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 
 
 // -----------------------------------------------------------
@@ -503,10 +504,15 @@ export function AutoFormFieldSingle({
         helperText={f.helperText}
         error={error}
         selectedIds={selectedIds}
-        onChange={(nextIds) => {
+        onChange={(nextIds, nextObjs) => {
           if (f.singleChoice) {
-            const single = nextIds && nextIds.length > 0 ? nextIds[0] : null;
-            setValue(f.name, single);
+            const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
+            const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
+            setValue(f.name, singleId);
+            const label = f.getOptionLabel?.(singleObj);
+            if (label) {
+              setValue(mapIdFieldToNameField(f.name), label)
+            }
           } else {
             setValue(f.name, nextIds);
           }

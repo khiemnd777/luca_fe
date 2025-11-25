@@ -33,7 +33,7 @@ export type SearchListFieldProps<T> = {
 
   // Back-compat: vẫn emit IDs vào onChange nếu không có onIdsChange
   value?: any;
-  onChange?: (next: any) => void;
+  onChange?: (next: any, nextObj: any) => void;
 
   // Server / client actions
   /** Search “không phân trang” (fallback). kw="" -> load ALL/top-N */
@@ -149,7 +149,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       if (!sameIds(ids, lastEmittedIdsRef.current)) {
         lastEmittedIdsRef.current = ids;
         if (onIdsChange) onIdsChange(ids);
-        else if (onChange) onChange(ids as any);
+        else if (onChange) onChange(ids as any, arr);
       }
     },
     [deriveIds, onIdsChange, onChange]

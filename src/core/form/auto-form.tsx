@@ -23,9 +23,10 @@ import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { parseShowIfDependencies } from "@root/shared/metadata/utils";
-import { relM2m, search } from "../relation/relation.api";
+import { rel1, relM2m, search } from "../relation/relation.api";
 import { openFormDialog } from "./form-dialog.service";
 import { extractVars } from "@root/shared/utils/equation.utils";
+import { parseIntSafe } from "@root/shared/utils/number.utils";
 
 /* ========================================================================
    MAP FIELD TYPE
@@ -129,6 +130,7 @@ async function expandOneMetadataBlock(
 
     if (kind === "searchlist") {
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
+      const singleChoice = relation.type ? relation.type === '1' : false;
       const frmDlgKey = relation.form ?? relation.ref;
       out.push({
         kind: "searchlist",
@@ -155,6 +157,14 @@ async function expandOneMetadataBlock(
 
         async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
           if (!ids || ids.length === 0) return [];
+          if (singleChoice) {
+            const refName = `customFields.${mf.name}`;
+            const refId = parseIntSafe(values[refName])
+            const single = await rel1(relation.target, refId);
+            const items = [single];
+            const set = new Set(ids.map(String));
+            return (items ?? []).filter((d: any) => set.has(String(d.id)));
+          }
           const table = await relM2m(relation.target, values.id, {
             limit: 10000,
             page: 1,
@@ -165,6 +175,12 @@ async function expandOneMetadataBlock(
         },
 
         async fetchList(values: Record<string, any>) {
+          if (singleChoice) {
+            const refName = `customFields.${mf.name}`;
+            const refId = parseIntSafe(values[refName])
+            const single = await rel1(relation.target, refId);
+            return [single];
+          }
           const table = await relM2m(relation.target, values.id, {
             limit: 10000,
             page: 1,
@@ -177,6 +193,7 @@ async function expandOneMetadataBlock(
         disableDelete: (d: any) => d.locked === true,
         onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
         autoLoadAllOnMount: true,
+        singleChoice
       });
 
       continue;
@@ -273,20 +290,41 @@ function normalizeCustomFieldsPayload(input: any): any {
   return dto;
 }
 
-function normalizeRelationFieldsToCore(dto: any): any {
+function normalizeRelationFields(dto: any): any {
+  if (!dto || typeof dto !== "object") return dto;
+
+  const custom =
+    dto.custom_fields && typeof dto.custom_fields === "object"
+      ? { ...dto.custom_fields }
+      : {};
+
+  const core: Record<string, any> = { ...dto };
+
   for (const [k, v] of Object.entries(dto)) {
-    if (k.startsWith("relation_fields.")) {
-      const coreName = k.substring("relation_fields.".length);
-      dto[coreName] = v;
-      delete dto[k];
-    }
+    if (!k.startsWith("relation_fields.")) continue;
+
+    const name = k.substring("relation_fields.".length);
+    core[name] = v;
+    custom[name] = v;
+
+    delete core[k];
   }
+
+  if (Object.keys(custom).length > 0) core.custom_fields = custom;
+  return core;
+}
+
+export function normalizePayload(input: any): any {
+  if (!input || typeof input !== "object") return input;
+  // relation_fields -> core + custom_fields
+  let dto = normalizeRelationFields(input);
+  // custom_fields.x -> custom_fields
+  dto = normalizeCustomFieldsPayload(dto);
   return dto;
 }
 
 async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
-  values = normalizeRelationFieldsToCore(values);
-  values = normalizeCustomFieldsPayload(values);
+  values = normalizePayload(values);
 
   if (def.type === "fn") return def.run(values, meta);
 
@@ -294,8 +332,7 @@ async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; f
   const fetcher = def.fetcher ?? defaultFetcher;
 
   let payload = def.transform ? def.transform(values) : values;
-  payload = normalizeRelationFieldsToCore(payload);
-  payload = normalizeCustomFieldsPayload(payload);
+  payload = normalizePayload(payload);
 
   const res = await fetcher(def.url, {
     method,

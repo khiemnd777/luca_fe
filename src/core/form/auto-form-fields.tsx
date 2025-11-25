@@ -485,7 +485,13 @@ export function AutoFormFieldSingle({
 
   // SEARCHLIST
   if (f.kind === "searchlist") {
-    const list = Array.isArray(values[f.name]) ? values[f.name] : [];
+    const raw = values[f.name];
+
+    const selectedIds = f.singleChoice
+      ? (raw ? [raw] : [])
+      : Array.isArray(raw)
+        ? raw
+        : [];
 
     return (
       <SearchListField
@@ -496,12 +502,20 @@ export function AutoFormFieldSingle({
         fullWidth={f.fullWidth ?? true}
         helperText={f.helperText}
         error={error}
-        selectedIds={list}
-        onChange={(next) => setValue(f.name, next)}
+        selectedIds={selectedIds}
+        onChange={(nextIds) => {
+          if (f.singleChoice) {
+            const single = nextIds && nextIds.length > 0 ? nextIds[0] : null;
+            setValue(f.name, single);
+          } else {
+            setValue(f.name, nextIds);
+          }
+        }}
         search={f.search!}
         searchPage={f.searchPage}
         getOptionLabel={f.getOptionLabel!}
         getOptionValue={f.getOptionValue!}
+        singleChoice={f.singleChoice}
         fetchList={f.fetchList}
         onAdd={f.onAdd}
         onDelete={f.onDelete}
@@ -516,6 +530,7 @@ export function AutoFormFieldSingle({
       />
     );
   }
+
 
   // FILEUPLOAD
   if (f.kind === "fileupload") {

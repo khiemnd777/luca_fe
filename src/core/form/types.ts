@@ -137,6 +137,7 @@ export type FieldDef = {
   // Extractors (áp dụng cho searchlist)
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
+  singleChoice?: boolean;
 
   // metadata
   metadata?: {

@@ -220,19 +220,22 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   // Search state & options (paging)
   const [keyword, setKeyword] = React.useState("");
   const [options, setOptions] = React.useState<T[]>([]);
+  const [inputValue, setInputValue] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);   // NEW
-  const [page, setPage] = React.useState(1);                     // NEW
-  const [hasMore, setHasMore] = React.useState(false);           // NEW
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(false);
 
   const eq = React.useMemo(() => makeEquality(getOptionValue, dedupeFn), [getOptionValue, dedupeFn]);
 
   const filterOutSelected = React.useCallback(
     (arr: T[]) => {
+      if (singleChoice) return arr;
+
       if (allowDuplicate) return arr;
       return arr.filter((o) => !items.some((x) => eq(x, o)));
     },
-    [allowDuplicate, items, eq]
+    [singleChoice, allowDuplicate, items, eq]
   );
 
   const dedupById = React.useCallback(
@@ -322,11 +325,10 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     [loadFirstPage]
   );
 
-  // Khi add/remove item → reload lại trang hiện tại theo từ khoá (đảm bảo ẩn item đã chọn)
   const reloadCurrentAfterSelectionChange = React.useCallback(() => {
-    // nếu có paging → refresh lại từ trang 1 với keyword hiện tại
-    loadFirstPage(keyword).catch(() => void 0);
-  }, [keyword, loadFirstPage]);
+    loadFirstPage("").catch(() => void 0);
+  }, [loadFirstPage]);
+
 
   const setItemsAndEmit = React.useCallback(
     (next: T[]) => {
@@ -429,9 +431,16 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
             loading={loading || loadingMore}
             value={null}
             onChange={async (_e, newVal) => {
-              if (newVal) await addItem(newVal as T);
+              if (newVal) {
+                await addItem(newVal as T);
+                setInputValue("");
+              }
             }}
-            onInputChange={handleInputChange}
+            inputValue={inputValue}
+            onInputChange={(e, v, reason) => {
+              setInputValue(v);
+              handleInputChange(e, v, reason);
+            }}
             getOptionLabel={(o) => getOptionLabel(o as T)}
             isOptionEqualToValue={(a, b) => eq(a as T, b as T)}
             onOpen={() => {

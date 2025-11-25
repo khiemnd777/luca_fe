@@ -44,6 +44,9 @@ function transformContent(content: string, ctx: any): string {
   // SampleUpsertModel → ProductUpsertModel
   out = out.replace(/\bSampleUpsertModel\b/g, `${ctx.modulePascal}UpsertModel`);
 
+  // SampleWidget → ProductWidget
+  out = out.replace(/\bSampleWidget\b/g, `${ctx.modulePascal}Widget`);
+
   // Sample → Product
   out = out.replace(/\bSample\b/g, ctx.modulePascal);
 

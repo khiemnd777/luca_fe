@@ -4,27 +4,18 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/sample/api/sample.api";
-import type { SampleModel } from "@features/sample/model/sample.model";
+import { create, id, update } from "@features/order/api/order.api";
+import type { OrderModel } from "@features/order/model/order.model";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "code",
-      label: "Mã {label}",
+      label: "Mã đơn hàng",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập mã {label}",
+        required: "Yêu cầu nhập mã đơn hàng",
         maxLength: 30,
-      },
-    },
-    {
-      name: "name",
-      label: "Tên {label}",
-      kind: "text",
-      rules: {
-        required: "Yêu cầu nhập tên {label}",
-        maxLength: 200,
       },
     },
     {
@@ -32,7 +23,7 @@ export function buildSampleSchema(): FormSchema {
       label: "",
       kind: "metadata",
       metadata: {
-        collection: "sample",
+        collection: "order",
         mode: "whole",
       }
     },
@@ -46,7 +37,7 @@ export function buildSampleSchema(): FormSchema {
         type: "fn",
         run: async (values, meta) => {
           await create({
-            dto: values as SampleModel,
+            dto: values as OrderModel,
             collections: meta?.map((m) => m.meta.metadata?.collection)
           });
           return values;
@@ -56,7 +47,7 @@ export function buildSampleSchema(): FormSchema {
         type: "fn",
         run: async (values, meta) => {
           await update({
-            dto: values as SampleModel,
+            dto: values as OrderModel,
             collections: meta?.map((m) => m.meta.metadata?.collection)
           });
           return values;
@@ -67,12 +58,12 @@ export function buildSampleSchema(): FormSchema {
     toasts: {
       saved: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo {label} "${values?.name ?? ""}" thành công!`
-          : `Cập nhật {label} "${values?.name ?? ""}" thành công!`,
+          ? `Tạo đơn hàng "${values?.name ?? ""}" thành công!`
+          : `Cập nhật đơn hàng "${values?.name ?? ""}" thành công!`,
       failed: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo {label} "${values?.name ?? ""}" thất bại, xin thử lại!`
-          : `Cập nhật {label} "${values?.name ?? ""}" thất bại, xin thử lại!`,
+          ? `Tạo đơn hàng "${values?.name ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật đơn hàng "${values?.name ?? ""}" thất bại, xin thử lại!`,
     },
 
     async initialResolver(data: any) {
@@ -83,19 +74,19 @@ export function buildSampleSchema(): FormSchema {
     },
 
     async afterSaved() {
-      reloadTable("samples");
+      reloadTable("orders");
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Sample", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Order", v, "model_to_dto"),
     },
   };
 }
 
-registerForm("sample", buildSampleSchema);
+registerForm("order", buildSampleSchema);
 
-registerFormDialog("sample", buildSampleSchema, {
-  title: { create: "Thêm {label}", update: "Cập nhật {label}" },
+registerFormDialog("order", buildSampleSchema, {
+  title: { create: "Tạo đơn hàng mới", update: "Cập nhật đơn hàng" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",
 });

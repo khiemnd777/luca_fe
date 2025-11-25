@@ -1,19 +1,18 @@
-import React from "react";
-import type { ModuleDescriptor } from "@root/core/module/types";
-import { registerModule } from "@root/core/module/registry";
+import type { ModuleDescriptor } from "@core/module/types";
+import { registerModule } from "@core/module/registry";
 import ChecklistIcon from '@mui/icons-material/Checklist';
-
-const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
+import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
   id: "order",
   routes: [
     {
       key: "order",
+      permissions: ["order.view"],
+      element: <OneColumnPage />,
       label: "Đơn hàng",
       title: "Đơn hàng",
       path: "/order",
-      element: <UnderConstructionPage />,
       icon: <ChecklistIcon />,
       priority: 97,
     },

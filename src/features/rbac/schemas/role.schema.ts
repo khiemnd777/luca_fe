@@ -48,15 +48,15 @@ export function buildRoleSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await createRole(values as RoleModel);
-          return values;
+          await createRole(values.dto as RoleModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await updateRole(values as RoleModel);
-          return values;
+          await updateRole(values.dto as RoleModel);
+          return values.dto;
         },
       },
     },

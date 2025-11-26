@@ -5,7 +5,7 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/sample/api/sample.api";
-import type { SampleModel } from "@features/sample/model/sample.model";
+import type { SampleUpsertModel } from "@features/sample/model/sample.model";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -44,22 +44,16 @@ export function buildSampleSchema(): FormSchema {
     submit: {
       create: {
         type: "fn",
-        run: async (values, meta) => {
-          await create({
-            dto: values as SampleModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
-          return values;
+        run: async (dto, meta) => {
+          await create(dto as SampleUpsertModel);
+          return dto;
         },
       },
       update: {
         type: "fn",
-        run: async (values, meta) => {
-          await update({
-            dto: values as SampleModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
-          return values;
+        run: async (dto, meta) => {
+          await update(dto as SampleUpsertModel);
+          return dto;
         },
       },
     },

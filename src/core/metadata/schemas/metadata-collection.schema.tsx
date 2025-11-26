@@ -50,18 +50,18 @@ export function buildMetadataCollectionSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await createCollection(values as CollectionModel);
-          return values;
+          await createCollection(values.dto as CollectionModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
           await updateCollection(
-            (values as any).id,
-            values as CollectionModel,
+            (values as any).dto.id,
+            values.dto as CollectionModel,
           );
-          return values;
+          return values.dto;
         },
       },
     },

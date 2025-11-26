@@ -111,15 +111,15 @@ export function buildMetadataFieldSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await createField(values as FieldDto);
-          return values;
+          await createField(values.dto as FieldDto);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values: any) => {
-          await updateField(values.id, values as FieldDto);
-          return values;
+          await updateField(values.dto.id, values.dto as FieldDto);
+          return values.dto;
         },
       },
     },

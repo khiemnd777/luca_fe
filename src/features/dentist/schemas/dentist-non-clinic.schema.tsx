@@ -51,15 +51,15 @@ export function buildDentistNonClinicSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as DentistModel);
-          return values;
+          await create(values.dto as DentistModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as DentistModel);
-          return values;
+          await update(values.dto as DentistModel);
+          return values.dto;
         },
       },
     },

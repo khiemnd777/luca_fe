@@ -34,15 +34,15 @@ export function buildSectionSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as SectionModel);
-          return values;
+          await create(values.dto as SectionModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as SectionModel);
-          return values;
+          await update(values.dto as SectionModel);
+          return values.dto;
         },
       },
     },

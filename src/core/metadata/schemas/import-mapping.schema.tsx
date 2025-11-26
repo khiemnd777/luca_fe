@@ -124,14 +124,14 @@ export function buildMetadataImportMappingSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values: any) => {
-          const result = await createImportFieldMapping(values);
+          const result = await createImportFieldMapping(values.dto);
           return result;
         },
       },
       update: {
         type: "fn",
         run: async (values: any) => {
-          const result = await updateImportFieldMapping(values.id, values);
+          const result = await updateImportFieldMapping(values.dto.id, values.dto);
           return result;
         },
       },

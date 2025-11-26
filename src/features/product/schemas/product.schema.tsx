@@ -5,7 +5,7 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/product/api/product.api";
-import type { ProductModel } from "@features/product/model/product.model";
+import type { ProductUpsertModel } from "@features/product/model/product.model";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -263,22 +263,16 @@ export function buildSampleSchema(): FormSchema {
     submit: {
       create: {
         type: "fn",
-        run: async (values, meta) => {
-          await create({
-            dto: values as ProductModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
-          return values;
+        run: async (values) => {
+          await create(values as ProductUpsertModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
-        run: async (values, meta) => {
-          await update({
-            dto: values as ProductModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
-          return values;
+        run: async (values) => {
+          await update(values as ProductUpsertModel);
+          return values.dto;
         },
       },
     },

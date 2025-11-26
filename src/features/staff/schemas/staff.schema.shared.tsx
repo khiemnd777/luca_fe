@@ -177,15 +177,15 @@ export function buildStaffSchemaShared(opts: Options): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as StaffModel);
-          return values;
+          await create(values.dto as StaffModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as StaffModel);
-          return values;
+          await update(values.dto as StaffModel);
+          return values.dto;
         },
       },
     },

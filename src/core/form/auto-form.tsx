@@ -27,10 +27,8 @@ import { rel1, relM2m, search } from "../relation/relation.api";
 import { openFormDialog } from "./form-dialog.service";
 import { extractVars } from "@root/shared/utils/equation.utils";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
+import { packageData } from "./auto-form-package";
 
-/* ========================================================================
-   MAP FIELD TYPE
-   ======================================================================== */
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
     case "text": return "text";
@@ -50,9 +48,6 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   }
 }
 
-/* ========================================================================
-   EXPAND ONE METADATA BLOCK
-   ======================================================================== */
 async function expandOneMetadataBlock(
   metaField: FieldDef,
   values: any,
@@ -104,9 +99,11 @@ async function expandOneMetadataBlock(
     const group = resolveMetadataFieldGroup(metaField, mf.name);
 
     if (kind === "currency-equation") {
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
       out.push({
         kind: "currency-equation",
-        name: `customFields.${mf.name}`,
+        name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
         fullWidth: true,
@@ -116,10 +113,12 @@ async function expandOneMetadataBlock(
     }
 
     if (kind === "select") {
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
       const opts = isJSON(mf.options ?? "") ? parseJSON(mf.options ?? "[]") : [];
       out.push({
         kind: "select",
-        name: `customFields.${mf.name}`,
+        name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         options: opts,
         fullWidth: true,
@@ -129,12 +128,14 @@ async function expandOneMetadataBlock(
     }
 
     if (kind === "searchlist") {
+      const prop = metaField.prop;
+      const relPrefix = prop ? `${prop}.relationFields` : `relationFields`;
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
       const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
       out.push({
         kind: "searchlist",
-        name: `relationFields.${mf.name}`,
+        name: `${relPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         group,
         placeholder: relation.placeholer ?? "",
@@ -201,9 +202,12 @@ async function expandOneMetadataBlock(
       continue;
     }
 
+    const prop = metaField.prop;
+    const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
+
     out.push({
       kind,
-      name: `customFields.${mf.name}`,
+      name: `${cfPrefix}.${mf.name}`,
       label: mf.label ?? mf.name,
       fullWidth: true,
       rules: mf.required ? { required: true } : undefined,
@@ -247,6 +251,49 @@ function resolveMetadataFieldGroup(
   return metaField.group ?? "general";
 }
 
+function flattenInitialRecursive(obj: any, prefix: string, out: any) {
+  if (!obj || typeof obj !== "object") return;
+
+  // flatten custom_fields → prefix.customFields.*
+  if (obj.custom_fields && typeof obj.custom_fields === "object") {
+    for (const [k, v] of Object.entries(obj.custom_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.customFields.${camel}`] = v;
+    }
+  }
+
+  // flatten customFields → prefix.customFields.*
+  if (obj.customFields && typeof obj.customFields === "object") {
+    for (const [k, v] of Object.entries(obj.customFields)) {
+      out[`${prefix}.customFields.${k}`] = v;
+    }
+  }
+
+  // flatten relation_fields → prefix.relationFields.*
+  if (obj.relation_fields && typeof obj.relation_fields === "object") {
+    for (const [k, v] of Object.entries(obj.relation_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.relationFields.${camel}`] = v;
+    }
+  }
+
+  // flatten NORMAL FIELDS: id, code, createdAt, updatedAt, ...
+  for (const [k, v] of Object.entries(obj)) {
+    // ignore nested groups already handled
+    if (k === "custom_fields" || k === "customFields" || k === "relation_fields") continue;
+
+    const camel = snakeToCamel(k);
+
+    // primitive values → flatten to prefix.camel
+    if (typeof v !== "object" || v === null) {
+      out[`${prefix}.${camel}`] = v;
+      continue;
+    }
+
+    // nested object → recurse
+    flattenInitialRecursive(v, `${prefix}.${camel}`, out);
+  }
+}
 
 function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   const idField = schema.idField ?? "id";
@@ -271,70 +318,13 @@ function renderModeText(
   return t[ctx!.mode];
 }
 
-function normalizeCustomFieldsPayload(input: any): any {
-  if (!input || typeof input !== "object") return input;
-
-  const dto: Record<string, any> = { ...input };
-  const custom: any =
-    dto.custom_fields && typeof dto.custom_fields === "object"
-      ? { ...dto.custom_fields }
-      : {};
-
-  for (const [k, v] of Object.entries(dto)) {
-    if (k.startsWith("custom_fields.")) {
-      const name = k.substring("custom_fields.".length);
-      custom[name] = v;
-      delete dto[k];
-    }
-  }
-
-  if (Object.keys(custom).length > 0) dto.custom_fields = custom;
-  return dto;
-}
-
-function normalizeRelationFields(dto: any): any {
-  if (!dto || typeof dto !== "object") return dto;
-
-  const custom =
-    dto.custom_fields && typeof dto.custom_fields === "object"
-      ? { ...dto.custom_fields }
-      : {};
-
-  const core: Record<string, any> = { ...dto };
-
-  for (const [k, v] of Object.entries(dto)) {
-    if (!k.startsWith("relation_fields.")) continue;
-
-    const name = k.substring("relation_fields.".length);
-    core[name] = v;
-    custom[name] = v;
-
-    delete core[k];
-  }
-
-  if (Object.keys(custom).length > 0) core.custom_fields = custom;
-  return core;
-}
-
-export function normalizePayload(input: any): any {
-  if (!input || typeof input !== "object") return input;
-  // relation_fields -> core + custom_fields
-  let dto = normalizeRelationFields(input);
-  // custom_fields.x -> custom_fields
-  dto = normalizeCustomFieldsPayload(dto);
-  return dto;
-}
-
-async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
-  values = normalizePayload(values);
-
-  if (def.type === "fn") return def.run(values, meta);
+async function runSubmit(def: SubmitDef, dto: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
+  if (def.type === "fn") return def.run(dto, meta);
 
   const method = def.method ?? "PATCH";
   const fetcher = def.fetcher ?? defaultFetcher;
 
-  let payload = def.transform ? def.transform(values) : values;
-  payload = normalizePayload(payload);
+  let payload = def.transform ? def.transform(dto) : dto;
 
   const res = await fetcher(def.url, {
     method,
@@ -400,17 +390,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           // ==========================================
           // FLATTEN customFields.* INTO customFields.*
           // ==========================================
-          if (finalInitial?.customFields && typeof finalInitial.customFields === "object") {
-            for (const [k, v] of Object.entries(finalInitial.customFields)) {
-              const camel = snakeToCamel(k);
-              finalInitial[`customFields.${camel}`] = v;
+          // FLATTEN ALL NESTED PROPS (custom_fields + relation_fields)
+          const flattenOut: any = { ...finalInitial };
+
+          for (const [k, v] of Object.entries(finalInitial)) {
+            if (typeof v === "object" && v !== null) {
+              flattenInitialRecursive(v, snakeToCamel(k), flattenOut)
             }
           }
 
           if (!cancelled) {
-            setResolvedInitial(finalInitial);
-            setAllValues(finalInitial);
+            setResolvedInitial(flattenOut);
+            setAllValues(flattenOut);
           }
+
         } finally {
           if (!cancelled) setResolvingInitial(false);
         }
@@ -426,16 +419,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // --------------------------------------
     const fixedInitial = React.useMemo(() => {
       const init = { ...stableInitial };
+      const out: any = { ...init };
 
-      if (init.customFields && typeof init.customFields === "object") {
-        for (const [k, v] of Object.entries(init.customFields)) {
-          const camel = snakeToCamel(k);
-          init[`customFields.${camel}`] = v;
+      for (const [k, v] of Object.entries(init)) {
+        if (typeof v === "object" && v !== null) {
+          flattenInitialRecursive(v, k, out);
         }
       }
 
-      return init;
+      return out;
     }, [stableInitial]);
+
+    React.useEffect(() => {
+      setAllValues(fixedInitial);
+    }, [fixedInitial]);
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
@@ -469,7 +466,14 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const fields = metadataMap.get(f) ?? [];
           arr.push(...fields);
         } else {
-          arr.push(f);
+          if (f.prop) {
+            arr.push({
+              ...f,
+              name: `${f.prop}.${f.name}`
+            })
+          } else {
+            arr.push(f);
+          }
         }
       }
       return arr;
@@ -701,9 +705,18 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       setSaving(true);
 
+      const packaged = packageData(
+        metadataBlocks,
+        values,
+      );
+
+      console.log("==== packaged data ====");
+      console.log(packaged);
+      console.log(JSON.stringify(packaged));
+
       const dto = schema.hooks?.mapToDto
-        ? schema.hooks.mapToDto(values)
-        : values;
+        ? schema.hooks.mapToDto(packaged)
+        : packaged;
 
       const mode = resolveMode(schema, stableInitial);
 

@@ -138,6 +138,7 @@ export type FieldDef = {
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
   singleChoice?: boolean;
+  prop?: string;
 
   // metadata
   metadata?: {

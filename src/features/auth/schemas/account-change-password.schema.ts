@@ -28,8 +28,7 @@ export function buildAccountChangePasswordSchema(): FormSchema {
   const submit: SubmitDef = {
     type: "fn",
     run: async (values) => {
-      console.log(values);
-      const { current, password } = values.password;
+      const { current, password } = values.dto.password;
       await changeMyPassword(current, password);
     }
   };

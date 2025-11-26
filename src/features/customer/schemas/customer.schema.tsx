@@ -45,15 +45,15 @@ export function buildSampleSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as CustomerModel);
-          return values;
+          await create(values.dto as CustomerModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as CustomerModel);
-          return values;
+          await update(values.dto as CustomerModel);
+          return values.dto;
         },
       },
     },

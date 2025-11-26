@@ -5,9 +5,9 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/order/api/order.api";
-import type { OrderModel } from "@features/order/model/order.model";
+import type { OrderUpsertModel } from "@features/order/model/order.model";
 
-export function buildSampleSchema(): FormSchema {
+export function buildOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "code",
@@ -27,6 +27,26 @@ export function buildSampleSchema(): FormSchema {
         mode: "whole",
       }
     },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
+        collection: "order-item-remake",
+        mode: "whole",
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
+        collection: "order-item",
+        mode: "whole",
+      }
+    },
   ];
 
   return {
@@ -35,21 +55,18 @@ export function buildSampleSchema(): FormSchema {
     submit: {
       create: {
         type: "fn",
-        run: async (values, meta) => {
-          await create({
-            dto: values as OrderModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
-          return values;
+        run: async (dto) => {
+          console.log("==== values ====");
+          console.log(dto);
+          console.log(JSON.stringify(dto));
+          await create(dto as OrderUpsertModel);
+          return dto;
         },
       },
       update: {
         type: "fn",
-        run: async (values, meta) => {
-          await update({
-            dto: values as OrderModel,
-            collections: meta?.map((m) => m.meta.metadata?.collection)
-          });
+        run: async (values) => {
+          await update(values as OrderUpsertModel);
           return values;
         },
       },
@@ -83,9 +100,9 @@ export function buildSampleSchema(): FormSchema {
   };
 }
 
-registerForm("order", buildSampleSchema);
+registerForm("order", buildOrderSchema);
 
-registerFormDialog("order", buildSampleSchema, {
+registerFormDialog("order", buildOrderSchema, {
   title: { create: "Tạo đơn hàng mới", update: "Cập nhật đơn hàng" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",

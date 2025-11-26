@@ -5,6 +5,21 @@ import dayjs from "dayjs";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+function flattenNested(obj: any, prefix: string, out: any) {
+  if (!obj || typeof obj !== "object") return;
+
+  for (const [k, v] of Object.entries(obj)) {
+    const camel = snakeToCamel(k);
+
+    if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+      flattenNested(v, `${prefix}.${camel}`, out);
+    } else {
+      out[`${prefix}.${camel}`] = v;
+    }
+  }
+}
+
+
 function normalizeCustomInitial(raw?: Record<string, any>): Record<string, any> {
   if (!raw || typeof raw !== "object") return raw ?? {};
 
@@ -28,6 +43,18 @@ function normalizeCustomInitial(raw?: Record<string, any>): Record<string, any> 
       if (!(flatKey in out)) {
         out[flatKey] = value;
       }
+    }
+  }
+
+  for (const [k, v] of Object.entries(raw)) {
+    const camelProp = snakeToCamel(k);
+    // flatten nested custom_fields
+    if (v && typeof v === "object" && v.custom_fields) {
+      flattenNested({ customFields: v.custom_fields }, camelProp, out);
+    }
+    // flatten nested relation_fields
+    if (v && typeof v === "object" && v.relation_fields) {
+      flattenNested({ relationFields: v.relation_fields }, camelProp, out);
     }
   }
 

@@ -58,7 +58,7 @@ export function buildDepartmentSettingsSchema(): FormSchema {
   const submit: SubmitDef = {
     type: "fn",
     run: async (values) => {
-      return updateDepartment(values);
+      return updateDepartment(values.dto);
     },
   }
 

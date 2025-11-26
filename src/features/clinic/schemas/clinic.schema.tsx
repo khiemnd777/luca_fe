@@ -129,15 +129,15 @@ export function buildClinicSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as ClinicModel);
-          return values;
+          await create(values.dto as ClinicModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as ClinicModel);
-          return values;
+          await update(values.dto as ClinicModel);
+          return values.dto;
         },
       },
     },

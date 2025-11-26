@@ -388,9 +388,8 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
               : resolved ?? initial ?? {};
 
           // ==========================================
-          // FLATTEN customFields.* INTO customFields.*
-          // ==========================================
           // FLATTEN ALL NESTED PROPS (custom_fields + relation_fields)
+          // ==========================================
           const flattenOut: any = { ...finalInitial };
 
           for (const [k, v] of Object.entries(finalInitial)) {

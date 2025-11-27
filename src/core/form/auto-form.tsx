@@ -14,7 +14,7 @@ import type {
   ModeText,
 } from "@core/form/form.types";
 
-import type { FieldDef, FieldKind } from "@core/form/types";
+import type { FieldDef, FieldKind, FormContext } from "@core/form/types";
 import type { FieldModel } from "@core/metadata/data/metadata.model";
 
 import { getFormSchema } from "@core/form/form-registry";
@@ -43,7 +43,7 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
     case "select": return "select";
     case "multiselect": return "multiselect";
     case "image": return "imageupload";
-    case "relation": return "searchlist";
+    case "relation": return "relation";
     default: return "text";
   }
 }
@@ -127,38 +127,41 @@ async function expandOneMetadataBlock(
       continue;
     }
 
-    if (kind === "searchlist") {
+    if (kind === "relation") {
       const prop = metaField.prop;
       const relPrefix = prop ? `${prop}.relationFields` : `relationFields`;
+      const altPrefix = prop ? `${prop}.customFields` : `customFields`;
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
       const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
-      out.push({
-        kind: "searchlist",
-        name: `${relPrefix}.${mf.name}`,
-        label: mf.label ?? mf.name,
-        group,
-        placeholder: relation.placeholer ?? "",
-        fullWidth: true,
+      if (singleChoice) {
+        out.push({
+          kind: "searchsingle",
+          name: `${relPrefix}.${mf.name}`,
+          altName: `${altPrefix}.${mf.name}`,
+          label: mf.label ?? mf.name,
+          group,
+          placeholder: relation.placeholer ?? "",
+          fullWidth: true,
+          onSelect: metaField.onSelect,
 
-        getOptionLabel: (d: any) => d?.name,
-        getOptionValue: (d: any) => d?.id,
+          getOptionLabel: (d: any) => d?.name,
+          getOptionValue: (d: any) => d?.id,
 
-        async searchPage(kw: string, page, limit) {
-          const searched = await search(relation.target, {
-            keyword: kw,
-            limit: limit,
-            page: page,
-            orderBy: "name",
-          });
-          return searched.items;
-        },
+          async searchPage(kw: string, page, limit) {
+            const searched = await search(relation.target, {
+              keyword: kw,
+              limit: limit,
+              page: page,
+              orderBy: "name",
+            });
+            return searched.items;
+          },
 
-        pageLimit: 20,
+          pageLimit: 20,
 
-        async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
-          if (!ids || ids.length === 0) return [];
-          if (singleChoice) {
+          async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+            if (!ids || ids.length === 0) return [];
             const refName = `customFields.${mf.name}`;
             const refId = parseIntSafe(values[refName])
             const single = await rel1(relation.target, refId);
@@ -166,38 +169,72 @@ async function expandOneMetadataBlock(
             const items = [single];
             const set = new Set(ids.map(String));
             return (items ?? []).filter((d: any) => set.has(String(d.id)));
-          }
-          const table = await relM2m(relation.target, values.id, {
-            limit: 10000,
-            page: 1,
-            orderBy: "name",
-          });
-          const set = new Set(ids.map(String));
-          return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
-        },
+          },
 
-        async fetchList(values: Record<string, any>) {
-          if (singleChoice) {
+          async fetchList(values: Record<string, any>) {
             const refName = `customFields.${mf.name}`;
             const refId = parseIntSafe(values[refName])
             const single = await rel1(relation.target, refId);
             if (!single) return [];
             return [single];
-          }
-          const table = await relM2m(relation.target, values.id, {
-            limit: 10000,
-            page: 1,
-            orderBy: "name",
-          });
-          return table.items;
-        },
+          },
 
-        renderItem: (d: any) => (<>{d?.name}</>),
-        disableDelete: (d: any) => d?.locked === true,
-        onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
-        autoLoadAllOnMount: true,
-        singleChoice
-      });
+          renderItem: (d: any) => (<>{d?.name}</>),
+          disableDelete: (d: any) => d?.locked === true,
+          onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
+          autoLoadAllOnMount: true,
+        });
+      } else {
+        out.push({
+          kind: "searchlist",
+          name: `${relPrefix}.${mf.name}`,
+          label: mf.label ?? mf.name,
+          group,
+          placeholder: relation.placeholer ?? "",
+          fullWidth: true,
+          onSelect: metaField.onSelect,
+
+          getOptionLabel: (d: any) => d?.name,
+          getOptionValue: (d: any) => d?.id,
+
+          async searchPage(kw: string, page, limit) {
+            const searched = await search(relation.target, {
+              keyword: kw,
+              limit: limit,
+              page: page,
+              orderBy: "name",
+            });
+            return searched.items;
+          },
+
+          pageLimit: 20,
+
+          async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+            if (!ids || ids.length === 0) return [];
+            const table = await relM2m(relation.target, values.id, {
+              limit: 10000,
+              page: 1,
+              orderBy: "name",
+            });
+            const set = new Set(ids.map(String));
+            return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
+          },
+
+          async fetchList(values: Record<string, any>) {
+            const table = await relM2m(relation.target, values.id, {
+              limit: 10000,
+              page: 1,
+              orderBy: "name",
+            });
+            return table.items;
+          },
+
+          renderItem: (d: any) => (<>{d?.name}</>),
+          disableDelete: (d: any) => d?.locked === true,
+          onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
+          autoLoadAllOnMount: true,
+        });
+      }
 
       continue;
     }
@@ -277,10 +314,16 @@ function flattenInitialRecursive(obj: any, prefix: string, out: any) {
     }
   }
 
+  if (obj.relationFields && typeof obj.relationFields === "object") {
+    for (const [k, v] of Object.entries(obj.relationFields)) {
+      out[`${prefix}.relationFields.${k}`] = v;
+    }
+  }
+
   // flatten NORMAL FIELDS: id, code, createdAt, updatedAt, ...
   for (const [k, v] of Object.entries(obj)) {
     // ignore nested groups already handled
-    if (k === "custom_fields" || k === "customFields" || k === "relation_fields") continue;
+    if (k === "custom_fields" || k === "customFields" || k === "relation_fields" || k === "relationFields") continue;
 
     const camel = snakeToCamel(k);
 
@@ -345,6 +388,18 @@ async function runSubmit(def: SubmitDef, dto: any, meta?: { meta: FieldDef; fiel
   }
 
   return res.json().catch(() => null);
+}
+
+function flattenForInitial(obj: any): any {
+  const out: any = { ...obj };
+
+  for (const [k, v] of Object.entries(obj ?? {})) {
+    if (typeof v === "object" && v !== null) {
+      flattenInitialRecursive(v, snakeToCamel(k), out);
+    }
+  }
+
+  return out;
 }
 
 /* ========================================================================
@@ -522,6 +577,43 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     } = useAutoForm(baseFields, fixedInitial, {
       asyncValidate: schema.hooks?.asyncValidate,
     });
+
+    // ----------------------------------------------------
+    // WRAPPED SETTERS WITH changeSource
+    // ----------------------------------------------------
+    const setValueUser = (name: string, v: any) => {
+      setValue(name, v);  // original
+      // schema.onChange?.(name, v, ctxRef.current, "user");
+    };
+
+    const setValueProg = (name: string, v: any) => {
+      setValue(name, v);  // original
+      // schema.onChange?.(name, v, ctxRef.current, "programmatic");
+    };
+
+    const setAllValuesProg = (obj: Record<string, any>) => {
+      setAllValues(obj);  // original setAllValues
+      // schema.onChange?.("*", obj, ctxRef.current, "programmatic");
+    };
+
+    // ----------------------------------------------------
+    // CTX FOR onChange
+    // ----------------------------------------------------
+    const ctxRef = React.useRef<FormContext>(null);
+
+    ctxRef.current = {
+      values,
+      setValue: setValueProg,
+      setAllValues: setAllValuesProg,
+      reset: () => setAllValuesProg(fixedInitial),
+      setInitial: (obj: Record<string, any>) => {
+        const flat = flattenForInitial(obj);
+        setAllValuesProg(flat);
+      },
+      clear: () => {
+        setAllValuesProg({});
+      }
+    };
 
     /* SHOW-IF HASH */
     const allDepsRef = React.useRef<string[]>([]);
@@ -709,10 +801,6 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         values,
       );
 
-      console.log("==== packaged data ====");
-      console.log(packaged);
-      console.log(JSON.stringify(packaged));
-
       const dto = schema.hooks?.mapToDto
         ? schema.hooks.mapToDto(packaged)
         : packaged;
@@ -752,8 +840,10 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* REF OUTPUT */
     React.useImperativeHandle(ref, () => ({
       submit: doSubmit,
-      reset: () => setAllValues(stableInitial),
       values,
+      setValue: setValueProg,
+      setAllValues: setAllValuesProg,
+      reset: () => setAllValuesProg(fixedInitial),
     }));
 
     /* RENDER */
@@ -766,8 +856,9 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
             groupMap={groupMap}
             groupsConfig={groupsConfig}
             values={values}
-            setValue={setValue}
+            setValue={setValueUser}
             errors={errors}
+            ctx={ctxRef.current}
           />
         )}
       </Stack>

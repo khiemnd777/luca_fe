@@ -20,7 +20,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Autocomplete } from "@mui/material";
 import dayjs from "dayjs";
 
-import type { FieldDef, Option } from "@core/form/types";
+import type { FieldDef, FormContext, Option } from "@core/form/types";
 import { CurrencyField } from "@core/form/currency-field";
 import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from "./image-upload-field";
 import PasswordField from "@core/form/password-field";
@@ -28,6 +28,7 @@ import SearchListField from "@core/form/search-list-field";
 import type { GroupConfig } from "./form.types";
 import { humanize } from "@root/shared/utils/string.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
+import SearchSingleField from "./search-single-field";
 
 
 // -----------------------------------------------------------
@@ -48,12 +49,17 @@ export function AutoFormFieldSingle({
   values,
   setValue,
   error,
+  ctx,
 }: {
   field: FieldDef;
   values: Record<string, any>;
   setValue: (name: string, v: any) => void;
   error?: string | null;
+  ctx?: FormContext,
 }) {
+
+  const isDisabled =
+    typeof f.disableIf === "function" ? f.disableIf(values) : false;
 
   const common = {
     label: f.label,
@@ -63,6 +69,7 @@ export function AutoFormFieldSingle({
     helperText: error ?? f.helperText,
     placeholder: f.placeholder,
     name: f.name,
+    disabled: isDisabled,
   } as const;
 
   // PASSWORD
@@ -436,6 +443,7 @@ export function AutoFormFieldSingle({
 
     return (
       <Autocomplete
+        disabled={isDisabled}
         options={opts}
         value={f.freeSolo ? value ?? null : selectedOption}
         freeSolo={!!f.freeSolo}
@@ -486,16 +494,15 @@ export function AutoFormFieldSingle({
 
   // SEARCHLIST
   if (f.kind === "searchlist") {
-    const raw = values[f.name];
+    let raw = values[f.name];
 
-    const selectedIds = f.singleChoice
-      ? (raw ? [raw] : [])
-      : Array.isArray(raw)
-        ? raw
-        : [];
+    const selectedIds = Array.isArray(raw)
+      ? raw
+      : [];
 
     return (
       <SearchListField
+        disabled={isDisabled}
         label={f.label}
         values={values}
         placeholder={f.placeholder}
@@ -504,24 +511,13 @@ export function AutoFormFieldSingle({
         helperText={f.helperText}
         error={error}
         selectedIds={selectedIds}
-        onChange={(nextIds, nextObjs) => {
-          if (f.singleChoice) {
-            const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
-            const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
-            setValue(f.name, singleId);
-            const label = f.getOptionLabel?.(singleObj);
-            if (label) {
-              setValue(mapIdFieldToNameField(f.name), label)
-            }
-          } else {
-            setValue(f.name, nextIds);
-          }
+        onChange={(nextIds) => {
+          setValue(f.name, nextIds);
         }}
         search={f.search!}
         searchPage={f.searchPage}
         getOptionLabel={f.getOptionLabel!}
         getOptionValue={f.getOptionValue!}
-        singleChoice={f.singleChoice}
         fetchList={f.fetchList}
         onAdd={f.onAdd}
         onDelete={f.onDelete}
@@ -537,6 +533,61 @@ export function AutoFormFieldSingle({
     );
   }
 
+  // SEARCHSINGLE
+  if (f.kind === "searchsingle") {
+    let raw = values[f.name] ?? (f.altName ? values[f.altName] : undefined);
+
+    const selectedIds = (raw ? [raw] : []);
+    const isFreeSolo = !f.onOpenCreate;
+
+    return (
+      <SearchSingleField
+        name={f.name}
+        label={f.label}
+        values={values}
+        placeholder={f.placeholder}
+        size={f.size ?? "small"}
+        fullWidth={f.fullWidth ?? true}
+        helperText={f.helperText}
+        error={error}
+        selectedIds={selectedIds}
+        onInputChange={(text) => {
+          if (isFreeSolo) {
+            setValue(f.name, text);
+            const mapped = mapIdFieldToNameField(f.name);
+            setValue(mapped, text);
+          }
+        }}
+        onChange={(nextIds, nextObjs) => {
+          const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
+          const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
+          setValue(f.name, singleId);
+          const label = f.getOptionLabel?.(singleObj);
+          if (label) {
+            setValue(mapIdFieldToNameField(f.name), label)
+          }
+        }}
+        search={f.search!}
+        searchPage={f.searchPage}
+        onSelect={f.onSelect}
+        onBlur={f.onBlur}
+        getOptionLabel={f.getOptionLabel!}
+        getOptionValue={f.getOptionValue!}
+        fetchList={f.fetchList}
+        onAdd={f.onAdd}
+        onDelete={f.onDelete}
+        renderItem={f.renderItem}
+        allowDuplicate={f.allowDuplicate}
+        dedupeFn={f.dedupeFn as any}
+        maxItems={f.maxItems}
+        disableDelete={f.disableDelete}
+        onOpenCreate={f.onOpenCreate}
+        refreshKey={f.refreshKey}
+        pageLimit={f.pageLimit}
+        ctx={ctx}
+      />
+    );
+  }
 
   // FILEUPLOAD
   if (f.kind === "fileupload") {
@@ -633,6 +684,7 @@ export function AutoFormFieldSingle({
         <FormControlLabel
           control={
             <Checkbox
+              disabled={isDisabled}
               size={f.size ?? "small"}
               checked={checked}
               onChange={(e) => setValue(f.name, e.target.checked)}
@@ -654,6 +706,7 @@ export function AutoFormFieldSingle({
         <FormControlLabel
           control={
             <MuiSwitch
+              disabled={isDisabled}
               size={f.size === "medium" ? "medium" : "small"}
               checked={checked}
               onChange={(e) => setValue(f.name, e.target.checked)}
@@ -707,6 +760,7 @@ export function AutoFormFieldsGrouped({
   setValue,
   errors,
   gap = 2,
+  ctx,
 }: {
   groupsConfig: GroupConfig[];
   groupMap: Map<string, FieldDef[]>;
@@ -714,6 +768,7 @@ export function AutoFormFieldsGrouped({
   setValue: (name: string, v: any) => void;
   errors?: Record<string, string | null>;
   gap?: number;
+  ctx?: FormContext;
 }) {
   return (
     <Stack spacing={gap}>
@@ -739,16 +794,23 @@ export function AutoFormFieldsGrouped({
                 gap: (theme) => theme.spacing(gap),
               }}
             >
-              {fields.map((f) => (
-                <Box key={f.name}>
-                  <AutoFormFieldSingle
-                    field={f}
-                    values={values}
-                    setValue={setValue}
-                    error={errors?.[f.name] ?? null}
-                  />
-                </Box>
-              ))}
+              {fields.map((f) => {
+                if (typeof f.showIf === "function") {
+                  const visible = f.showIf(values, ctx);
+                  if (!visible) return null;
+                }
+                return (
+                  <Box key={f.name}>
+                    <AutoFormFieldSingle
+                      field={f}
+                      values={values}
+                      setValue={setValue}
+                      error={errors?.[f.name] ?? null}
+                      ctx={ctx}
+                    />
+                  </Box>
+                );
+              })}
             </Box>
           </Stack>
         );

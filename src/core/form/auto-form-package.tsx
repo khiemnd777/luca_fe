@@ -13,7 +13,7 @@ export type MetaBlock = {
    ====================================================== */
 export function packageData(metaBlocks: MetaBlock[], values: any) {
   // -----------------------------------------------------
-  // 1) BUILD dto (root + nested)
+  // BUILD dto (root + nested)
   // -----------------------------------------------------
   const flat: Record<string, any> = { ...values };
   const nested = buildNestedPayload(flat);
@@ -23,7 +23,7 @@ export function packageData(metaBlocks: MetaBlock[], values: any) {
   normalizeObject(dto);
 
   // -----------------------------------------------------
-  // 2) PREPARE OUTPUT
+  // PREPARE OUTPUT
   // -----------------------------------------------------
   const output: {
     dto: Record<string, any>;
@@ -54,7 +54,7 @@ export function packageData(metaBlocks: MetaBlock[], values: any) {
   }
 
   // -----------------------------------------------------
-  // 3) ROOT DTO (snake keys)
+  // ROOT DTO (snake keys)
   // -----------------------------------------------------
   for (const [k, v] of Object.entries(dto)) {
     const isNestedProp = metaBlocks.some((b) => b.meta.prop === k);
@@ -64,7 +64,7 @@ export function packageData(metaBlocks: MetaBlock[], values: any) {
   }
 
   // -----------------------------------------------------
-  // 4) ATTACH NESTED DTOs (snake prop)
+  // ATTACH NESTED DTOs (snake prop)
   // -----------------------------------------------------
   for (const [prop, obj] of Object.entries(nestedOut)) {
     obj.dto = dto[prop] ?? {};

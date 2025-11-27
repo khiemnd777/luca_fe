@@ -7,16 +7,13 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 
-export function buildOrderSchema(): FormSchema {
+export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
+      kind: "text",
       name: "code",
       label: "Mã đơn hàng",
-      kind: "text",
-      rules: {
-        required: "Yêu cầu nhập mã đơn hàng",
-        maxLength: 30,
-      },
+      disableIf: () => true,
     },
     {
       name: "",
@@ -52,22 +49,22 @@ export function buildOrderSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    modeResolver: (_) => {
+      return "update";
+    },
     submit: {
       create: {
         type: "fn",
         run: async (dto) => {
-          console.log("==== values ====");
-          console.log(dto);
-          console.log(JSON.stringify(dto));
           await create(dto as OrderUpsertModel);
           return dto;
         },
       },
       update: {
         type: "fn",
-        run: async (values) => {
-          await update(values as OrderUpsertModel);
-          return values;
+        run: async (dto) => {
+          await update(dto as OrderUpsertModel);
+          return dto;
         },
       },
     },
@@ -100,9 +97,9 @@ export function buildOrderSchema(): FormSchema {
   };
 }
 
-registerForm("order", buildOrderSchema);
+registerForm("order-edit", buildEditOrderSchema);
 
-registerFormDialog("order", buildOrderSchema, {
+registerFormDialog("order-edit", buildEditOrderSchema, {
   title: { create: "Tạo đơn hàng mới", update: "Cập nhật đơn hàng" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",

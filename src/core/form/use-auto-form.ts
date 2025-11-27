@@ -248,7 +248,8 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
         v = v ?? (f.freeSolo ? "" : "");
         break;
       }
-      case "searchlist": {
+      case "searchlist":
+      case "searchsingle": {
         v = Array.isArray(v) ? v : [];
         break;
       }

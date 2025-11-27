@@ -20,10 +20,21 @@ export type FieldKind =
   | "imageupload"
   | "custom"
   | "searchlist"
+  | "searchsingle"
   | "metadata"
+  | "relation" // ghost -> searchlist or searchsingle
   ;
 
 export type DeriveMode = "always" | "whenEmpty" | "untilManual";
+
+export type FormContext = {
+  values: Record<string, any>;
+  setValue: (name: string, v: any) => void;
+  setAllValues: (obj: Record<string, any>) => void;
+  reset: () => void;
+  setInitial: (obj: Record<string, any>) => void;
+  clear: () => void;
+}
 
 // Password rules
 export type PasswordRules = {
@@ -78,6 +89,7 @@ export type SearchListHydrateFn = (
 
 export type FieldDef = {
   name: string;
+  altName?: string;
   label: string;
   kind: FieldKind;
   group?: string;                                       // default: "general"
@@ -89,6 +101,8 @@ export type FieldDef = {
   size?: "small" | "medium";
   rules?: FieldRules;
   step?: number;                                        // for number
+  showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
 
   // select / multiselect / autocomplete
   options?: Option[];                                   // for select
@@ -131,13 +145,13 @@ export type FieldDef = {
   searchPage?: SearchListSearchPageFn;                           // searchPage(kw, page, limit): T[]
   fetchList?: SearchListFetchListFn;                             // hydrate list hiện có theo ngữ cảnh (values): T[]
   hydrateByIds?: SearchListHydrateFn;                            // map IDs -> T[] khi field đã có sẵn IDs
-
+  onSelect?: (item: any) => void;
+  onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
   onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search
   onDelete?: (item: any) => Promise<void> | void;
   // Extractors (áp dụng cho searchlist)
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
-  singleChoice?: boolean;
   prop?: string;
 
   // metadata

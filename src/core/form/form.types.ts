@@ -63,6 +63,14 @@ export type FormSchema = {
   initialResolver?: (initial?: any) => Promise<Record<string, any> | null> | Record<string, any> | null;
   afterSaved?: (result: any) => Promise<void> | void;
 
+  onChange?: (name: string, value: any, ctx: {
+    values: Record<string, any>;
+    setValue: (name: string, v: any) => void;
+    setAllValues: (obj: Record<string, any>) => void;
+    reset: () => void;
+  }, source: "user" | "programmatic") => void;
+
+
   // Groups
   groups?: GroupConfig[] | null;
 };

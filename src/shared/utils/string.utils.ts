@@ -17,3 +17,18 @@ export function humanize(v: any): string {
 
   return s[0].toUpperCase() + s.slice(1);
 }
+
+export function alphabetSeq(n: number): string {
+  // n = 1 => A
+  // n = 26 => Z
+  // n = 27 => AA
+  // n = 28 => AB
+  let result = "";
+  while (n > 0) {
+    n--;
+    const char = String.fromCharCode("A".charCodeAt(0) + (n % 26));
+    result = char + result;
+    n = Math.floor(n / 26);
+  }
+  return result;
+}

@@ -33,7 +33,7 @@ export type SearchListFieldProps<T> = {
 
   // Back-compat: vẫn emit IDs vào onChange nếu không có onIdsChange
   value?: any;
-  onChange?: (next: any, nextObj: any) => void;
+  onChange?: (next: any) => void;
 
   // Server / client actions
   /** Search “không phân trang” (fallback). kw="" -> load ALL/top-N */
@@ -72,12 +72,11 @@ export type SearchListFieldProps<T> = {
   refreshKey?: any;
   autoLoadAllOnMount?: boolean;
 
+  /** NEW: định nghĩa deps để gọi fetchList (tránh loop vì values đổi reference) */
   fetchDeps?: any[];
 
-  // page size cho suggestion paging (mặc định 20)
+  /** NEW: page size cho suggestion paging (mặc định 20) */
   pageLimit?: number;
-
-  singleChoice?: boolean;
 };
 
 function makeEquality<T>(
@@ -127,8 +126,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     autoLoadAllOnMount = false,
     fetchDeps,
     pageLimit = 20,
-
-    singleChoice = false,
   } = props;
 
   const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
@@ -149,7 +146,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       if (!sameIds(ids, lastEmittedIdsRef.current)) {
         lastEmittedIdsRef.current = ids;
         if (onIdsChange) onIdsChange(ids);
-        else if (onChange) onChange(ids as any, arr);
+        else if (onChange) onChange(ids as any);
       }
     },
     [deriveIds, onIdsChange, onChange]
@@ -220,22 +217,19 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   // Search state & options (paging)
   const [keyword, setKeyword] = React.useState("");
   const [options, setOptions] = React.useState<T[]>([]);
-  const [inputValue, setInputValue] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);   // NEW
+  const [page, setPage] = React.useState(1);                     // NEW
+  const [hasMore, setHasMore] = React.useState(false);           // NEW
 
   const eq = React.useMemo(() => makeEquality(getOptionValue, dedupeFn), [getOptionValue, dedupeFn]);
 
   const filterOutSelected = React.useCallback(
     (arr: T[]) => {
-      if (singleChoice) return arr;
-
       if (allowDuplicate) return arr;
       return arr.filter((o) => !items.some((x) => eq(x, o)));
     },
-    [singleChoice, allowDuplicate, items, eq]
+    [allowDuplicate, items, eq]
   );
 
   const dedupById = React.useCallback(
@@ -325,10 +319,11 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     [loadFirstPage]
   );
 
+  // Khi add/remove item → reload lại trang hiện tại theo từ khoá (đảm bảo ẩn item đã chọn)
   const reloadCurrentAfterSelectionChange = React.useCallback(() => {
-    loadFirstPage("").catch(() => void 0);
-  }, [loadFirstPage]);
-
+    // nếu có paging → refresh lại từ trang 1 với keyword hiện tại
+    loadFirstPage(keyword).catch(() => void 0);
+  }, [keyword, loadFirstPage]);
 
   const setItemsAndEmit = React.useCallback(
     (next: T[]) => {
@@ -342,48 +337,23 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   const addItem = React.useCallback(
     async (item: T) => {
-      // Single choice
-      if (singleChoice) {
-        if (onAdd) await onAdd(item);
-        const next = [item];
-        setItemsAndEmit(next);
-        reloadCurrentAfterSelectionChange();
-        return;
-      }
-
-      // Multi-select
       if (!canAddMore) return;
       if (!allowDuplicate && items.some((x) => eq(x, item))) return;
       if (onAdd) await onAdd(item);
       setItemsAndEmit([...items, item]);
       reloadCurrentAfterSelectionChange();
     },
-    [
-      singleChoice,
-      canAddMore,
-      allowDuplicate,
-      items,
-      eq,
-      onAdd,
-      setItemsAndEmit,
-      reloadCurrentAfterSelectionChange,
-    ]
+    [canAddMore, allowDuplicate, items, eq, onAdd, setItemsAndEmit, reloadCurrentAfterSelectionChange]
   );
 
   const removeItem = React.useCallback(
     async (item: T) => {
       if (onDelete) await onDelete(item);
-      if (singleChoice) {
-        setItemsAndEmit([]);
-        reloadCurrentAfterSelectionChange();
-        return;
-      }
-
       const next = items.filter((x) => !eq(x, item));
       setItemsAndEmit(next);
       reloadCurrentAfterSelectionChange();
     },
-    [singleChoice, items, onDelete, eq, setItemsAndEmit, reloadCurrentAfterSelectionChange]
+    [items, onDelete, eq, setItemsAndEmit, reloadCurrentAfterSelectionChange]
   );
 
   const defaultItemContent = React.useCallback(
@@ -431,16 +401,9 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
             loading={loading || loadingMore}
             value={null}
             onChange={async (_e, newVal) => {
-              if (newVal) {
-                await addItem(newVal as T);
-                setInputValue("");
-              }
+              if (newVal) await addItem(newVal as T);
             }}
-            inputValue={inputValue}
-            onInputChange={(e, v, reason) => {
-              setInputValue(v);
-              handleInputChange(e, v, reason);
-            }}
+            onInputChange={handleInputChange}
             getOptionLabel={(o) => getOptionLabel(o as T)}
             isOptionEqualToValue={(a, b) => eq(a as T, b as T)}
             onOpen={() => {

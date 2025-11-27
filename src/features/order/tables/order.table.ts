@@ -27,7 +27,7 @@ registerTable("orders", () => {
     allowUpdating: ["order.update"],
     allowDeleting: ["order.delete"],
     onEdit(row: OrderModel) {
-      openFormDialog("order", { initial: { id: row.id } });
+      openFormDialog("order-edit", { initial: { id: row.id } });
     },
     async onDelete(row) {
       await unlink(row.id);

@@ -13,7 +13,7 @@ function OrderWidget() {
         <>
           <IfPermission permissions={["order.create"]}>
             <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-              openFormDialog("order");
+              openFormDialog("order-new");
             }} >Tạo đơn hàng mới</Button>
           </IfPermission>
         </>

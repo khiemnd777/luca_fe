@@ -87,6 +87,23 @@ export type SearchListHydrateFn = (
   values: Record<string, any>
 ) => Promise<any[]>;
 
+// metadata def
+export type MiniFieldOverride = {
+  name: string;
+  label?: string;
+  placeholder?: string;
+  helperText?: string;
+  rules?: FieldRules;
+  showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+
+  onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
+  onSelect?: (item: any) => void;
+  onChange?: (value: any, ctx?: FormContext) => void;
+  onInputChange?: (text: string) => void;
+};
+
+
 export type FieldDef = {
   name: string;
   altName?: string;
@@ -162,6 +179,7 @@ export type FieldDef = {
     ignoreFields?: string[];
     showIfFields?: string[];
     groups?: { group: string; fields?: string[]; }[];
+    def?: MiniFieldOverride[];
   };
 
   // UI render item (không chứa nút delete)

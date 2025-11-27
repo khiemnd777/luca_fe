@@ -246,13 +246,22 @@ export function AutoFormFieldSingle({
 
   // CURRENCY
   if (f.kind === "currency") {
+    const raw = values[f.name] ?? "";
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
     return (
       <CurrencyField
         {...(common as any)}
-        value={values[f.name]}
+        value={raw}
         onChange={(n) => setValue(f.name, n)}
         prefix="₫"
         decimalScale={0}
+        InputLabelProps={{
+          shrink: hasValue,
+        }}
         inputProps={{ inputMode: "decimal" }}
       />
     );
@@ -260,13 +269,23 @@ export function AutoFormFieldSingle({
 
   // CURRENCY EQUATION
   if (f.kind === "currency-equation") {
+    const raw = values[f.name] ?? "";
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
+
     return (
       <CurrencyField
         {...(common as any)}
-        value={values[f.name]}
+        value={raw}
         onChange={(n) => setValue(f.name, n)}
         prefix="₫"
         decimalScale={0}
+        InputLabelProps={{
+          shrink: hasValue,
+        }}
         inputProps={{ inputMode: "decimal" }}
       />
     );
@@ -274,7 +293,13 @@ export function AutoFormFieldSingle({
 
   // NUMBER
   if (f.kind === "number") {
-    const raw = values[f.name];
+    const raw = values[f.name] ?? "";
+
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
 
     return (
       <TextField
@@ -289,6 +314,9 @@ export function AutoFormFieldSingle({
           }
           const n = Number(v);
           setValue(f.name, Number.isFinite(n) ? n : null);
+        }}
+        InputLabelProps={{
+          shrink: hasValue,
         }}
         inputProps={{
           inputMode: "decimal",

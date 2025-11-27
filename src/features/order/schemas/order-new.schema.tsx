@@ -7,6 +7,8 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
+import { rel1 } from "@root/core/relation/relation.api";
+import type { ProductModel } from "@root/features/product/model/product.model";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -22,13 +24,13 @@ export function buildNewOrderSchema(): FormSchema {
         if (matched) {
           const vid = matched.id;
           const result = await id(vid);
-          console.log(result);
           if (result.latestOrderItem) {
             const seq = result.latestOrderItem.remakeCount + 1;
             result.latestOrderItem.remakeCount = seq;
             result.latestOrderItem.code = `${alphabetSeq(seq)}${matched.code}`;
             ctx?.setInitial(result);
           }
+          console.log(result);
         } else {
           ctx?.setInitial({ code: text });
         }
@@ -98,8 +100,68 @@ export function buildNewOrderSchema(): FormSchema {
       kind: "metadata",
       prop: "latestOrderItem",
       metadata: {
+        collection: "order-item-product",
+        mode: "whole",
+        groups: [
+          {
+            group: "product",
+          }
+        ],
+        def: [
+          {
+            name: "productId",
+            onBlur: async (text, matched, ctx) => {
+              console.log(text, matched, ctx);
+              if (matched) {
+                const result: ProductModel = await rel1("order-product", matched.id);
+                console.log(result);
+                // don't need assign to productId and productName, because they are handled during submitting.
+                // ctx?.setValue("latestOrderItem.customFields.productId", result.id);
+                // ctx?.setValue("latestOrderItem.customFields.productName", result.name);
+                ctx?.setValue("latestOrderItem.customFields.", result.id);
+                if (result.customFields) {
+                  ctx?.setValue("latestOrderItem.customFields.vat", result.customFields.vat);
+                  ctx?.setValue("latestOrderItem.customFields.productCategory", result.customFields.category);
+                  ctx?.setValue("latestOrderItem.customFields.retailPrice", result.customFields.retailPrice);
+                }
+              }
+            },
+          },
+          {
+            name: "productCategory",
+            disableIf: () => true,
+          }
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
+        collection: "order-item-tooth",
+        mode: "whole",
+        groups: [
+          {
+            group: "product",
+          },
+        ]
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
         collection: "order-item-remake",
         mode: "whole",
+        groups: [
+          {
+            group: "remake",
+          }
+        ],
       }
     },
     {
@@ -110,6 +172,24 @@ export function buildNewOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
+        groups: [
+          {
+            group: "price",
+            fields: ["retailPrice", "quantity", "vat", "discountPrice"],
+          },
+          {
+            group: "total-price",
+            fields: ["totalPrice"],
+          },
+          {
+            group: "status",
+            fields: ["status", "priority"],
+          },
+          {
+            group: "note",
+            fields: ["note"],
+          },
+        ],
       }
     },
   ];
@@ -117,6 +197,39 @@ export function buildNewOrderSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    groups: [
+      {
+        name: "general",
+        label: "Thông tin chung:",
+        col: 2,
+      },
+      {
+        name: "remake",
+        col: 1,
+      },
+      {
+        name: "note",
+        col: 1,
+      },
+      {
+        name: "status",
+        col: 2,
+      },
+      {
+        name: "product",
+        label: "Sản phẩm:",
+        col: 3,
+      },
+      {
+        name: "price",
+        label: "Giá:",
+        col: 4,
+      },
+      {
+        name: "total-price",
+        col: 1,
+      }
+    ],
     modeResolver: (_) => {
       return "create";
     },

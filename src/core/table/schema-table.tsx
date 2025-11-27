@@ -40,25 +40,50 @@ async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<Column
 
     if (fieldsToUse != null) {
       for (const f of fieldsToUse) {
-        if (f.type === "relation") {
+        const fieldName = f.name;
+        const overrides = col.metadata.def?.[fieldName];
+
+        const baseKey = `customFields.${fieldName}`;
+        const header = overrides?.header ?? f.label ?? fieldName;
+
+        let type: ColumnType;
+        if (overrides?.type) {
+          type = overrides.type;
+        } else if (f.type === "relation") {
           const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
-          const singleChoice = relation.type && relation.type === '1';
-          const label = mapIdFieldToNameField(f.name);
-          result.push({
-            key: `customFields.${f.name}`,
-            header: f.label ?? f.name,
-            type: singleChoice ? 'text' : 'chips',
-            accessor: (row: any) => row.customFields?.[label] ?? row.customFields?.[f.name],
-            sortable: false,
-          });
-          continue;
+          const singleChoice = relation.type === "1";
+          type = singleChoice ? "text" : "chips";
+        } else {
+          type = mapFieldTypeToColumnType(f.type);
         }
+
+        const accessor =
+          overrides?.accessor ??
+          ((row: any) => {
+            if (f.type === "relation") {
+              const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+              const singleChoice = relation.type === "1";
+              const label = mapIdFieldToNameField(fieldName);
+              return singleChoice
+                ? row.customFields?.[label] ?? row.customFields?.[fieldName]
+                : row.customFields?.[fieldName];
+            }
+            return row.customFields?.[fieldName];
+          });
+
+        const sortable = overrides?.sortable ?? false;
+
+        const render = overrides?.render
+          ? ((row: any) => overrides.render!(accessor(row), row))
+          : undefined;
+
         result.push({
-          key: `customFields.${f.name}`,
-          header: f.label ?? f.name,
-          type: mapFieldTypeToColumnType(f.type),
-          accessor: (row: any) => row.customFields?.[f.name],
-          sortable: false,
+          key: baseKey,
+          header,
+          type,
+          accessor,
+          sortable,
+          render,
         });
       }
     }

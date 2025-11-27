@@ -931,43 +931,59 @@ export class ApiClient {
     delayMs = 1000,
   ): Promise<AxiosResponse<T>> {
     let attempt = 0;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       try {
         const res = await requestFn();
-        // Logic đặc biệt: backend trả statusCode=102 trong body → coi như lỗi
+
         if (
           res.data &&
           typeof res.data === "object" &&
           (res.data as any).statusCode === 102
         ) {
-          throw new Error(
-            (res.data as any).statusMessage || "Service message",
-          );
+          throw new Error((res.data as any).statusMessage || "Service message");
         }
+
         return res;
       } catch (err: any) {
         attempt++;
-        const status = err?.response?.status as number | undefined;
-        const isAuthError = status === 401 || status === 403;
-        const retryable =
-          err?.code === "ECONNABORTED" ||
-          err?.message?.includes("timeout") ||
-          (typeof status === "number" && status >= 500 && status !== 501);
 
+        const status = err?.response?.status as number | undefined;
+        const message = err?.message ?? "";
+
+        /** ===============================
+         * Retry rule mới
+         * =============================== */
+        const retryable =
+          // Timeout / network error
+          err?.code === "ECONNABORTED" ||
+          message.includes("timeout") ||
+          // Retry ONLY 5xx except 500 & 501
+          (typeof status === "number" &&
+            status >= 500 &&
+            status !== 500 &&
+            status !== 501);
+
+        // ❌ Không retry hoặc đã hết attempt
         if (!retryable || attempt >= maxAttempts) {
-          if (!isAuthError)
+          const isAuthError = status === 401 || status === 403;
+
+          if (!isAuthError) {
             console.error(
               `[Axios] Request failed after ${attempt} attempts`,
               err,
             );
+          }
           throw err;
         }
+
+        // Retry
         const jitter = Math.floor(Math.random() * 200);
         await new Promise((r) => setTimeout(r, delayMs + jitter));
       }
     }
   }
+
 }
 
 // Singleton export

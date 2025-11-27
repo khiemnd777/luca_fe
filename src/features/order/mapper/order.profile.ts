@@ -8,8 +8,21 @@ mapper.register<OrderModel>({
   defaultModel: () => ({
     id: 0,
     code: "",
-    name: "",
     customFields: null,
+    customerId: 0,
+    customerName: "",
+    statusLatest: "",
+    codeLatest: "",
+    priorityLatest: "",
+    productId: 0,
+    productName: "",
+    quantity: 0,
+    totalPrice: 0,
+    deliveryDate: null,
+    remakeCount: 0,
+    remakeType: "",
+    createdAt: "",
+    updatedAt: "",
     latestOrderItemUpsert: {
       dto: {
         id: 0,
@@ -24,17 +37,20 @@ mapper.register<OrderModel>({
       }
     },
     latestOrderItem: {
+      // general
       id: 0,
       orderId: 0,
       parentItemId: null,
-      code: "",
-      codeOriginal: "",
-      remakeCount: 0,
       customFields: null,
       createdAt: "",
       updatedAt: "",
+      // order
+      code: "",
+      codeOriginal: "",
+      remakeCount: 0,
+      // product
+      productId: 0,
+      productName: "",
     },
-    createdAt: "",
-    updatedAt: "",
   }),
 });

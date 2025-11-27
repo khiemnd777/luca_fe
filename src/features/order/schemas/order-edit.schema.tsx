@@ -11,8 +11,35 @@ export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       kind: "text",
-      name: "code",
+      name: "codeLatest",
       label: "Mã đơn hàng",
+      disableIf: () => true,
+    },
+    {
+      kind: "text",
+      name: "code",
+      label: "Mã gốc",
+      disableIf: () => true,
+    },
+    {
+      kind: "text",
+      name: "remakeCount",
+      prop: "latestOrderItem",
+      label: "Số lần làm lại",
+      disableIf: () => true,
+      showIf: (v) => v["latestOrderItem.remakeCount"] > 0,
+    },
+    {
+      kind: "text",
+      name: "customerName",
+      label: "Khách hàng",
+      disableIf: () => true,
+    },
+    {
+      kind: "text",
+      name: "productName",
+      label: "Sản phẩm",
+      group: "product",
       disableIf: () => true,
     },
     {
@@ -22,6 +49,60 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
+        ignoreFields: ["customerId"],
+        def: [
+          {
+            name: "patientName",
+            disableIf: () => true,
+          },
+          // {
+          //   name: "customerId",
+          //   showIf: () => false,
+          // },
+        ]
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
+        collection: "order-item-product",
+        mode: "whole",
+        groups: [
+          {
+            group: "product",
+          }
+        ],
+        ignoreFields: ["productId"],
+        def: [
+          {
+            name: "productCategory",
+            disableIf: () => true,
+          }
+        ],
+      }
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      prop: "latestOrderItem",
+      metadata: {
+        collection: "order-item-tooth",
+        mode: "whole",
+        groups: [
+          {
+            group: "product",
+          }
+        ],
+        def: [
+          {
+            name: "toothPositions",
+            disableIf: () => true,
+          }
+        ],
       }
     },
     {
@@ -32,6 +113,11 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item-remake",
         mode: "whole",
+        groups: [
+          {
+            group: "remake",
+          }
+        ],
       }
     },
     {
@@ -42,6 +128,24 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
+        groups: [
+          {
+            group: "price",
+            fields: ["retailPrice", "quantity", "vat", "discountPrice"],
+          },
+          {
+            group: "total-price",
+            fields: ["totalPrice"],
+          },
+          {
+            group: "status",
+            fields: ["status", "priority"],
+          },
+          {
+            group: "note",
+            fields: ["note"],
+          },
+        ],
       }
     },
   ];
@@ -49,6 +153,39 @@ export function buildEditOrderSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    groups: [
+      {
+        name: "general",
+        label: "Thông tin chung:",
+        col: 2,
+      },
+      {
+        name: "remake",
+        col: 1,
+      },
+      {
+        name: "note",
+        col: 1,
+      },
+      {
+        name: "status",
+        col: 2,
+      },
+      {
+        name: "product",
+        label: "Sản phẩm:",
+        col: 3,
+      },
+      {
+        name: "price",
+        label: "Giá:",
+        col: 4,
+      },
+      {
+        name: "total-price",
+        col: 1,
+      }
+    ],
     modeResolver: (_) => {
       return "update";
     },

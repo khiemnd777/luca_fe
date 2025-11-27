@@ -11,22 +11,28 @@ export function parseShowIfDependencies(showIfStr?: string | null): string[] {
 
   function normalize(path: string): string {
     const parts = path.split(".");
+
+    // CASE 1: customFields
     if (parts.length > 2 && parts[1] === "customFields") {
       return parts.slice(1).join(".");
     }
+
+    // CASE 2: normal field
+    if (parts.length > 1) {
+      return parts[parts.length - 1];
+    }
+
     return path;
   }
 
   function collect(o: any) {
     if (!o || typeof o !== "object") return;
 
-    // leaf: { field, op, value }
     if (typeof o.field === "string") {
       out.add(normalize(o.field));
       return;
     }
 
-    // groups
     if (Array.isArray(o.any)) o.any.forEach(collect);
     if (Array.isArray(o.all)) o.all.forEach(collect);
     if (Array.isArray(o.none)) o.none.forEach(collect);
@@ -36,3 +42,4 @@ export function parseShowIfDependencies(showIfStr?: string | null): string[] {
   collect(obj);
   return Array.from(out);
 }
+

@@ -1,13 +1,18 @@
 export interface OrderItemModel {
+  // general
   id: number;
   orderId: number;
   parentItemId: number;
-  code: string;
-  codeOriginal: string;
-  remakeCount: number;
   customFields?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
+  // order
+  code: string;
+  codeOriginal: string;
+  remakeCount: number;
+  // product
+  productId?: number;
+  productName?: string;
 }
 
 export interface OrderItemUpsertModel {

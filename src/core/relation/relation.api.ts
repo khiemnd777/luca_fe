@@ -5,10 +5,10 @@ import { apiClient } from "../network/api-client";
 import { mapper } from "../mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "../types/search.types";
 
-export async function rel1<T>(key: string, mainId: number): Promise<T> {
+export async function rel1<T>(key: string, refId: number): Promise<T> {
   const { departmentApiPath } = useAuthStore.getState();
-  mainId = mainId === undefined ? -1 : mainId;
-  const { data } = await apiClient.get<any>(`${departmentApiPath()}/relation/${key}/${mainId}/one`);
+  refId = refId === undefined ? -1 : refId;
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/relation/${key}/${refId}/one`);
   const result = mapper.map<any, T>("Common", data, "dto_to_model");
   return result;
 }

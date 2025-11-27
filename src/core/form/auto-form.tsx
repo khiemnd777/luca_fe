@@ -74,6 +74,11 @@ async function expandOneMetadataBlock(
   let deps: string[] = [];
   if (coll.showIf && isJSON(coll.showIf)) {
     deps = parseShowIfDependencies(coll.showIf);
+    if (deps.length > 0) {
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.` : "";
+      deps = deps.map((d) => `${cfPrefix}${snakeToCamel(d)}`);
+    }
   }
 
   let fieldsToUse: FieldModel[] | undefined = coll.fields;
@@ -101,14 +106,21 @@ async function expandOneMetadataBlock(
     if (kind === "currency-equation") {
       const prop = metaField.prop;
       const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
-      out.push({
+      const fd: FieldDef = {
+        prop,
         kind: "currency-equation",
         name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
         fullWidth: true,
         group,
-      });
+      };
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+      if (override) {
+        const { name: _omit, ...rest } = override;
+        Object.assign(fd, rest);
+      }
+      out.push(fd);
       continue;
     }
 
@@ -116,14 +128,21 @@ async function expandOneMetadataBlock(
       const prop = metaField.prop;
       const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
       const opts = isJSON(mf.options ?? "") ? parseJSON(mf.options ?? "[]") : [];
-      out.push({
+      const fd: FieldDef = {
+        prop,
         kind: "select",
         name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         options: opts,
         fullWidth: true,
         group,
-      });
+      };
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+      if (override) {
+        const { name: _omit, ...rest } = override;
+        Object.assign(fd, rest);
+      }
+      out.push(fd);
       continue;
     }
 
@@ -135,7 +154,8 @@ async function expandOneMetadataBlock(
       const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
       if (singleChoice) {
-        out.push({
+        const fd: FieldDef = {
+          prop,
           kind: "searchsingle",
           name: `${relPrefix}.${mf.name}`,
           altName: `${altPrefix}.${mf.name}`,
@@ -183,9 +203,17 @@ async function expandOneMetadataBlock(
           disableDelete: (d: any) => d?.locked === true,
           onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
           autoLoadAllOnMount: true,
-        });
+        };
+        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        if (override) {
+          const { name: _omit, ...rest } = override;
+          Object.assign(fd, rest);
+        }
+        out.push(fd);
       } else {
-        out.push({
+
+        let fd: FieldDef = {
+          prop,
           kind: "searchlist",
           name: `${relPrefix}.${mf.name}`,
           label: mf.label ?? mf.name,
@@ -233,7 +261,13 @@ async function expandOneMetadataBlock(
           disableDelete: (d: any) => d?.locked === true,
           onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
           autoLoadAllOnMount: true,
-        });
+        };
+        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        if (override) {
+          const { name: _omit, ...rest } = override;
+          Object.assign(fd, rest);
+        }
+        out.push(fd);
       }
 
       continue;
@@ -241,15 +275,21 @@ async function expandOneMetadataBlock(
 
     const prop = metaField.prop;
     const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
-
-    out.push({
+    let fd: FieldDef = {
+      prop,
       kind,
       name: `${cfPrefix}.${mf.name}`,
       label: mf.label ?? mf.name,
       fullWidth: true,
       rules: mf.required ? { required: true } : undefined,
       group,
-    });
+    };
+    const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+    if (override) {
+      const { name: _omit, ...rest } = override;
+      Object.assign(fd, rest);
+    }
+    out.push(fd);
   }
 
   return { fields: out, deps };
@@ -768,8 +808,11 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
           const argValues = vars.map((name) => {
             if (name in values) return values[name];
-            const cf = `customFields.${name}`;
-            return values[cf];
+            let fn = `customFields.${name}`;
+            if (f.prop) {
+              fn = `${f.prop}.${fn}`;
+            }
+            return values[fn];
           });
 
           const fn = new Function(...vars, `return (${expr});`);

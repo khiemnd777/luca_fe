@@ -5,6 +5,7 @@ import { openFormDialog } from "@core/form/form-dialog.service";
 import type { OrderModel } from "@features/order/model/order.model";
 import { table, unlink } from "@features/order/api/order.api";
 import { priorityColor, priorityLabel, statusLabel } from "@root/shared/utils/order.utils";
+import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<OrderModel>[] = [
   { key: "codeLatest", header: "Mã đơn hàng", sortable: true, stickyRight: true },
@@ -67,9 +68,8 @@ registerTable("orders", () => {
     initialSort: { by: "updated_at", dir: "desc" },
     allowUpdating: ["order.update"],
     allowDeleting: ["order.delete"],
-    onEdit(row: OrderModel) {
-      openFormDialog("order-edit", { initial: { id: row.id } });
-    },
+    onView: (row: OrderModel) => {navigate(`/order/${row.id}`)},
+    onEdit: (row: OrderModel) => openFormDialog("order-edit", { initial: { id: row.id } }),
     async onDelete(row) {
       await unlink(row.id);
       reloadTable("orders");

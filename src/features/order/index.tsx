@@ -15,6 +15,28 @@ const mod: ModuleDescriptor = {
       path: "/order",
       icon: <ChecklistIcon />,
       priority: 97,
+      children: [
+        {
+          hidden: true,
+          key: "order-detail",
+          permissions: ["order.view", "order.edit"],
+          label: "Chi tiết đơn hàng",
+          title: "Chi tiết đơn hàng",
+          path: "/order/:orderId",
+          icon: <ChecklistIcon />,
+          priority: 99,
+        },
+        {
+          hidden: true,
+          key: "order-detail-historical",
+          permissions: ["order.view", "order.edit"],
+          label: "Chi tiết đơn hàng",
+          title: "Chi tiết đơn hàng",
+          path: "/order/:orderId/historical/:orderItemId",
+          icon: <ChecklistIcon />,
+          priority: 99,
+        }
+      ],
     },
   ],
 };

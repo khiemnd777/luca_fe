@@ -951,9 +951,6 @@ export class ApiClient {
         const status = err?.response?.status as number | undefined;
         const message = err?.message ?? "";
 
-        /** ===============================
-         * Retry rule mới
-         * =============================== */
         const retryable =
           // Timeout / network error
           err?.code === "ECONNABORTED" ||

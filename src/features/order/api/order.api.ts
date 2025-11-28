@@ -28,6 +28,13 @@ export async function id(id: number): Promise<OrderModel> {
   return result;
 }
 
+export async function getByOrderIdAndOrderItemId(orderId: number, orderItemId: number): Promise<OrderModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}`);
+  const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
 export async function create(model: OrderUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.post<any>(`${departmentApiPath()}/order`, model);

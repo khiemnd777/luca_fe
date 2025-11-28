@@ -11,11 +11,19 @@ export interface OrderItemModel {
   codeOriginal: string;
   remakeCount: number;
   // product
-  productId?: number;
+  productId?: number | null;
   productName?: string;
 }
 
 export interface OrderItemUpsertModel {
   dto: OrderItemModel;
   collections?: (string | undefined)[];
+}
+
+export interface OrderItemHistoricalModel {
+  id: number;
+  code: string;
+  createdAt: string;
+  isCurrent: boolean;
+  isHighlight: boolean;
 }

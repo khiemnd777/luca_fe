@@ -34,6 +34,9 @@ mapper.register<OrderModel>({
         customFields: null,
         createdAt: "",
         updatedAt: "",
+        // product
+        productId: 0,
+        productName: "",
       }
     },
     latestOrderItem: {

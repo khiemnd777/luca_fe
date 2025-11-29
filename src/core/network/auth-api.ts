@@ -46,7 +46,8 @@ export async function refreshAccessToken(
 
   const res = await apiClient.post<RefreshTokenResponse>(
     `${baseURL}/auth/refresh-token`,
-    { refreshToken }
+    { refreshToken },
+    { isRefresh: true },
   );
 
   const data = res.data;

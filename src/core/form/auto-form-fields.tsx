@@ -331,50 +331,44 @@ export function AutoFormFieldSingle({
   // SELECT
   if (f.kind === "select" && !f.multiple) {
     const raw = values[f.name];
-    let optsFromValue: Option[] = [];
-
-    if (Array.isArray(raw)) {
-      // ["a","b"] -> [{label:"a",value:"a"}, ...]
-      optsFromValue = raw.map((v) => ({
-        label: humanize(v),
-        value: v,
-      }));
-    } else if (raw != null && raw !== "") {
-      // "a" -> [{label:"a",value:"a"}]
-      optsFromValue = [
-        {
-          label: humanize(raw),
-          value: raw,
-        },
-      ];
-    }
-
-    const schemaOpts: Option[] = (f.options ?? []).map((o) =>
-      typeof o === "string" || typeof o === "number"
-        ? { label: humanize(o), value: o }
-        : o
-    );
-
-    const mergedOpts: Option[] = [...schemaOpts];
-
-    optsFromValue.forEach((o) => {
-      if (!mergedOpts.some((x) => x.value === o.value)) {
-        mergedOpts.push(o);
+    const schemaOpts: Option[] = (f.options ?? []).map((o) => {
+      if (typeof o === "string" || typeof o === "number") {
+        return { label: humanize(o), value: o };
       }
+      return {
+        label: o.label ?? humanize(o.value),
+        value: o.value,
+      };
     });
 
-    const selected = optsFromValue.length > 0 ? optsFromValue[0] : null;
+    let selected: Option | null = null;
+
+    if (raw != null && raw !== "") {
+      const found = schemaOpts.find((opt) => opt.value === raw);
+      if (found) {
+        selected = found;
+      } else {
+        selected = {
+          label: humanize(raw),
+          value: raw,
+        };
+      }
+    }
+
+    const mergedOpts = [...schemaOpts];
+    if (selected && !mergedOpts.some((o) => o.value === selected!.value)) {
+      mergedOpts.push(selected);
+    }
 
     return (
       <Autocomplete
         options={mergedOpts}
         value={selected}
-        onChange={(_, newVal) => {
-          if (!newVal) setValue(f.name, null);
-          else setValue(f.name, (newVal as Option).value);
-        }}
-        getOptionLabel={(opt) => (opt as Option).label}
+        getOptionLabel={(opt) => opt.label}
         isOptionEqualToValue={(a, b) => a.value === b.value}
+        onChange={(_, newVal) => {
+          setValue(f.name, newVal ? newVal.value : null);
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -388,6 +382,7 @@ export function AutoFormFieldSingle({
       />
     );
   }
+
 
   // MULTISELECT
   if (f.kind === "multiselect" || (f.kind === "select" && f.multiple)) {

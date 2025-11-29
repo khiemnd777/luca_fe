@@ -201,9 +201,11 @@ async function expandOneMetadataBlock(
 
           renderItem: (d: any) => (<>{d?.name}</>),
           disableDelete: (d: any) => d?.locked === true,
-          onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
           autoLoadAllOnMount: true,
         };
+        if (relation.form) {
+          fd.onOpenCreate = () => openFormDialog(frmDlgKey);
+        }
         const override = metaField.metadata?.def?.find(d => d.name === mf.name);
         if (override) {
           const { name: _omit, ...rest } = override;
@@ -807,12 +809,17 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const vars = extractVars(expr);
 
           const argValues = vars.map((name) => {
-            if (name in values) return values[name];
-            let fn = `customFields.${name}`;
+            let path = `customFields.${name}`;
             if (f.prop) {
-              fn = `${f.prop}.${fn}`;
+              path = `${f.prop}.${path}`;
             }
-            return values[fn];
+
+            const rVal = values[path];
+            if (rVal !== undefined) return rVal;
+
+            if (name in values) return values[name];
+
+            return undefined;
           });
 
           const fn = new Function(...vars, `return (${expr});`);

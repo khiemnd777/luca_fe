@@ -13,34 +13,35 @@ export function buildEditOrderSchema(): FormSchema {
       kind: "text",
       name: "codeLatest",
       label: "Mã đơn hàng",
-      disableIf: () => true,
+      // disableIf: () => true,
+      asText: true,
     },
     {
       kind: "text",
       name: "code",
       label: "Mã gốc",
-      disableIf: () => true,
+      asText: true,
     },
     {
       kind: "text",
       name: "remakeCount",
       prop: "latestOrderItem",
       label: "Số lần làm lại",
-      disableIf: () => true,
+      asText: true,
       showIf: (v) => v["latestOrderItem.remakeCount"] > 0,
     },
     {
       kind: "text",
       name: "customerName",
       label: "Khách hàng",
-      disableIf: () => true,
+      asText: true,
     },
     {
       kind: "text",
       name: "productName",
       label: "Sản phẩm",
       group: "product",
-      disableIf: () => true,
+      asText: true,
     },
     {
       name: "",
@@ -53,7 +54,7 @@ export function buildEditOrderSchema(): FormSchema {
         def: [
           {
             name: "patientName",
-            disableIf: () => true,
+            asText: true,
           },
           // {
           //   name: "customerId",
@@ -79,7 +80,7 @@ export function buildEditOrderSchema(): FormSchema {
         def: [
           {
             name: "productCategory",
-            disableIf: () => true,
+            asText: true,
           }
         ],
       }
@@ -100,7 +101,7 @@ export function buildEditOrderSchema(): FormSchema {
         def: [
           {
             name: "toothPositions",
-            disableIf: () => true,
+            asText: true,
           }
         ],
       }

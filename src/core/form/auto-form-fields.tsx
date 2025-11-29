@@ -40,6 +40,72 @@ function toMap(options?: Option[]) {
   return map;
 }
 
+function renderAsText(f: FieldDef, values: Record<string, any>) {
+  const v = values[f.name];
+
+  // null / empty
+  if (v === null || v === undefined || v === "") return <Typography>—</Typography>;
+
+  // SELECT
+  if (f.kind === "select" && !f.multiple) {
+    const opt = (f.options ?? []).find(o => o.value === v);
+    return <Typography>{opt?.label ?? String(v)}</Typography>;
+  }
+
+  // MULTISELECT
+  if (f.kind === "multiselect" || (f.kind === "select" && f.multiple)) {
+    const arr: any[] = Array.isArray(v) ? v : [];
+    if (arr.length === 0) return <Typography>—</Typography>;
+
+    const labels = arr.map(x => {
+      const opt = (f.options ?? []).find(o => o.value === x);
+      return opt?.label ?? String(x);
+    });
+
+    return <Typography>{labels.join(", ")}</Typography>;
+  }
+
+  // SEARCHSINGLE
+  if (f.kind === "searchsingle") {
+    // cố lấy name từ altName
+    const nameValue = f.altName ? values[f.altName] : null;
+    return <Typography>{nameValue ?? String(v)}</Typography>;
+  }
+
+  // SEARCHLIST
+  if (f.kind === "searchlist") {
+    const arr: any[] = Array.isArray(v) ? v : [];
+    if (arr.length === 0) return <Typography>—</Typography>;
+    return <Typography>{arr.join(", ")}</Typography>;
+  }
+
+  // DATE / DATETIME
+  if (f.kind === "date" || f.kind === "datetime") {
+    return <Typography>{String(v)}</Typography>;
+  }
+
+  // CURRENCY
+  if (f.kind === "currency" || f.kind === "currency-equation") {
+    return <Typography>{Number(v).toLocaleString()}</Typography>;
+  }
+
+  // SWITCH / CHECKBOX
+  if (f.kind === "checkbox" || f.kind === "switch") {
+    return <Typography>{v ? "Có" : "Không"}</Typography>;
+  }
+
+  // IMAGEUPLOAD / FILEUPLOAD
+  if (f.kind === "imageupload") {
+    return <Typography>{Array.isArray(v) ? `${v.length} hình` : "—"}</Typography>;
+  }
+  if (f.kind === "fileupload") {
+    return <Typography>{Array.isArray(v) ? `${v.length} file` : "—"}</Typography>;
+  }
+
+  // DEFAULT
+  return <Typography>{String(v)}</Typography>;
+}
+
 
 // -----------------------------------------------------------
 // Render SINGLE FIELD — nguyên gốc logic cũ của bạn
@@ -58,6 +124,19 @@ export function AutoFormFieldSingle({
   ctx?: FormContext,
 }) {
 
+  // AS TEXT MODE
+  if (f.asText) {
+    return (
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          {f.label}
+        </Typography>
+        {renderAsText(f, values)}
+      </Stack>
+    );
+  }
+
+  // AS EDIT MODE
   const isDisabled =
     typeof f.disableIf === "function" ? f.disableIf(values) : false;
 

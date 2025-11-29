@@ -96,6 +96,7 @@ export type MiniFieldOverride = {
   rules?: FieldRules;
   showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  asText?: boolean;
 
   onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
   onSelect?: (item: any) => void;
@@ -109,29 +110,30 @@ export type FieldDef = {
   altName?: string;
   label: string;
   kind: FieldKind;
-  group?: string;                                       // default: "general"
+  group?: string;                                                           // default: "general"
   placeholder?: string;
-  rows?: number;                                        // for textarea
+  rows?: number;                                                            // for textarea
   defaultValue?: any;
   helperText?: string;
   fullWidth?: boolean;
   size?: "small" | "medium";
   rules?: FieldRules;
-  step?: number;                                        // for number
+  step?: number;                                                            // for number
   showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  asText?: boolean;                                                         // readonly text mode
 
   // select / multiselect / autocomplete
-  options?: Option[];                                   // for select
-  loadOptions?: (keyword: string) => Promise<Option[]>; // async loader cho autocomplete
-  freeSolo?: boolean;                                   // autocomplete free text
-  multiple?: boolean;                                   // multiselect flag
+  options?: Option[];                                                       // for select
+  loadOptions?: (keyword: string) => Promise<Option[]>;                     // async loader cho autocomplete
+  freeSolo?: boolean;                                                       // autocomplete free text
+  multiple?: boolean;                                                       // multiselect flag
 
   // fileupload | imageupload
-  accept?: string;                                      // ví dụ: "image/*,.pdf"
-  uploader?: (files: File[]) => Promise<string[]>;      // trả về URLs sau upload
+  accept?: string;                                                          // ví dụ: "image/*,.pdf"
+  uploader?: (files: File[]) => Promise<string[]>;                          // trả về URLs sau upload
   maxFiles?: number;
-  multipleFiles?: boolean;                              // nếu không set, suy ra từ rules.required hoặc defaultValue
+  multipleFiles?: boolean;                                                  // nếu không set, suy ra từ rules.required hoặc defaultValue
 
   // password
   passwordRules?: PasswordRules;

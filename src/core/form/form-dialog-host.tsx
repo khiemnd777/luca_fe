@@ -4,8 +4,10 @@ import type { AutoFormRef, FormMode, FormSchema } from "@core/form/form.types";
 import { subscribe, closeFormDialog, type Payload } from "@core/form/form-dialog.service";
 import { getFormDialogBuilder, getFormDialogDefaults } from "@core/form/form-dialog.registry";
 import { getFormSchema } from "@core/form/form-registry";
-import { FormDialog } from "@shared/components/dialog/form-dialog";
+import { FormDialog } from "@root/core/form/form-dialog";
 import { pickModeText, resolveMode, resolveTitle } from "@core/form/form-dialog-mode.helper";
+import { Stack } from "@mui/material";
+import { SafeButton } from "@root/shared/components/button/safe-button";
 
 // ---------- Host nhiều dialog ----------
 export function FormDialogHost() {
@@ -37,6 +39,7 @@ function DialogInstance({ payload }: { payload: Payload }) {
   const [resolvedInitial, setResolvedInitial] = React.useState<Record<string, any> | null>(null);
   const [resolvingInitial, setResolvingInitial] = React.useState(false);
   const autoRef = React.useRef<AutoFormRef | null>(null);
+  const submitButtons = autoRef.current?.getSubmitButtons?.() ?? [];
 
   // ---- resolve initial (theo name + options.initial) ----
   React.useEffect(() => {
@@ -147,6 +150,36 @@ function DialogInstance({ payload }: { payload: Payload }) {
       onClose={handleClose}
       onSubmit={handleSubmit}
       maxWidth={maxWidth}
+      actions={
+        submitButtons && submitButtons.length ? (
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            {submitButtons.map((btn) => {
+              const mode = resolveMode(schema, resolvedInitial ?? {});
+              const shouldShow = btn.visible ? btn.visible({
+                values: autoRef.current?.values ?? {},
+                mode,
+              }) : true;
+
+              if (!shouldShow) return null;
+
+              return (
+                <SafeButton
+                  key={btn.name}
+                  variant="contained"
+                  color={btn.color ?? "primary"}
+                  onClick={() => {
+                    if (!autoRef.current) return;
+                    const mode = resolveMode(schema, resolvedInitial ?? {});
+                    autoRef.current.runSubmitButton(btn, mode);
+                  }}
+                >
+                  {btn.label ?? btn.name}
+                </SafeButton>
+              );
+            })}
+          </Stack>
+        ) : undefined
+      }
     >
       {resolvingInitial ? (
         <div>Loading…</div>

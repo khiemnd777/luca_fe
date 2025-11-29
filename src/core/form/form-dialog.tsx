@@ -7,6 +7,7 @@ type FormDialogProps = React.PropsWithChildren<{
   confirmText?: string;
   cancelText?: string;
   submitting?: boolean;
+  actions?: React.ReactNode;
   onClose: () => void;
   onSubmit: () => void;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false;
@@ -19,6 +20,7 @@ export function FormDialog({
   confirmText = "Save",
   cancelText = "Cancel",
   submitting = false,
+  actions,
   onClose,
   onSubmit,
   maxWidth = "lg",
@@ -28,8 +30,17 @@ export function FormDialog({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>{children}</DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>{cancelText}</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={submitting}>{confirmText}</Button>
+        {actions ? (
+          <>
+            <Button onClick={onClose} disabled={submitting}>{cancelText}</Button>
+            {actions}
+          </>
+        ) : (
+          <>
+            <Button onClick={onClose} disabled={submitting}>{cancelText}</Button>
+            <Button variant="contained" onClick={onSubmit} disabled={submitting}>{confirmText}</Button>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

@@ -8,10 +8,10 @@ import { useAutoForm } from "@core/form/use-auto-form";
 import type {
   AutoFormRef,
   AutoFormProps,
-  SubmitDef,
   FormSchema,
   FormMode,
   ModeText,
+  SubmitButton,
 } from "@core/form/form.types";
 
 import type { FieldDef, FieldKind, FormContext } from "@core/form/types";
@@ -28,6 +28,7 @@ import { openFormDialog } from "./form-dialog.service";
 import { extractVars } from "@root/shared/utils/equation.utils";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
 import { packageData } from "./auto-form-package";
+import { resolveSubmitButtons } from "./auto-form.helper";
 
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
@@ -300,7 +301,7 @@ async function expandOneMetadataBlock(
 /* ========================================================================
    HELPERS
    ======================================================================== */
-const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
+// const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
 
 function resolveMetadataFieldGroup(
   metaField: FieldDef,
@@ -387,11 +388,11 @@ function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   return id ? "update" : "create";
 }
 
-function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
-  const s = schema.submit as any;
-  if (s?.create && s?.update) return mode === "create" ? s.create : s.update;
-  return schema.submit as SubmitDef;
-}
+// function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
+//   const s = schema.submit as any;
+//   if (s?.create && s?.update) return mode === "create" ? s.create : s.update;
+//   return schema.submit as SubmitDef;
+// }
 
 function renderModeText(
   t?: ModeText,
@@ -403,34 +404,34 @@ function renderModeText(
   return t[ctx!.mode];
 }
 
-async function runSubmit(def: SubmitDef, dto: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
-  if (def.type === "fn") return def.run(dto, meta);
+// async function runSubmit(def: SubmitDef, dto: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
+//   if (def.type === "fn") return def.run(dto, meta);
 
-  const method = def.method ?? "PATCH";
-  const fetcher = def.fetcher ?? defaultFetcher;
+//   const method = def.method ?? "PATCH";
+//   const fetcher = def.fetcher ?? defaultFetcher;
 
-  let payload = def.transform ? def.transform(dto) : dto;
+//   let payload = def.transform ? def.transform(dto) : dto;
 
-  const res = await fetcher(def.url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(def.headers ?? {}),
-    },
-    body: JSON.stringify(payload),
-  });
+//   const res = await fetcher(def.url, {
+//     method,
+//     headers: {
+//       "Content-Type": "application/json",
+//       ...(def.headers ?? {}),
+//     },
+//     body: JSON.stringify(payload),
+//   });
 
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const json = await res.json();
-      msg = json?.message || msg;
-    } catch { }
-    throw new Error(msg);
-  }
+//   if (!res.ok) {
+//     let msg = `HTTP ${res.status}`;
+//     try {
+//       const json = await res.json();
+//       msg = json?.message || msg;
+//     } catch { }
+//     throw new Error(msg);
+//   }
 
-  return res.json().catch(() => null);
-}
+//   return res.json().catch(() => null);
+// }
 
 function flattenForInitial(obj: any): any {
   const out: any = { ...obj };
@@ -614,7 +615,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       setValue,
       setAllValues,
       errors,
-      setErrors,
+      // setErrors,
       validateAll,
     } = useAutoForm(baseFields, fixedInitial, {
       asyncValidate: schema.hooks?.asyncValidate,
@@ -840,61 +841,77 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* SUBMIT */
     const [, setSaving] = React.useState(false);
 
-    const doSubmit = React.useCallback(async () => {
+    async function handleSubmitButton(btn: SubmitButton, mode: FormMode) {
       const ok = await validateAll();
       if (!ok) return false;
 
       setSaving(true);
 
-      const packaged = packageData(
-        metadataBlocks,
-        values,
-      );
+      const packaged = packageData(metadataBlocks, values);
+      const dto = schema!.hooks?.mapToDto ? schema!.hooks.mapToDto(packaged) : packaged;
 
-      const dto = schema.hooks?.mapToDto
-        ? schema.hooks.mapToDto(packaged)
-        : packaged;
-
-      const mode = resolveMode(schema, stableInitial);
+      const ctx = {
+        values: dto,
+        mode,
+        meta: metadataBlocks,
+      };
 
       try {
-        const submitDef = pickSubmit(schema, mode);
-        const result = await runSubmit(submitDef, dto, metadataBlocks);
-
-        if (schema.hooks?.mapFromDto) {
-          const uiVals = schema.hooks.mapFromDto(result);
+        const result = await btn.submit(ctx);
+        if (schema!.hooks?.mapFromDto) {
+          const uiVals = schema!.hooks.mapFromDto(result);
           if (uiVals && typeof uiVals === "object") setAllValues(uiVals);
         }
 
         toasts.success(
-          renderModeText(schema.toasts?.saved, {
-            mode,
-            values,
-            result,
-          }) ?? "Đã lưu thành công"
+          renderModeText(
+            btn.toasts?.saved ?? schema!.toasts?.saved,
+            { mode, values, result }
+          ) ?? "Đã lưu"
         );
 
+        if (btn.afterSaved) await btn.afterSaved(result);
+        if (schema!.afterSaved) await schema!.afterSaved(result);
         if (onSaved) await onSaved(result);
-        if (schema.afterSaved) await schema.afterSaved(result);
 
         return true;
-      } catch (e: any) {
-        toasts.error(e?.message ?? "Lỗi");
-        setErrors((prev) => ({ ...prev, _form: e?.message }));
+      } catch (err: any) {
+        toasts.error(
+          renderModeText(
+            btn.toasts?.failed ?? schema!.toasts?.failed,
+            { mode, values }
+          ) ?? (err?.message ?? "Lỗi")
+        );
         return false;
       } finally {
         setSaving(false);
       }
-    }, [schema, values]);
+    }
+
 
     /* REF OUTPUT */
     React.useImperativeHandle(ref, () => ({
-      submit: doSubmit,
+      submit: () => {
+        const mode = resolveMode(schema, stableInitial);
+        const buttons = resolveSubmitButtons(schema, mode);
+        const primary = buttons[0];
+        return handleSubmitButton(primary, mode);
+      },
+      runSubmitButton: handleSubmitButton,
+      getSubmitButtons: () => {
+        const mode = resolveMode(schema, stableInitial);
+        return resolveSubmitButtons(schema, mode);
+      },
+      schema,
       values,
+      reset: () => setAllValuesProg(fixedInitial),
       setValue: setValueProg,
       setAllValues: setAllValuesProg,
-      reset: () => setAllValuesProg(fixedInitial),
     }));
+
+    /* RENDER SUBMIT BUTTONS */
+    // const mode = resolveMode(schema, stableInitial);
+    // const submitButtons = resolveSubmitButtons(schema, mode);
 
     /* RENDER */
     return (
@@ -911,6 +928,24 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
             ctx={ctxRef.current}
           />
         )}
+
+        {/* ======= SUBMIT BUTTONS ======= */}
+        {/* <Stack direction="row" spacing={1} justifyContent="flex-end">
+          {submitButtons.map((btn) => {
+            if (btn.visible && !btn.visible({ values, mode })) return null;
+            return (
+              <SafeButton
+                key={btn.name}
+                variant="contained"
+                color={btn.color ?? "primary"}
+                onClick={() => handleSubmitButton(btn, mode)}
+                startIcon={btn.icon}
+              >
+                {btn.label ?? btn.name}
+              </SafeButton>
+            );
+          })}
+        </Stack> */}
       </Stack>
     );
   }

@@ -9,19 +9,8 @@ export function parseShowIfDependencies(showIfStr?: string | null): string[] {
 
   const out = new Set<string>();
 
+  // NO NORMALIZATION — keep original path exactly
   function normalize(path: string): string {
-    const parts = path.split(".");
-
-    // CASE 1: customFields
-    if (parts.length > 2 && parts[1] === "customFields") {
-      return parts.slice(1).join(".");
-    }
-
-    // CASE 2: normal field
-    if (parts.length > 1) {
-      return parts[parts.length - 1];
-    }
-
     return path;
   }
 
@@ -42,4 +31,3 @@ export function parseShowIfDependencies(showIfStr?: string | null): string[] {
   collect(obj);
   return Array.from(out);
 }
-

@@ -11,6 +11,13 @@ export async function processes(orderId: number, orderItemId: number): Promise<O
   return result;
 }
 
+export async function processesForStaff(staffId: number): Promise<OrderItemProcessModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/staff/${staffId}/order/processes`);
+  const result = mapper.map<any[], OrderItemProcessModel[]>("OrderItemProcess", data, "dto_to_model");
+  return result;
+}
+
 export async function update(orderId: number, orderItemId: number, orderItemProcessId: number, payload: OrderItemProcessUpsertModel): Promise<OrderItemProcessModel[]> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.put<any[]>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}/processes/${orderItemProcessId}`, payload);

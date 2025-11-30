@@ -78,7 +78,13 @@ async function expandOneMetadataBlock(
     if (deps.length > 0) {
       const prop = metaField.prop;
       const cfPrefix = prop ? `${prop}.` : "";
-      deps = deps.map((d) => `${cfPrefix}${snakeToCamel(d)}`);
+      deps = deps.map((d) => {
+        const camel = snakeToCamel(d);
+        if (!camel.startsWith(cfPrefix)) {
+          return `${cfPrefix}${camel}`;
+        }
+        return camel;
+      });
     }
   }
 

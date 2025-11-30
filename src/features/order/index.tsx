@@ -1,7 +1,8 @@
 import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
-import ChecklistIcon from '@mui/icons-material/Checklist';
 import OneColumnPage from "@root/core/pages/one-column-page";
+import ChecklistIcon from '@mui/icons-material/Checklist';
+import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 
 const mod: ModuleDescriptor = {
   id: "order",
@@ -38,6 +39,16 @@ const mod: ModuleDescriptor = {
         }
       ],
     },
+    {
+      key: "order-process",
+      permissions: ["order.view"],
+      element: <OneColumnPage />,
+      label: "Gia công",
+      title: "Gia công",
+      path: "/order/processing",
+      icon: <DeveloperBoardIcon />,
+      priority: 96,
+    }
   ],
 };
 

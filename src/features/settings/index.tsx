@@ -10,7 +10,7 @@ const mod: ModuleDescriptor = {
       permissions: ["settings.view"],
       label: "Thiết lập",
       title: "Thiết lập",
-      subtitle: "Cấu hình thông tin trang quản lý và giao diện",
+      subtitle: "Cấu hình thông tin trang quản lý và giao diện Labo",
       path: "/settings",
       icon: <SettingsRoundedIcon />,
       priority: 0,

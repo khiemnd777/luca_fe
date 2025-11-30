@@ -56,13 +56,50 @@ export default function StatusCard<T>({
         {...sortable.attributes}
         sx={{
           width: "100%",
-          height: 20,
+          height: 24,
           cursor: "grab",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           background: isDark ? "#555" : "#ddd",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
+      >
+        {/* 3 dots */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: "4px",
+          }}
+        >
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: isDark ? "#aaa" : "#555",
+            }}
+          />
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: isDark ? "#aaa" : "#555",
+            }}
+          />
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: isDark ? "#aaa" : "#555",
+            }}
+          />
+        </Box>
+      </Box>
+
 
       {/* CARD BODY - CLICKABLE */}
       <Box

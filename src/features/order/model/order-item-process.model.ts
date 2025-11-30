@@ -3,6 +3,7 @@ export interface OrderItemProcessModel {
   orderId?: number | null;
   orderItemId?: number | null;
 
+  orderCode?: string | null;
   processName?: string | null;
   stepNumber?: number;
 

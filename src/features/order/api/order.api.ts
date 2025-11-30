@@ -45,6 +45,13 @@ export async function update(model: OrderUpsertModel): Promise<void> {
   await apiClient.put<any>(`${departmentApiPath()}/order/${model.dto.id}`, model);
 }
 
+export async function updateStatus(orderId: number, orderItemProcessId: number, status: string): Promise<OrderModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.put<any>(`${departmentApiPath()}/order/${orderId}/process/${orderItemProcessId}/change-status/${status}`);
+  const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/order/${id}`);

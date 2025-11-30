@@ -1,4 +1,3 @@
-// @core/form/form-dialog.registry.ts
 import type { FormSchema } from "@core/form/form.types";
 
 export type ModeText = string | { create: string; update: string };

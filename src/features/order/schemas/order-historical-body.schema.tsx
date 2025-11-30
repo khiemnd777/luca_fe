@@ -10,56 +10,11 @@ export function buildHistoricalOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       kind: "text",
-      name: "latestOrderItem.code",
-      label: "Mã đơn hàng",
-      disableIf: () => true,
-    },
-    {
-      kind: "text",
-      name: "latestOrderItem.codeOriginal",
-      label: "Mã gốc",
-      disableIf: () => true,
-    },
-    {
-      kind: "text",
-      name: "remakeCount",
-      prop: "latestOrderItem",
-      label: "Số lần làm lại",
-      disableIf: () => true,
-      showIf: (v) => v["latestOrderItem.remakeCount"] > 0,
-    },
-    {
-      kind: "text",
-      name: "customerName",
-      label: "Khách hàng",
-      disableIf: () => true,
-    },
-    {
-      kind: "text",
       name: "productName",
       label: "Sản phẩm",
       group: "product",
-      disableIf: () => true,
-    },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      metadata: {
-        collection: "order",
-        mode: "whole",
-        ignoreFields: ["customerId"],
-        def: [
-          {
-            name: "patientName",
-            disableIf: () => true,
-          },
-          // {
-          //   name: "customerId",
-          //   showIf: () => false,
-          // },
-        ]
-      }
+      // disableIf: () => true,
+      asText: true,
     },
     {
       name: "",
@@ -78,7 +33,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
         def: [
           {
             name: "productCategory",
-            disableIf: () => true,
+            asText: true,
           }
         ],
       }
@@ -99,7 +54,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
         def: [
           {
             name: "toothPositions",
-            disableIf: () => true,
+            asText: true,
           }
         ],
       }
@@ -127,6 +82,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
+        ignoreFields: ["deliveryDate"],
         groups: [
           {
             group: "price",
@@ -154,21 +110,8 @@ export function buildHistoricalOrderSchema(): FormSchema {
     fields,
     groups: [
       {
-        name: "general",
-        label: "Thông tin chung:",
-        col: 2,
-      },
-      {
         name: "remake",
         col: 1,
-      },
-      {
-        name: "note",
-        col: 1,
-      },
-      {
-        name: "status",
-        col: 2,
       },
       {
         name: "product",
@@ -183,7 +126,15 @@ export function buildHistoricalOrderSchema(): FormSchema {
       {
         name: "total-price",
         col: 1,
-      }
+      },
+      {
+        name: "status",
+        col: 2,
+      },
+      {
+        name: "note",
+        col: 1,
+      },
     ],
     modeResolver: (_) => {
       return "update";
@@ -230,4 +181,4 @@ export function buildHistoricalOrderSchema(): FormSchema {
   };
 }
 
-registerForm("order-historical", buildHistoricalOrderSchema);
+registerForm("order-historical-body", buildHistoricalOrderSchema);

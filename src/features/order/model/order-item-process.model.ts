@@ -1,6 +1,7 @@
 export interface OrderItemProcessModel {
   id?: number;
-  orderItemId?: number;
+  orderId?: number | null;
+  orderItemId?: number | null;
 
   processName?: string | null;
   stepNumber?: number;
@@ -13,5 +14,11 @@ export interface OrderItemProcessModel {
   assignedId?: number | null;
   assignedName?: string | null;
 
-  customFields?: Record<string, any>;
+  customFields?: Record<string, any> | null;
 }
+
+export interface OrderItemProcessUpsertModel {
+  dto: OrderItemProcessModel;
+  collections?: (string | undefined)[];
+}
+

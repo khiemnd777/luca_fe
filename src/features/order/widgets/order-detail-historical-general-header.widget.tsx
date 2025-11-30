@@ -74,7 +74,7 @@ function OrderDetailHistoricalGeneralWidget() {
           </Section>
         ) : (
           <AutoForm
-            name="order-historical"
+            name="order-historical-header"
             ref={frmOrderEditRef}
             initial={detail}
           />
@@ -85,7 +85,8 @@ function OrderDetailHistoricalGeneralWidget() {
 }
 
 registerSlot({
-  id: "order-detail-historical",
+  id: "order-detail-historical-header",
   name: "order-detail-historical:left",
   render: () => <OrderDetailHistoricalGeneralWidget />,
+  priority: 99,
 });

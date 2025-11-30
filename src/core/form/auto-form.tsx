@@ -172,8 +172,8 @@ async function expandOneMetadataBlock(
           async searchPage(kw: string, page, limit) {
             const searched = await search(relation.target, {
               keyword: kw,
-              limit: limit,
               page: page,
+              limit: limit,
               orderBy: "name",
             });
             return searched.items;
@@ -231,8 +231,8 @@ async function expandOneMetadataBlock(
           async searchPage(kw: string, page, limit) {
             const searched = await search(relation.target, {
               keyword: kw,
-              limit: limit,
               page: page,
+              limit: limit,
               orderBy: "name",
             });
             return searched.items;

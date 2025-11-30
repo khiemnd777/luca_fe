@@ -55,7 +55,7 @@ function OrderDetailWidget() {
       <SectionCard title={title ?? ""}
         extra={
           <>
-            <IfPermission permissions={["order.create"]}>
+            <IfPermission permissions={["order.edit"]}>
               <SafeButton
                 variant="outlined"
                 startIcon={<SaveOutlinedIcon />}
@@ -73,7 +73,7 @@ function OrderDetailWidget() {
           </Section>
         ) : (
           <AutoForm
-            name="order-edit"
+            name="order-edit-header"
             ref={frmOrderEditRef}
             initial={detail ?? { id: orderId }}
           />
@@ -84,7 +84,8 @@ function OrderDetailWidget() {
 }
 
 registerSlot({
-  id: "order-detail",
+  id: "order-detail-header",
   name: "order-detail:left",
   render: () => <OrderDetailWidget />,
+  priority: 99,
 });

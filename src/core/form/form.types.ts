@@ -77,7 +77,7 @@ export type SubmitButton = {
 
 export type FormSchema = {
   fields: FieldDef[];
-  submit: SubmitDef | { create: SubmitDef; update: SubmitDef };
+  submit: SubmitDef | { create: SubmitDef | null; update: SubmitDef | null };
   submitButtons?: SubmitButton[];
   mergeSubmitButtons?: boolean;
   idField?: string; // mặc định "id"

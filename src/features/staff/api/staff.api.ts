@@ -35,7 +35,14 @@ export async function existsEmail({ id, email }: { id: number | undefined, email
   return data;
 }
 
-// common api
+export async function searchWithRoleName(roleName: string, opts: SearchOpts): Promise<SearchResult<StaffModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.search<any[]>(`${departmentApiPath()}/staff/role/${roleName}/search`, opts);
+  const result = mapper.map<any[], SearchResult<StaffModel>>("Staff", data, "dto_to_model");
+  return result;
+}
+
+// general api
 export async function table(tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/staff/list`, tableOpts);

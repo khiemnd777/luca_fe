@@ -142,14 +142,14 @@ export function OrderDetailProcessesListWidget() {
 
 registerSlot({
   id: "order-detail-processes-list",
-  name: "order-detail:right",
+  name: "_order-detail:right",
   priority: 99,
   render: () => <OrderDetailProcessesListWidget />,
 });
 
 registerSlot({
   id: "order-detail-processes-list",
-  name: "order-detail-historical:right",
+  name: "_order-detail-historical:right",
   priority: 99,
   render: () => <OrderDetailProcessesListWidget />,
 });

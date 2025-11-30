@@ -6,10 +6,17 @@ import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
 
-export async function tableBySectionId(sectionId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
+export async function getBySectionId(sectionId: number | undefined, tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
   sectionId = sectionId === undefined ? - 1 : sectionId;
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/section/${sectionId}/staffs`, tableOpts);
+  const result = mapper.map<any[], ListResult<StaffModel>>("Staff", data, "dto_to_model");
+  return result;
+}
+
+export async function getByRoleName(roleName: string, tableOpts: FetchTableOpts): Promise<ListResult<StaffModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/role/${roleName}/staffs`, tableOpts);
   const result = mapper.map<any[], ListResult<StaffModel>>("Staff", data, "dto_to_model");
   return result;
 }

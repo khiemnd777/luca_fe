@@ -964,16 +964,19 @@ export class ApiClient {
 
         let retryable =
           // Network
-          err?.code === "ECONNABORTED" ||
+          ["ECONNABORTED"].includes(err?.code) ||
           message.includes("timeout") ||
-          // 5xx except 501
-          (typeof status === "number" &&
+          // 5xx except 500 501
+          (
+            typeof status === "number" &&
             status >= 500 &&
-            status !== 501);
+            status !== 500 &&
+            status !== 501
+          );
 
         if (opts?.isRefresh) {
           retryable =
-            err?.code === "ECONNABORTED" ||
+            ["ECONNABORTED"].includes(err?.code) ||
             message.includes("timeout") ||
             (typeof status === "number" && status >= 500);
         }

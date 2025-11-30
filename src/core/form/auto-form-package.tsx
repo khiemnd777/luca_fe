@@ -97,6 +97,12 @@ function buildNestedPayload(flat: Record<string, any>) {
   for (const [k, v] of Object.entries(flat)) {
     if (!k.includes(".")) continue;
 
+    const idx = k.lastIndexOf(".");
+    const last = k.slice(idx + 1);
+    if (/^\d+$/.test(last)) {
+      continue;
+    }
+
     const parts = k.split(".");
     let cur = out;
 
@@ -114,6 +120,27 @@ function buildNestedPayload(flat: Record<string, any>) {
 function normalizeObject(obj: any) {
   if (!obj || typeof obj !== "object") return;
 
+  // ---------------------------------------------
+  // Convert objects with numeric keys → arrays
+  // ---------------------------------------------
+  for (const [k, v] of Object.entries(obj)) {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      const rec = v as Record<string, any>;
+      const keys = Object.keys(rec);
+      const allNumeric = keys.every((x) => /^\d+$/.test(x));
+
+      if (allNumeric) {
+        // sort numeric keys and build array
+        const arr: any[] = [];
+        keys.sort((a, b) => Number(a) - Number(b));
+        for (const key of keys) {
+          arr.push(rec[key]);
+        }
+        obj[k] = arr;
+      }
+    }
+  }
+
   // -------------------------------------------------
   // customFields → custom_fields (snake keys)
   // -------------------------------------------------
@@ -126,23 +153,16 @@ function normalizeObject(obj: any) {
   }
 
   // -------------------------------------------------
-  // relationFields → core + custom_fields (snake keys)
-  // XÓA relation_fields KHÔNG GỬI LÊN SERVER
+  // relationFields → core + custom_fields
   // -------------------------------------------------
   const rel = obj.relationFields ?? obj.relation_fields;
   if (rel && typeof rel === "object") {
     for (const [k, v] of Object.entries(rel)) {
       const sk = camelToSnake(k);
-
-      // core snake
       obj[sk] = v;
-
-      // custom_fields snake
       if (!obj.custom_fields) obj.custom_fields = {};
       obj.custom_fields[sk] = v;
     }
-
-    // DELETE relation fields hoàn toàn
     delete obj.relationFields;
     delete obj.relation_fields;
   }
@@ -154,3 +174,4 @@ function normalizeObject(obj: any) {
     if (v && typeof v === "object") normalizeObject(v);
   }
 }
+

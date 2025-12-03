@@ -13,9 +13,9 @@ import {
 import { processes } from "../api/order-item-process.api";
 import { id, updateStatus } from "../api/order.api";
 import { useAsync } from "@root/core/hooks/use-async";
-import StatusBoard from "@root/shared/components/status-board/status-board";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
 import { priorityColor } from "@root/shared/utils/order.utils";
+import ResponsiveStatusBoard from "@root/shared/components/status-board/responsive-status-board";
 
 export function OrderDetailProcessesStatusBoardWidget() {
   const { orderId, orderItemId } = useParams();
@@ -58,7 +58,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
         </Typography>
       )}
 
-      <StatusBoard
+      <ResponsiveStatusBoard
         items={(list ?? []).map(it => ({
           id: it.id!,
           status: it.customFields?.status || "waiting",

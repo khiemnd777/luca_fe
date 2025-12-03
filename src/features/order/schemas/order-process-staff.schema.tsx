@@ -19,7 +19,7 @@ export function buildOrderProcessStaffSchema(): FormSchema {
       metadata: {
         collection: "order-item-process",
         mode: "whole",
-        ignoreFields: ["status", "assignedId"],
+        ignoreFields: ["assignedId"],
         def: [
           {
             name: "note",

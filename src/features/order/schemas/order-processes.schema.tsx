@@ -16,12 +16,12 @@ export function buildOrderProcessesSchema(): FormSchema {
       metadata: {
         collection: "order-item-process",
         mode: "whole",
-        def: [
-          {
-            name: "status",
-            asText: true,
-          },
-        ],
+        // def: [
+        //   {
+        //     name: "status",
+        //     asText: true,
+        //   },
+        // ],
       },
     },
   ];

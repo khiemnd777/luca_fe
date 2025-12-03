@@ -1,9 +1,8 @@
 import { registerSlot } from "@root/core/module/registry";
 import { useParams } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
-import { historical } from "../api/order-item.api";
-import React from "react";
 import type { OrderItemHistoricalModel } from "../model/order-item.model";
+import { historical } from "../api/order-item.api";
 
 import {
   List,
@@ -17,37 +16,18 @@ import {
 import { Section } from "@shared/components/ui/section";
 import { formatDateTime } from "@root/shared/utils/datetime.utils";
 import { navigate } from "@root/core/navigation/navigate";
+import { useAsync } from "@root/core/hooks/use-async";
 
 export function OrderDetailHistoricalListWidget() {
   const { orderId, orderItemId } = useParams();
-  const [loading, setLoading] = React.useState(true);
-  const [historicalList, setHistoricalList] =
-    React.useState<OrderItemHistoricalModel[] | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      if (!orderId) return;
-
-      setLoading(true);
-
-      try {
-        const data = await historical(Number(orderId), Number(orderItemId ?? 0));
-        if (!cancelled) {
-          setHistoricalList(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, orderItemId]);
+  const { data: historicalList, loading } = useAsync<OrderItemHistoricalModel[]>(
+    () => {
+      if (!orderId) return Promise.resolve([]);
+      return historical(Number(orderId), Number(orderItemId ?? 0));
+    },
+    [orderId, orderItemId],
+    { key: "order-detail-historical-list" }
+  );
 
   return (
     <SectionCard title="Các đơn liên quan">

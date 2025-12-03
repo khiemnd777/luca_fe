@@ -1,4 +1,3 @@
-import React from "react";
 import { registerSlot } from "@root/core/module/registry";
 import { useParams } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
@@ -20,53 +19,31 @@ import { id } from "../api/order.api";
 import { AutoForm } from "@root/core/form/auto-form";
 import { IfPermission } from "@root/core/auth/if-permission";
 import { SafeButton } from "@root/shared/components/button/safe-button";
+import { useAsync } from "@root/core/hooks/use-async";
 
 export function OrderDetailProcessesListWidget() {
   const { orderId, orderItemId } = useParams();
 
-  const [loading, setLoading] = React.useState(true);
-  const [list, setList] = React.useState<OrderItemProcessModel[] | null>(null);
+  const { data: list, loading } = useAsync<OrderItemProcessModel[]>(() => {
+    return (async () => {
+      if (!orderId) return [];
 
-  React.useEffect(() => {
-    let cancelled = false;
+      let realOrderItemId: number;
 
-    (async () => {
-      if (!orderId) return;
-
-      setLoading(true);
-
-      try {
-        let realOrderItemId: number;
-
-        if (!orderItemId) {
-          // 🔥 CASE 1: orderItemId not in URL → fetch detail to get latestOrderItem.id
-          const detail = await id(Number(orderId));
-          realOrderItemId = detail.latestOrderItem?.id;
-        } else {
-          // 🔥 CASE 2: orderItemId exists → use directly
-          realOrderItemId = Number(orderItemId);
-        }
-
-        if (!realOrderItemId) {
-          if (!cancelled) setList([]);
-          return;
-        }
-
-        const data = await processes(Number(orderId), realOrderItemId);
-        if (!cancelled) {
-          setList(data);
-        }
-      } catch (err) {
-        console.error("Process fetch error:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (!orderItemId) {
+        const detail = await id(Number(orderId));
+        realOrderItemId = detail.latestOrderItem?.id;
+      } else {
+        realOrderItemId = Number(orderItemId);
       }
-    })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, orderItemId]);
+      if (!realOrderItemId) {
+        return [];
+      }
+
+      return processes(Number(orderId), realOrderItemId);
+    })();
+  }, [orderId, orderItemId], { key: "order-detail-processes-list" });
 
   return (
     <SectionCard title="Công đoạn gia công" extra={

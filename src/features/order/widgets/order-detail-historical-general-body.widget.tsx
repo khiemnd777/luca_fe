@@ -11,38 +11,20 @@ import { getByOrderIdAndOrderItemId } from "../api/order.api";
 import { Section } from "@root/shared/components/ui/section";
 import { CircularProgress } from "@mui/material";
 import type { OrderModel } from "../model/order.model";
+import { useAsync } from "@root/core/hooks/use-async";
 
 function OrderDetailHistoricalGeneralWidget() {
   const { orderId, orderItemId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
 
-  const [loading, setLoading] = React.useState(true);
-  const [detail, setDetail] = React.useState<OrderModel | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      if (!orderId) return;
-
-      setLoading(true);
-
-      try {
-        const data = await getByOrderIdAndOrderItemId(Number(orderId ?? 0), Number(orderItemId ?? 0));
-        if (!cancelled) {
-          setDetail(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
+  const { data: detail, loading } = useAsync<OrderModel | null>(
+    () => {
+      if (!orderId) return Promise.resolve(null);
+      return getByOrderIdAndOrderItemId(Number(orderId ?? 0), Number(orderItemId ?? 0));
+    },
+    [orderId, orderItemId],
+    { key: "order-detail-historical-body" }
+  );
 
   return (
     <>

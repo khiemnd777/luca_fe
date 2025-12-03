@@ -10,13 +10,18 @@ import { SafeButton } from "@shared/components/button/safe-button";
 import { id as getById } from "../api/order.api";
 import { Section } from "@root/shared/components/ui/section";
 import { CircularProgress } from "@mui/material";
+import { useAsync } from "@root/core/hooks/use-async";
 
 function OrderDetailWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
 
-  const [loading, setLoading] = React.useState(true);
-  const [detail, setDetail] = React.useState<any | null>(null);
+  const { data: detail, loading } = useAsync<any>(() => {
+    if (!orderId) return Promise.resolve(null);
+    return getById(Number(orderId ?? 0));
+  }, [orderId], {
+    key: `order-detail:${orderId ?? "new"}`,
+  });
 
   // page information
   const isOriginal = detail?.codeLatest === detail?.code;
@@ -24,31 +29,6 @@ function OrderDetailWidget() {
   const codeLabel = `Mã: ${detail?.codeLatest}${originalCodeLabel}`
   // title
   const title = `${codeLabel}`;
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      if (!orderId) return;
-
-      setLoading(true);
-
-      try {
-        const data = await getById(Number(orderId ?? 0));
-        if (!cancelled) {
-          setDetail(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
 
   return (
     <>

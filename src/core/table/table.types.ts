@@ -23,6 +23,7 @@ export type ColumnType = "text"
   | "qr"
   | "custom"
   | "metadata"
+  | "relation"
   ;
 
 export type MetadataColumnMode = "whole" | "partial";
@@ -32,6 +33,28 @@ export type MetadataColumnOptions = {
   mode?: MetadataColumnMode;
   fields?: string[];
   ignoreFields?: string[];
+  /*
+  def: {
+    remakeCount: {
+      header: "Số lần remake",
+      type: "number",
+      accessor: row => row.customFields.remakeCount ?? 0,
+    },
+    priority: {
+      header: "Priority",
+      render: (val) => <Tag color="red">{val}</Tag>,
+    }
+  }
+  */
+  def?: Record<string, MiniColumnDef>;
+};
+
+export type MiniColumnDef = {
+  accessor?: (row: any) => unknown;
+  header?: string;
+  type?: ColumnType;
+  sortable?: boolean;
+  render?: (value: any, row: any) => React.ReactNode;
 };
 
 export type QROptions = {

@@ -12,7 +12,7 @@ function DepartmentSettingsWidget() {
 
   return (
     <>
-      <SectionCard title="Thông tin trang" extra={
+      <SectionCard title="Thông tin Labo" extra={
         <IfPermission permissions={["settings.update"]}>
           <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => formRef.current?.submit()}>Lưu</SafeButton>
         </IfPermission>

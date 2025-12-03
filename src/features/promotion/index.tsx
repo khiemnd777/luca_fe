@@ -10,6 +10,7 @@ const mod: ModuleDescriptor = {
   routes: [
     {
       key: "promotion",
+      permissions: ["promotion.view"],
       label: "Khuyến mãi",
       title: "Khuyến mãi",
       path: "/promotion",

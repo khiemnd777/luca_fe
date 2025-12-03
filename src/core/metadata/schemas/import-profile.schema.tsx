@@ -82,15 +82,15 @@ export function buildMetadataImportProfileSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values: any) => {
-          await createImportProfile(values);
-          return values;
+          await createImportProfile(values.dto);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values: any) => {
-          await updateImportProfile(values.id, values);
-          return values;
+          await updateImportProfile(values.dto.id, values.dto);
+          return values.dto;
         },
       },
     },

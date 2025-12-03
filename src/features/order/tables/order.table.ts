@@ -1,0 +1,78 @@
+import { registerTable } from "@core/table/table-registry";
+import { createTableSchema, type ColumnDef, type FetchTableOpts } from "@core/table/table.types";
+import { reloadTable } from "@core/table/table-reload";
+import { openFormDialog } from "@core/form/form-dialog.service";
+import type { OrderModel } from "@features/order/model/order.model";
+import { table, unlink } from "@features/order/api/order.api";
+import { priorityColor, priorityLabel, statusLabel } from "@root/shared/utils/order.utils";
+import { navigate } from "@root/core/navigation/navigate";
+
+const columns: ColumnDef<OrderModel>[] = [
+  { key: "codeLatest", header: "Mã đơn hàng", sortable: true, stickyRight: true },
+  { key: "code", header: "Mã gốc", sortable: true, },
+  { 
+    key: "remakeCount", 
+    header: "Làm lại", 
+    accessor: (row) => row.remakeCount ? `${row.remakeCount} lần` : '',
+    sortable: true, 
+  },
+  // {
+  //   key: "",
+  //   type: "metadata",
+  //   metadata: {
+  //     collection: "order",
+  //     mode: "whole",
+  //   }
+  // },
+  { key: "customerName", header: "Khách hàng", sortable: true, },
+  {
+    key: "statusLatest",
+    header: "Trạng thái",
+    accessor: (row) => statusLabel(row.statusLatest),
+    sortable: true,
+  },
+  {
+    key: "priorityLatest",
+    type: "color",
+    header: "Ưu tiên",
+    accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
+    sortable: true,
+  },
+  {
+    key: "productName",
+    header: "Sản phẩm",
+    sortable: true,
+  },
+  {
+    key: "quantity",
+    header: "Số lượng",
+    accessor: (row) => `x${row.quantity}`,
+    sortable: true,
+  },
+  {
+    key: "totalPrice",
+    type: "currency",
+    header: "Thành tiền",
+    sortable: true,
+  },
+  { key: "deliveryDate", header: "Ngày giao", type: "datetime", sortable: true, },
+  { key: "updatedAt", header: "Cập nhật lúc", type: "datetime", sortable: true, },
+  { key: "createdAt", header: "Ngày tạo đơn", type: "datetime", sortable: true, },
+];
+
+registerTable("orders", () => {
+  return createTableSchema<OrderModel>({
+    columns,
+    fetch: async (opts: FetchTableOpts) => await table(opts),
+    initialPageSize: 10,
+    initialSort: { by: "updated_at", dir: "desc" },
+    allowUpdating: ["order.update"],
+    allowDeleting: ["order.delete"],
+    onView: (row: OrderModel) => {navigate(`/order/${row.id}`)},
+    onEdit: (row: OrderModel) => openFormDialog("order-edit", { initial: { id: row.id } }),
+    async onDelete(row) {
+      await unlink(row.id);
+      reloadTable("orders");
+    },
+  });
+});

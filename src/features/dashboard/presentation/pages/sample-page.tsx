@@ -7,7 +7,7 @@ import { SectionCard } from "@shared/components/ui/section-card";
 import { ResponsiveGrid } from "@shared/components/ui/responsive-grid";
 import { Loading } from "@shared/components/ui/loading";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
-import { FormDialog } from "@shared/components/dialog/form-dialog";
+import { FormDialog } from "@root/core/form/form-dialog";
 import { EmptyState } from "@shared/components/ui/empty-state";
 import { AutoGrid } from "@root/shared/components/ui/auto-grid";
 import type { FieldDef } from "@core/form/types";

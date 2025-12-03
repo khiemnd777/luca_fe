@@ -79,8 +79,8 @@ export function buildClinicSchema(): FormSchema {
       placeholder: "Tìm nha sĩ...",
       fullWidth: true,
 
-      getOptionLabel: (d: any) => d.name,
-      getOptionValue: (d: any) => d.id,
+      getOptionLabel: (d: any) => d?.name,
+      getOptionValue: (d: any) => d?.id,
 
       async searchPage(kw: string, page, limit) {
         const searched = await searchDentist({
@@ -129,15 +129,15 @@ export function buildClinicSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as ClinicModel);
-          return values;
+          await create(values.dto as ClinicModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as ClinicModel);
-          return values;
+          await update(values.dto as ClinicModel);
+          return values.dto;
         },
       },
     },

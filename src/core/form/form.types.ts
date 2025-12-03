@@ -46,11 +46,40 @@ export type ModeText =
 
 export type GroupConfig = { name: string; label?: string; col?: number };
 
+export type SubmitButton = {
+  name: string;
+  label?: string;
+  color?:
+  | "primary"
+  | "secondary"
+  | "error"
+  | "warning"
+  | "info"
+  | "success";
+
+  icon?: React.ReactNode;
+
+  visible?: (ctx: { mode: FormMode; values: any }) => boolean;
+
+  submit: (ctx: {
+    values: Record<string, any>;
+    mode: FormMode;
+    meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[];
+  }) => Promise<any>;
+
+  toasts?: {
+    saved?: ModeText;
+    failed?: ModeText;
+  };
+
+  afterSaved?: (result: any) => void | Promise<void>;
+};
+
 export type FormSchema = {
   fields: FieldDef[];
-  submit:
-  | SubmitDef
-  | { create: SubmitDef; update: SubmitDef };
+  submit: SubmitDef | { create: SubmitDef | null; update: SubmitDef | null };
+  submitButtons?: SubmitButton[];
+  mergeSubmitButtons?: boolean;
   idField?: string; // mặc định "id"
   modeResolver?: (initial: Record<string, any>) => FormMode;
   hooks?: FormHooks;
@@ -62,6 +91,14 @@ export type FormSchema = {
   showReset?: boolean;
   initialResolver?: (initial?: any) => Promise<Record<string, any> | null> | Record<string, any> | null;
   afterSaved?: (result: any) => Promise<void> | void;
+
+  onChange?: (name: string, value: any, ctx: {
+    values: Record<string, any>;
+    setValue: (name: string, v: any) => void;
+    setAllValues: (obj: Record<string, any>) => void;
+    reset: () => void;
+  }, source: "user" | "programmatic") => void;
+
 
   // Groups
   groups?: GroupConfig[] | null;
@@ -75,8 +112,13 @@ export type AutoFormProps = {
 };
 
 export type AutoFormRef = {
-  submit: () => Promise<boolean>;
-  reset: () => void;
+  schema: FormSchema;
   values: Record<string, any>;
+  submit: () => Promise<boolean>;
+  runSubmitButton: (btn: SubmitButton, mode: FormMode) => Promise<boolean>;
+  getSubmitButtons: () => SubmitButton[]
+  reset: () => void;
+  setValue: (name: string, v: any) => void;
+  setAllValues: (obj: Record<string, any>) => void
 };
 

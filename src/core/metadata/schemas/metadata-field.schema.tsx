@@ -99,7 +99,7 @@ export function buildMetadataFieldSchema(): FormSchema {
       name: "relation",
       label: "Relation (JSON)",
       kind: "textarea",
-      helperText: 'e.g. {"target":"product", ref:"process", "form":"process","placeholder":"Tìm..."}',
+      helperText: 'e.g. {"target":"product", "ref":"process", "type":"n|1", "form":"process","placeholder":"Tìm..."}',
       rows: 2,
     },
   ];
@@ -111,15 +111,15 @@ export function buildMetadataFieldSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await createField(values as FieldDto);
-          return values;
+          await createField(values.dto as FieldDto);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values: any) => {
-          await updateField(values.id, values as FieldDto);
-          return values;
+          await updateField(values.dto.id, values.dto as FieldDto);
+          return values.dto;
         },
       },
     },

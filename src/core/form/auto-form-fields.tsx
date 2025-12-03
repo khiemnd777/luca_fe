@@ -20,13 +20,15 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Autocomplete } from "@mui/material";
 import dayjs from "dayjs";
 
-import type { FieldDef, Option } from "@core/form/types";
+import type { FieldDef, FormContext, Option } from "@core/form/types";
 import { CurrencyField } from "@core/form/currency-field";
 import { ImageUploadField, type ImageUploadList, type ImageUploadValue } from "./image-upload-field";
 import PasswordField from "@core/form/password-field";
 import SearchListField from "@core/form/search-list-field";
 import type { GroupConfig } from "./form.types";
 import { humanize } from "@root/shared/utils/string.utils";
+import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
+import SearchSingleField from "./search-single-field";
 
 
 // -----------------------------------------------------------
@@ -38,6 +40,72 @@ function toMap(options?: Option[]) {
   return map;
 }
 
+function renderAsText(f: FieldDef, values: Record<string, any>) {
+  const v = values[f.name];
+
+  // null / empty
+  if (v === null || v === undefined || v === "") return <Typography>—</Typography>;
+
+  // SELECT
+  if (f.kind === "select" && !f.multiple) {
+    const opt = (f.options ?? []).find(o => o.value === v);
+    return <Typography>{opt?.label ?? String(v)}</Typography>;
+  }
+
+  // MULTISELECT
+  if (f.kind === "multiselect" || (f.kind === "select" && f.multiple)) {
+    const arr: any[] = Array.isArray(v) ? v : [];
+    if (arr.length === 0) return <Typography>—</Typography>;
+
+    const labels = arr.map(x => {
+      const opt = (f.options ?? []).find(o => o.value === x);
+      return opt?.label ?? String(x);
+    });
+
+    return <Typography>{labels.join(", ")}</Typography>;
+  }
+
+  // SEARCHSINGLE
+  if (f.kind === "searchsingle") {
+    // cố lấy name từ altName
+    const nameValue = f.altName ? values[f.altName] : null;
+    return <Typography>{nameValue ?? String(v)}</Typography>;
+  }
+
+  // SEARCHLIST
+  if (f.kind === "searchlist") {
+    const arr: any[] = Array.isArray(v) ? v : [];
+    if (arr.length === 0) return <Typography>—</Typography>;
+    return <Typography>{arr.join(", ")}</Typography>;
+  }
+
+  // DATE / DATETIME
+  if (f.kind === "date" || f.kind === "datetime") {
+    return <Typography>{String(v)}</Typography>;
+  }
+
+  // CURRENCY
+  if (f.kind === "currency" || f.kind === "currency-equation") {
+    return <Typography>{Number(v).toLocaleString()}</Typography>;
+  }
+
+  // SWITCH / CHECKBOX
+  if (f.kind === "checkbox" || f.kind === "switch") {
+    return <Typography>{v ? "Có" : "Không"}</Typography>;
+  }
+
+  // IMAGEUPLOAD / FILEUPLOAD
+  if (f.kind === "imageupload") {
+    return <Typography>{Array.isArray(v) ? `${v.length} hình` : "—"}</Typography>;
+  }
+  if (f.kind === "fileupload") {
+    return <Typography>{Array.isArray(v) ? `${v.length} file` : "—"}</Typography>;
+  }
+
+  // DEFAULT
+  return <Typography>{String(v)}</Typography>;
+}
+
 
 // -----------------------------------------------------------
 // Render SINGLE FIELD — nguyên gốc logic cũ của bạn
@@ -47,12 +115,30 @@ export function AutoFormFieldSingle({
   values,
   setValue,
   error,
+  ctx,
 }: {
   field: FieldDef;
   values: Record<string, any>;
   setValue: (name: string, v: any) => void;
   error?: string | null;
+  ctx?: FormContext,
 }) {
+
+  // AS TEXT MODE
+  if (f.asText) {
+    return (
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          {f.label}
+        </Typography>
+        {renderAsText(f, values)}
+      </Stack>
+    );
+  }
+
+  // AS EDIT MODE
+  const isDisabled =
+    typeof f.disableIf === "function" ? f.disableIf(values) : false;
 
   const common = {
     label: f.label,
@@ -62,6 +148,7 @@ export function AutoFormFieldSingle({
     helperText: error ?? f.helperText,
     placeholder: f.placeholder,
     name: f.name,
+    disabled: isDisabled,
   } as const;
 
   // PASSWORD
@@ -238,13 +325,22 @@ export function AutoFormFieldSingle({
 
   // CURRENCY
   if (f.kind === "currency") {
+    const raw = values[f.name] ?? "";
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
     return (
       <CurrencyField
         {...(common as any)}
-        value={values[f.name]}
+        value={raw}
         onChange={(n) => setValue(f.name, n)}
         prefix="₫"
         decimalScale={0}
+        InputLabelProps={{
+          shrink: hasValue,
+        }}
         inputProps={{ inputMode: "decimal" }}
       />
     );
@@ -252,13 +348,23 @@ export function AutoFormFieldSingle({
 
   // CURRENCY EQUATION
   if (f.kind === "currency-equation") {
+    const raw = values[f.name] ?? "";
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
+
     return (
       <CurrencyField
         {...(common as any)}
-        value={values[f.name]}
+        value={raw}
         onChange={(n) => setValue(f.name, n)}
         prefix="₫"
         decimalScale={0}
+        InputLabelProps={{
+          shrink: hasValue,
+        }}
         inputProps={{ inputMode: "decimal" }}
       />
     );
@@ -266,7 +372,13 @@ export function AutoFormFieldSingle({
 
   // NUMBER
   if (f.kind === "number") {
-    const raw = values[f.name];
+    const raw = values[f.name] ?? "";
+
+    const hasValue =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !(Number.isNaN(raw));
 
     return (
       <TextField
@@ -282,6 +394,9 @@ export function AutoFormFieldSingle({
           const n = Number(v);
           setValue(f.name, Number.isFinite(n) ? n : null);
         }}
+        InputLabelProps={{
+          shrink: hasValue,
+        }}
         inputProps={{
           inputMode: "decimal",
           step: f.step ?? 1,
@@ -295,50 +410,44 @@ export function AutoFormFieldSingle({
   // SELECT
   if (f.kind === "select" && !f.multiple) {
     const raw = values[f.name];
-    let optsFromValue: Option[] = [];
-
-    if (Array.isArray(raw)) {
-      // ["a","b"] -> [{label:"a",value:"a"}, ...]
-      optsFromValue = raw.map((v) => ({
-        label: humanize(v),
-        value: v,
-      }));
-    } else if (raw != null && raw !== "") {
-      // "a" -> [{label:"a",value:"a"}]
-      optsFromValue = [
-        {
-          label: humanize(raw),
-          value: raw,
-        },
-      ];
-    }
-
-    const schemaOpts: Option[] = (f.options ?? []).map((o) =>
-      typeof o === "string" || typeof o === "number"
-        ? { label: humanize(o), value: o }
-        : o
-    );
-
-    const mergedOpts: Option[] = [...schemaOpts];
-
-    optsFromValue.forEach((o) => {
-      if (!mergedOpts.some((x) => x.value === o.value)) {
-        mergedOpts.push(o);
+    const schemaOpts: Option[] = (f.options ?? []).map((o) => {
+      if (typeof o === "string" || typeof o === "number") {
+        return { label: humanize(o), value: o };
       }
+      return {
+        label: o.label ?? humanize(o.value),
+        value: o.value,
+      };
     });
 
-    const selected = optsFromValue.length > 0 ? optsFromValue[0] : null;
+    let selected: Option | null = null;
+
+    if (raw != null && raw !== "") {
+      const found = schemaOpts.find((opt) => opt.value === raw);
+      if (found) {
+        selected = found;
+      } else {
+        selected = {
+          label: humanize(raw),
+          value: raw,
+        };
+      }
+    }
+
+    const mergedOpts = [...schemaOpts];
+    if (selected && !mergedOpts.some((o) => o.value === selected!.value)) {
+      mergedOpts.push(selected);
+    }
 
     return (
       <Autocomplete
         options={mergedOpts}
         value={selected}
-        onChange={(_, newVal) => {
-          if (!newVal) setValue(f.name, null);
-          else setValue(f.name, (newVal as Option).value);
-        }}
-        getOptionLabel={(opt) => (opt as Option).label}
+        getOptionLabel={(opt) => opt.label}
         isOptionEqualToValue={(a, b) => a.value === b.value}
+        onChange={(_, newVal) => {
+          setValue(f.name, newVal ? newVal.value : null);
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -352,6 +461,7 @@ export function AutoFormFieldSingle({
       />
     );
   }
+
 
   // MULTISELECT
   if (f.kind === "multiselect" || (f.kind === "select" && f.multiple)) {
@@ -435,6 +545,7 @@ export function AutoFormFieldSingle({
 
     return (
       <Autocomplete
+        disabled={isDisabled}
         options={opts}
         value={f.freeSolo ? value ?? null : selectedOption}
         freeSolo={!!f.freeSolo}
@@ -485,10 +596,15 @@ export function AutoFormFieldSingle({
 
   // SEARCHLIST
   if (f.kind === "searchlist") {
-    const list = Array.isArray(values[f.name]) ? values[f.name] : [];
+    let raw = values[f.name];
+
+    const selectedIds = Array.isArray(raw)
+      ? raw
+      : [];
 
     return (
       <SearchListField
+        disabled={isDisabled}
         label={f.label}
         values={values}
         placeholder={f.placeholder}
@@ -496,8 +612,10 @@ export function AutoFormFieldSingle({
         fullWidth={f.fullWidth ?? true}
         helperText={f.helperText}
         error={error}
-        selectedIds={list}
-        onChange={(next) => setValue(f.name, next)}
+        selectedIds={selectedIds}
+        onChange={(nextIds) => {
+          setValue(f.name, nextIds);
+        }}
         search={f.search!}
         searchPage={f.searchPage}
         getOptionLabel={f.getOptionLabel!}
@@ -513,6 +631,62 @@ export function AutoFormFieldSingle({
         onOpenCreate={f.onOpenCreate}
         refreshKey={f.refreshKey}
         pageLimit={f.pageLimit}
+      />
+    );
+  }
+
+  // SEARCHSINGLE
+  if (f.kind === "searchsingle") {
+    let raw = values[f.name] ?? (f.altName ? values[f.altName] : undefined);
+
+    const selectedIds = (raw ? [raw] : []);
+    const isFreeSolo = !f.onOpenCreate;
+
+    return (
+      <SearchSingleField
+        name={f.name}
+        label={f.label}
+        values={values}
+        placeholder={f.placeholder}
+        size={f.size ?? "small"}
+        fullWidth={f.fullWidth ?? true}
+        helperText={f.helperText}
+        error={error}
+        selectedIds={selectedIds}
+        onInputChange={(text) => {
+          if (isFreeSolo) {
+            setValue(f.name, text);
+            const mapped = mapIdFieldToNameField(f.name);
+            setValue(mapped, text);
+          }
+        }}
+        onChange={(nextIds, nextObjs) => {
+          const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
+          const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
+          setValue(f.name, singleId);
+          const label = f.getOptionLabel?.(singleObj);
+          if (label) {
+            setValue(mapIdFieldToNameField(f.name), label)
+          }
+        }}
+        search={f.search!}
+        searchPage={f.searchPage}
+        onSelect={f.onSelect}
+        onBlur={f.onBlur}
+        getOptionLabel={f.getOptionLabel!}
+        getOptionValue={f.getOptionValue!}
+        fetchList={f.fetchList}
+        onAdd={f.onAdd}
+        onDelete={f.onDelete}
+        renderItem={f.renderItem}
+        allowDuplicate={f.allowDuplicate}
+        dedupeFn={f.dedupeFn as any}
+        maxItems={f.maxItems}
+        disableDelete={f.disableDelete}
+        onOpenCreate={f.onOpenCreate}
+        refreshKey={f.refreshKey}
+        pageLimit={f.pageLimit}
+        ctx={ctx}
       />
     );
   }
@@ -612,6 +786,7 @@ export function AutoFormFieldSingle({
         <FormControlLabel
           control={
             <Checkbox
+              disabled={isDisabled}
               size={f.size ?? "small"}
               checked={checked}
               onChange={(e) => setValue(f.name, e.target.checked)}
@@ -633,6 +808,7 @@ export function AutoFormFieldSingle({
         <FormControlLabel
           control={
             <MuiSwitch
+              disabled={isDisabled}
               size={f.size === "medium" ? "medium" : "small"}
               checked={checked}
               onChange={(e) => setValue(f.name, e.target.checked)}
@@ -686,6 +862,7 @@ export function AutoFormFieldsGrouped({
   setValue,
   errors,
   gap = 2,
+  ctx,
 }: {
   groupsConfig: GroupConfig[];
   groupMap: Map<string, FieldDef[]>;
@@ -693,6 +870,7 @@ export function AutoFormFieldsGrouped({
   setValue: (name: string, v: any) => void;
   errors?: Record<string, string | null>;
   gap?: number;
+  ctx?: FormContext;
 }) {
   return (
     <Stack spacing={gap}>
@@ -718,16 +896,23 @@ export function AutoFormFieldsGrouped({
                 gap: (theme) => theme.spacing(gap),
               }}
             >
-              {fields.map((f) => (
-                <Box key={f.name}>
-                  <AutoFormFieldSingle
-                    field={f}
-                    values={values}
-                    setValue={setValue}
-                    error={errors?.[f.name] ?? null}
-                  />
-                </Box>
-              ))}
+              {fields.map((f) => {
+                if (typeof f.showIf === "function") {
+                  const visible = f.showIf(values, ctx);
+                  if (!visible) return null;
+                }
+                return (
+                  <Box key={f.name}>
+                    <AutoFormFieldSingle
+                      field={f}
+                      values={values}
+                      setValue={setValue}
+                      error={errors?.[f.name] ?? null}
+                      ctx={ctx}
+                    />
+                  </Box>
+                );
+              })}
             </Box>
           </Stack>
         );

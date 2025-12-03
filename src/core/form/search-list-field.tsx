@@ -72,12 +72,11 @@ export type SearchListFieldProps<T> = {
   refreshKey?: any;
   autoLoadAllOnMount?: boolean;
 
+  /** NEW: định nghĩa deps để gọi fetchList (tránh loop vì values đổi reference) */
   fetchDeps?: any[];
 
-  // page size cho suggestion paging (mặc định 20)
+  /** NEW: page size cho suggestion paging (mặc định 20) */
   pageLimit?: number;
-
-  singleChoice?: boolean;
 };
 
 function makeEquality<T>(
@@ -127,8 +126,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     autoLoadAllOnMount = false,
     fetchDeps,
     pageLimit = 20,
-
-    singleChoice = false,
   } = props;
 
   const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
@@ -340,48 +337,23 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   const addItem = React.useCallback(
     async (item: T) => {
-      // Single choice
-      if (singleChoice) {
-        if (onAdd) await onAdd(item);
-        const next = [item];
-        setItemsAndEmit(next);
-        reloadCurrentAfterSelectionChange();
-        return;
-      }
-
-      // Multi-select
       if (!canAddMore) return;
       if (!allowDuplicate && items.some((x) => eq(x, item))) return;
       if (onAdd) await onAdd(item);
       setItemsAndEmit([...items, item]);
       reloadCurrentAfterSelectionChange();
     },
-    [
-      singleChoice,
-      canAddMore,
-      allowDuplicate,
-      items,
-      eq,
-      onAdd,
-      setItemsAndEmit,
-      reloadCurrentAfterSelectionChange,
-    ]
+    [canAddMore, allowDuplicate, items, eq, onAdd, setItemsAndEmit, reloadCurrentAfterSelectionChange]
   );
 
   const removeItem = React.useCallback(
     async (item: T) => {
       if (onDelete) await onDelete(item);
-      if (singleChoice) {
-        setItemsAndEmit([]);
-        reloadCurrentAfterSelectionChange();
-        return;
-      }
-
       const next = items.filter((x) => !eq(x, item));
       setItemsAndEmit(next);
       reloadCurrentAfterSelectionChange();
     },
-    [singleChoice, items, onDelete, eq, setItemsAndEmit, reloadCurrentAfterSelectionChange]
+    [items, onDelete, eq, setItemsAndEmit, reloadCurrentAfterSelectionChange]
   );
 
   const defaultItemContent = React.useCallback(

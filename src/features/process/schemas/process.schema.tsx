@@ -61,15 +61,15 @@ export function buildSampleSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (values) => {
-          await create(values as ProcessModel);
-          return values;
+          await create(values.dto as ProcessModel);
+          return values.dto;
         },
       },
       update: {
         type: "fn",
         run: async (values) => {
-          await update(values as ProcessModel);
-          return values;
+          await update(values.dto as ProcessModel);
+          return values.dto;
         },
       },
     },

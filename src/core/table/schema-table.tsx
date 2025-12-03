@@ -7,6 +7,8 @@ import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { hasAnyPermissions } from "../auth/rbac-utils";
 import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
+import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
+import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 
 async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<ColumnDef<T>[]> {
   const result: ColumnDef<T>[] = [];
@@ -38,12 +40,50 @@ async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<Column
 
     if (fieldsToUse != null) {
       for (const f of fieldsToUse) {
+        const fieldName = f.name;
+        const overrides = col.metadata.def?.[fieldName];
+
+        const baseKey = `customFields.${fieldName}`;
+        const header = overrides?.header ?? f.label ?? fieldName;
+
+        let type: ColumnType;
+        if (overrides?.type) {
+          type = overrides.type;
+        } else if (f.type === "relation") {
+          const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+          const singleChoice = relation.type === "1";
+          type = singleChoice ? "text" : "chips";
+        } else {
+          type = mapFieldTypeToColumnType(f.type);
+        }
+
+        const accessor =
+          overrides?.accessor ??
+          ((row: any) => {
+            if (f.type === "relation") {
+              const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+              const singleChoice = relation.type === "1";
+              const label = mapIdFieldToNameField(fieldName);
+              return singleChoice
+                ? row.customFields?.[label] ?? row.customFields?.[fieldName]
+                : row.customFields?.[fieldName];
+            }
+            return row.customFields?.[fieldName];
+          });
+
+        const sortable = overrides?.sortable ?? false;
+
+        const render = overrides?.render
+          ? ((row: any) => overrides.render!(accessor(row), row))
+          : undefined;
+
         result.push({
-          key: `customFields.${f.name}`,
-          header: f.label ?? f.name,
-          type: mapFieldTypeToColumnType(f.type),
-          accessor: (row: any) => row.customFields?.[f.name],
-          sortable: false,
+          key: baseKey,
+          header,
+          type,
+          accessor,
+          sortable,
+          render,
         });
       }
     }
@@ -70,6 +110,7 @@ function mapFieldTypeToColumnType(type: string): ColumnType {
       return "boolean";
     case "image":
       return "image";
+    case "relation": return "relation";
     default:
       return "text";
   }

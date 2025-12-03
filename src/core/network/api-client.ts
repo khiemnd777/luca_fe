@@ -554,6 +554,9 @@ type DedupConfig = AxiosRequestConfig & {
   // invalidate
   invalidateTags?: string[];
   invalidateTagPrefixes?: string[];
+
+  // others
+  isRefresh?: boolean;
 };
 
 export class ApiClient {
@@ -853,6 +856,9 @@ export class ApiClient {
                 factory,
                 keyParts,
                 dedupKey,
+                {
+                  isRefresh: config?.isRefresh,
+                },
               );
               if (fresh.status >= 200 && fresh.status < 400) {
                 setCachedResponse(
@@ -878,6 +884,9 @@ export class ApiClient {
       factory,
       keyParts,
       dedupKey,
+      {
+        isRefresh: config?.isRefresh,
+      },
     );
 
     // 3) lưu cache
@@ -894,6 +903,7 @@ export class ApiClient {
     factory: () => Promise<AxiosResponse<T>>,
     keyParts: Record<string, any>,
     dedupKey?: string | false,
+    opts?: { isRefresh?: boolean; },
   ): Promise<AxiosResponse<T>> {
     // Cho phép tắt dedup hoặc đặt key tùy chỉnh
     const key =
@@ -902,13 +912,13 @@ export class ApiClient {
         : dedupKey || this.buildDedupKey(method, url, keyParts);
 
     if (!key) {
-      return this.withRetry(factory);
+      return this.withRetry(factory, undefined, undefined, opts);
     }
 
     const existed = this.inflight.get(key);
     if (existed) return existed as Promise<AxiosResponse<T>>;
 
-    const p = this.withRetry(factory).finally(() => {
+    const p = this.withRetry(factory, undefined, undefined, opts).finally(() => {
       this.inflight.delete(key);
     }) as Promise<AxiosResponse<T>>;
 
@@ -929,40 +939,62 @@ export class ApiClient {
     requestFn: () => Promise<AxiosResponse<T>>,
     maxAttempts = 3,
     delayMs = 1000,
+    opts?: { isRefresh?: boolean }
   ): Promise<AxiosResponse<T>> {
     let attempt = 0;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       try {
         const res = await requestFn();
-        // Logic đặc biệt: backend trả statusCode=102 trong body → coi như lỗi
+
         if (
           res.data &&
           typeof res.data === "object" &&
           (res.data as any).statusCode === 102
         ) {
-          throw new Error(
-            (res.data as any).statusMessage || "Service message",
-          );
+          throw new Error((res.data as any).statusMessage || "Service message");
         }
+
         return res;
       } catch (err: any) {
         attempt++;
-        const status = err?.response?.status as number | undefined;
-        const isAuthError = status === 401 || status === 403;
-        const retryable =
-          err?.code === "ECONNABORTED" ||
-          err?.message?.includes("timeout") ||
-          (typeof status === "number" && status >= 500 && status !== 501);
+
+        const status = err?.response?.status;
+        const message = err?.message ?? "";
+
+        let retryable =
+          // Network
+          ["ECONNABORTED"].includes(err?.code) ||
+          message.includes("timeout") ||
+          // 5xx except 500 501
+          (
+            typeof status === "number" &&
+            status >= 500 &&
+            status !== 500 &&
+            status !== 501
+          );
+
+        if (opts?.isRefresh) {
+          retryable =
+            ["ECONNABORTED"].includes(err?.code) ||
+            message.includes("timeout") ||
+            (typeof status === "number" && status >= 500);
+        }
 
         if (!retryable || attempt >= maxAttempts) {
-          if (!isAuthError)
+          const isAuthError = status === 401 || status === 403;
+
+          if (!isAuthError) {
             console.error(
               `[Axios] Request failed after ${attempt} attempts`,
               err,
             );
+          }
+
           throw err;
         }
+
+        // Delay retry
         const jitter = Math.floor(Math.random() * 200);
         await new Promise((r) => setTimeout(r, delayMs + jitter));
       }

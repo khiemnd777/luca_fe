@@ -70,7 +70,7 @@ export function buildAccountSchema(): FormSchema {
   const submit: SubmitDef = {
     type: "fn",
     run: async (values) => {
-      await updateMe(values as MeModel);
+      await updateMe(values.dto as MeModel);
     }
   };
 

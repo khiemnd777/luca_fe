@@ -1,0 +1,28 @@
+import { Button } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import { openFormDialog } from "@core/form/form-dialog.service";
+import { registerSlot } from "@root/core/module/registry";
+import { IfPermission } from "@root/core/auth/if-permission";
+import { useParams } from "react-router-dom";
+
+function OrderDetailActionsWidget() {
+  const { orderId } = useParams();
+  return (
+    <>
+      <IfPermission permissions={["order.create"]}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
+          openFormDialog("order-new", {
+            initial: { id: orderId },
+          });
+        }} >Thêm đơn làm lại</Button>
+      </IfPermission>
+
+    </>
+  );
+}
+
+registerSlot({
+  id: "order-detail",
+  name: "order-detail:actions",
+  render: () => <OrderDetailActionsWidget />,
+})

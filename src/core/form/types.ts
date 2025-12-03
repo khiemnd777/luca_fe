@@ -20,10 +20,21 @@ export type FieldKind =
   | "imageupload"
   | "custom"
   | "searchlist"
+  | "searchsingle"
   | "metadata"
+  | "relation" // ghost -> searchlist or searchsingle
   ;
 
 export type DeriveMode = "always" | "whenEmpty" | "untilManual";
+
+export type FormContext = {
+  values: Record<string, any>;
+  setValue: (name: string, v: any) => void;
+  setAllValues: (obj: Record<string, any>) => void;
+  reset: () => void;
+  setInitial: (obj: Record<string, any>) => void;
+  clear: () => void;
+}
 
 // Password rules
 export type PasswordRules = {
@@ -76,31 +87,56 @@ export type SearchListHydrateFn = (
   values: Record<string, any>
 ) => Promise<any[]>;
 
+// metadata def
+export type MiniFieldOverride = {
+  name: string;
+  label?: string;
+  placeholder?: string;
+  helperText?: string;
+  rules?: FieldRules;
+  showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  asText?: boolean;
+
+  onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
+  onSelect?: (item: any) => void;
+  onChange?: (value: any, ctx?: FormContext) => void;
+  onInputChange?: (text: string) => void;
+
+  // searchlist, autocomplete, relation
+  searchPage?: SearchListSearchPageFn;
+};
+
+
 export type FieldDef = {
   name: string;
+  altName?: string;
   label: string;
   kind: FieldKind;
-  group?: string;                                       // default: "general"
+  group?: string;                                                           // default: "general"
   placeholder?: string;
-  rows?: number;                                        // for textarea
+  rows?: number;                                                            // for textarea
   defaultValue?: any;
   helperText?: string;
   fullWidth?: boolean;
   size?: "small" | "medium";
   rules?: FieldRules;
-  step?: number;                                        // for number
+  step?: number;                                                            // for number
+  showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  asText?: boolean;                                                         // readonly text mode
 
   // select / multiselect / autocomplete
-  options?: Option[];                                   // for select
-  loadOptions?: (keyword: string) => Promise<Option[]>; // async loader cho autocomplete
-  freeSolo?: boolean;                                   // autocomplete free text
-  multiple?: boolean;                                   // multiselect flag
+  options?: Option[];                                                       // for select
+  loadOptions?: (keyword: string) => Promise<Option[]>;                     // async loader cho autocomplete
+  freeSolo?: boolean;                                                       // autocomplete free text
+  multiple?: boolean;                                                       // multiselect flag
 
   // fileupload | imageupload
-  accept?: string;                                      // ví dụ: "image/*,.pdf"
-  uploader?: (files: File[]) => Promise<string[]>;      // trả về URLs sau upload
+  accept?: string;                                                          // ví dụ: "image/*,.pdf"
+  uploader?: (files: File[]) => Promise<string[]>;                          // trả về URLs sau upload
   maxFiles?: number;
-  multipleFiles?: boolean;                              // nếu không set, suy ra từ rules.required hoặc defaultValue
+  multipleFiles?: boolean;                                                  // nếu không set, suy ra từ rules.required hoặc defaultValue
 
   // password
   passwordRules?: PasswordRules;
@@ -131,12 +167,14 @@ export type FieldDef = {
   searchPage?: SearchListSearchPageFn;                           // searchPage(kw, page, limit): T[]
   fetchList?: SearchListFetchListFn;                             // hydrate list hiện có theo ngữ cảnh (values): T[]
   hydrateByIds?: SearchListHydrateFn;                            // map IDs -> T[] khi field đã có sẵn IDs
-
+  onSelect?: (item: any) => void;
+  onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
   onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search
   onDelete?: (item: any) => Promise<void> | void;
   // Extractors (áp dụng cho searchlist)
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
+  prop?: string;
 
   // metadata
   metadata?: {
@@ -146,6 +184,7 @@ export type FieldDef = {
     ignoreFields?: string[];
     showIfFields?: string[];
     groups?: { group: string; fields?: string[]; }[];
+    def?: MiniFieldOverride[];
   };
 
   // UI render item (không chứa nút delete)

@@ -8,13 +8,13 @@ import { useAutoForm } from "@core/form/use-auto-form";
 import type {
   AutoFormRef,
   AutoFormProps,
-  SubmitDef,
   FormSchema,
   FormMode,
   ModeText,
+  SubmitButton,
 } from "@core/form/form.types";
 
-import type { FieldDef, FieldKind } from "@core/form/types";
+import type { FieldDef, FieldKind, FormContext } from "@core/form/types";
 import type { FieldModel } from "@core/metadata/data/metadata.model";
 
 import { getFormSchema } from "@core/form/form-registry";
@@ -23,13 +23,13 @@ import { getAvailableCollection } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { parseShowIfDependencies } from "@root/shared/metadata/utils";
-import { rel, search } from "../relation/relation.api";
+import { rel1, relM2m, search } from "../relation/relation.api";
 import { openFormDialog } from "./form-dialog.service";
 import { extractVars } from "@root/shared/utils/equation.utils";
+import { parseIntSafe } from "@root/shared/utils/number.utils";
+import { packageData } from "./auto-form-package";
+import { resolveSubmitButtons } from "./auto-form.helper";
 
-/* ========================================================================
-   MAP FIELD TYPE
-   ======================================================================== */
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
     case "text": return "text";
@@ -44,14 +44,11 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
     case "select": return "select";
     case "multiselect": return "multiselect";
     case "image": return "imageupload";
-    case "relation": return "searchlist";
+    case "relation": return "relation";
     default: return "text";
   }
 }
 
-/* ========================================================================
-   EXPAND ONE METADATA BLOCK
-   ======================================================================== */
 async function expandOneMetadataBlock(
   metaField: FieldDef,
   values: any,
@@ -78,6 +75,17 @@ async function expandOneMetadataBlock(
   let deps: string[] = [];
   if (coll.showIf && isJSON(coll.showIf)) {
     deps = parseShowIfDependencies(coll.showIf);
+    if (deps.length > 0) {
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.` : "";
+      deps = deps.map((d) => {
+        const camel = snakeToCamel(d);
+        if (!camel.startsWith(cfPrefix)) {
+          return `${cfPrefix}${camel}`;
+        }
+        return camel;
+      });
+    }
   }
 
   let fieldsToUse: FieldModel[] | undefined = coll.fields;
@@ -103,93 +111,194 @@ async function expandOneMetadataBlock(
     const group = resolveMetadataFieldGroup(metaField, mf.name);
 
     if (kind === "currency-equation") {
-      out.push({
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
+      const fd: FieldDef = {
+        prop,
         kind: "currency-equation",
-        name: `customFields.${mf.name}`,
+        name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
         fullWidth: true,
         group,
-      });
+      };
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+      if (override) {
+        const { name: _omit, ...rest } = override;
+        Object.assign(fd, rest);
+      }
+      out.push(fd);
       continue;
     }
 
     if (kind === "select") {
+      const prop = metaField.prop;
+      const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
       const opts = isJSON(mf.options ?? "") ? parseJSON(mf.options ?? "[]") : [];
-      out.push({
+      const fd: FieldDef = {
+        prop,
         kind: "select",
-        name: `customFields.${mf.name}`,
+        name: `${cfPrefix}.${mf.name}`,
         label: mf.label ?? mf.name,
         options: opts,
         fullWidth: true,
         group,
-      });
+      };
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+      if (override) {
+        const { name: _omit, ...rest } = override;
+        Object.assign(fd, rest);
+      }
+      out.push(fd);
       continue;
     }
 
-    if (kind === "searchlist") {
+    if (kind === "relation") {
+      const prop = metaField.prop;
+      const relPrefix = prop ? `${prop}.relationFields` : `relationFields`;
+      const altPrefix = prop ? `${prop}.customFields` : `customFields`;
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
+      const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
-      out.push({
-        kind: "searchlist",
-        name: `relationFields.${mf.name}`,
-        label: mf.label ?? mf.name,
-        group,
-        placeholder: relation.placeholer ?? "",
-        fullWidth: true,
+      if (singleChoice) {
+        const fd: FieldDef = {
+          prop,
+          kind: "searchsingle",
+          name: `${relPrefix}.${mf.name}`,
+          altName: `${altPrefix}.${mf.name}`,
+          label: mf.label ?? mf.name,
+          group,
+          placeholder: relation.placeholer ?? "",
+          fullWidth: true,
+          onSelect: metaField.onSelect,
 
-        getOptionLabel: (d: any) => d.name,
-        getOptionValue: (d: any) => d.id,
+          getOptionLabel: (d: any) => d?.name,
+          getOptionValue: (d: any) => d?.id,
 
-        async searchPage(kw: string, page, limit) {
-          const searched = await search(relation.target, {
-            keyword: kw,
-            limit: limit,
-            page: page,
-            orderBy: "name",
-          });
-          return searched.items;
-        },
+          async searchPage(kw: string, page, limit) {
+            const searched = await search(relation.target, {
+              keyword: kw,
+              page: page,
+              limit: limit,
+              orderBy: "name",
+            });
+            return searched.items;
+          },
 
-        pageLimit: 20,
+          pageLimit: 20,
 
-        async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
-          if (!ids || ids.length === 0) return [];
-          const table = await rel(relation.target, values.id, {
-            limit: 10000,
-            page: 1,
-            orderBy: "name",
-          });
-          const set = new Set(ids.map(String));
-          return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
-        },
+          async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+            if (!ids || ids.length === 0) return [];
+            const refName = `customFields.${mf.name}`;
+            const refId = parseIntSafe(values[refName])
+            const single = await rel1(relation.target, refId);
+            if (!single) return [];
+            const items = [single];
+            const set = new Set(ids.map(String));
+            return (items ?? []).filter((d: any) => set.has(String(d.id)));
+          },
 
-        async fetchList(values: Record<string, any>) {
-          const table = await rel(relation.target, values.id, {
-            limit: 10000,
-            page: 1,
-            orderBy: "name",
-          });
-          return table.items;
-        },
+          async fetchList(values: Record<string, any>) {
+            const refName = `customFields.${mf.name}`;
+            const refId = parseIntSafe(values[refName])
+            const single = await rel1(relation.target, refId);
+            if (!single) return [];
+            return [single];
+          },
 
-        renderItem: (d: any) => (<>{d.name}</>),
-        disableDelete: (d: any) => d.locked === true,
-        onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
-        autoLoadAllOnMount: true,
-      });
+          renderItem: (d: any) => (<>{d?.name}</>),
+          disableDelete: (d: any) => d?.locked === true,
+          autoLoadAllOnMount: true,
+        };
+        if (relation.form) {
+          fd.onOpenCreate = () => openFormDialog(frmDlgKey);
+        }
+        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        if (override) {
+          const { name: _omit, ...rest } = override;
+          Object.assign(fd, rest);
+        }
+        out.push(fd);
+      } else {
+
+        let fd: FieldDef = {
+          prop,
+          kind: "searchlist",
+          name: `${relPrefix}.${mf.name}`,
+          label: mf.label ?? mf.name,
+          group,
+          placeholder: relation.placeholer ?? "",
+          fullWidth: true,
+          onSelect: metaField.onSelect,
+
+          getOptionLabel: (d: any) => d?.name,
+          getOptionValue: (d: any) => d?.id,
+
+          async searchPage(kw: string, page, limit) {
+            const searched = await search(relation.target, {
+              keyword: kw,
+              page: page,
+              limit: limit,
+              orderBy: "name",
+            });
+            return searched.items;
+          },
+
+          pageLimit: 20,
+
+          async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+            if (!ids || ids.length === 0) return [];
+            const table = await relM2m(relation.target, values.id, {
+              limit: 10000,
+              page: 1,
+              orderBy: "name",
+            });
+            const set = new Set(ids.map(String));
+            return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
+          },
+
+          async fetchList(values: Record<string, any>) {
+            const table = await relM2m(relation.target, values.id, {
+              limit: 10000,
+              page: 1,
+              orderBy: "name",
+            });
+            return table.items;
+          },
+
+          renderItem: (d: any) => (<>{d?.name}</>),
+          disableDelete: (d: any) => d?.locked === true,
+          onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
+          autoLoadAllOnMount: true,
+        };
+        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        if (override) {
+          const { name: _omit, ...rest } = override;
+          Object.assign(fd, rest);
+        }
+        out.push(fd);
+      }
 
       continue;
     }
 
-    out.push({
+    const prop = metaField.prop;
+    const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
+    let fd: FieldDef = {
+      prop,
       kind,
-      name: `customFields.${mf.name}`,
+      name: `${cfPrefix}.${mf.name}`,
       label: mf.label ?? mf.name,
       fullWidth: true,
       rules: mf.required ? { required: true } : undefined,
       group,
-    });
+    };
+    const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+    if (override) {
+      const { name: _omit, ...rest } = override;
+      Object.assign(fd, rest);
+    }
+    out.push(fd);
   }
 
   return { fields: out, deps };
@@ -198,7 +307,7 @@ async function expandOneMetadataBlock(
 /* ========================================================================
    HELPERS
    ======================================================================== */
-const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
+// const defaultFetcher = (input: string, init: RequestInit) => fetch(input, init);
 
 function resolveMetadataFieldGroup(
   metaField: FieldDef,
@@ -228,6 +337,55 @@ function resolveMetadataFieldGroup(
   return metaField.group ?? "general";
 }
 
+function flattenInitialRecursive(obj: any, prefix: string, out: any) {
+  if (!obj || typeof obj !== "object") return;
+
+  // flatten custom_fields → prefix.customFields.*
+  if (obj.custom_fields && typeof obj.custom_fields === "object") {
+    for (const [k, v] of Object.entries(obj.custom_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.customFields.${camel}`] = v;
+    }
+  }
+
+  // flatten customFields → prefix.customFields.*
+  if (obj.customFields && typeof obj.customFields === "object") {
+    for (const [k, v] of Object.entries(obj.customFields)) {
+      out[`${prefix}.customFields.${k}`] = v;
+    }
+  }
+
+  // flatten relation_fields → prefix.relationFields.*
+  if (obj.relation_fields && typeof obj.relation_fields === "object") {
+    for (const [k, v] of Object.entries(obj.relation_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.relationFields.${camel}`] = v;
+    }
+  }
+
+  if (obj.relationFields && typeof obj.relationFields === "object") {
+    for (const [k, v] of Object.entries(obj.relationFields)) {
+      out[`${prefix}.relationFields.${k}`] = v;
+    }
+  }
+
+  // flatten NORMAL FIELDS: id, code, createdAt, updatedAt, ...
+  for (const [k, v] of Object.entries(obj)) {
+    // ignore nested groups already handled
+    if (k === "custom_fields" || k === "customFields" || k === "relation_fields" || k === "relationFields") continue;
+
+    const camel = snakeToCamel(k);
+
+    // primitive values → flatten to prefix.camel
+    if (typeof v !== "object" || v === null) {
+      out[`${prefix}.${camel}`] = v;
+      continue;
+    }
+
+    // nested object → recurse
+    flattenInitialRecursive(v, `${prefix}.${camel}`, out);
+  }
+}
 
 function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   const idField = schema.idField ?? "id";
@@ -236,11 +394,11 @@ function resolveMode(schema: FormSchema, initialVals: any): FormMode {
   return id ? "update" : "create";
 }
 
-function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
-  const s = schema.submit as any;
-  if (s?.create && s?.update) return mode === "create" ? s.create : s.update;
-  return schema.submit as SubmitDef;
-}
+// function pickSubmit(schema: FormSchema, mode: FormMode): SubmitDef {
+//   const s = schema.submit as any;
+//   if (s?.create && s?.update) return mode === "create" ? s.create : s.update;
+//   return schema.submit as SubmitDef;
+// }
 
 function renderModeText(
   t?: ModeText,
@@ -252,70 +410,45 @@ function renderModeText(
   return t[ctx!.mode];
 }
 
-function normalizeCustomFieldsPayload(input: any): any {
-  if (!input || typeof input !== "object") return input;
+// async function runSubmit(def: SubmitDef, dto: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
+//   if (def.type === "fn") return def.run(dto, meta);
 
-  const dto: Record<string, any> = { ...input };
-  const custom: any =
-    dto.custom_fields && typeof dto.custom_fields === "object"
-      ? { ...dto.custom_fields }
-      : {};
+//   const method = def.method ?? "PATCH";
+//   const fetcher = def.fetcher ?? defaultFetcher;
 
-  for (const [k, v] of Object.entries(dto)) {
-    if (k.startsWith("custom_fields.")) {
-      const name = k.substring("custom_fields.".length);
-      custom[name] = v;
-      delete dto[k];
+//   let payload = def.transform ? def.transform(dto) : dto;
+
+//   const res = await fetcher(def.url, {
+//     method,
+//     headers: {
+//       "Content-Type": "application/json",
+//       ...(def.headers ?? {}),
+//     },
+//     body: JSON.stringify(payload),
+//   });
+
+//   if (!res.ok) {
+//     let msg = `HTTP ${res.status}`;
+//     try {
+//       const json = await res.json();
+//       msg = json?.message || msg;
+//     } catch { }
+//     throw new Error(msg);
+//   }
+
+//   return res.json().catch(() => null);
+// }
+
+function flattenForInitial(obj: any): any {
+  const out: any = { ...obj };
+
+  for (const [k, v] of Object.entries(obj ?? {})) {
+    if (typeof v === "object" && v !== null) {
+      flattenInitialRecursive(v, snakeToCamel(k), out);
     }
   }
 
-  if (Object.keys(custom).length > 0) dto.custom_fields = custom;
-  return dto;
-}
-
-function normalizeRelationFieldsToCore(dto: any): any {
-  for (const [k, v] of Object.entries(dto)) {
-    if (k.startsWith("relation_fields.")) {
-      const coreName = k.substring("relation_fields.".length);
-      dto[coreName] = v;
-      delete dto[k];
-    }
-  }
-  return dto;
-}
-
-async function runSubmit(def: SubmitDef, values: any, meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]) {
-  values = normalizeRelationFieldsToCore(values);
-  values = normalizeCustomFieldsPayload(values);
-
-  if (def.type === "fn") return def.run(values, meta);
-
-  const method = def.method ?? "PATCH";
-  const fetcher = def.fetcher ?? defaultFetcher;
-
-  let payload = def.transform ? def.transform(values) : values;
-  payload = normalizeRelationFieldsToCore(payload);
-  payload = normalizeCustomFieldsPayload(payload);
-
-  const res = await fetcher(def.url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(def.headers ?? {}),
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const json = await res.json();
-      msg = json?.message || msg;
-    } catch { }
-    throw new Error(msg);
-  }
-
-  return res.json().catch(() => null);
+  return out;
 }
 
 /* ========================================================================
@@ -359,19 +492,21 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
               : resolved ?? initial ?? {};
 
           // ==========================================
-          // FLATTEN customFields.* INTO customFields.*
+          // FLATTEN ALL NESTED PROPS (custom_fields + relation_fields)
           // ==========================================
-          if (finalInitial?.customFields && typeof finalInitial.customFields === "object") {
-            for (const [k, v] of Object.entries(finalInitial.customFields)) {
-              const camel = snakeToCamel(k);
-              finalInitial[`customFields.${camel}`] = v;
+          const flattenOut: any = { ...finalInitial };
+
+          for (const [k, v] of Object.entries(finalInitial)) {
+            if (typeof v === "object" && v !== null) {
+              flattenInitialRecursive(v, snakeToCamel(k), flattenOut)
             }
           }
 
           if (!cancelled) {
-            setResolvedInitial(finalInitial);
-            setAllValues(finalInitial);
+            setResolvedInitial(flattenOut);
+            setAllValues(flattenOut);
           }
+
         } finally {
           if (!cancelled) setResolvingInitial(false);
         }
@@ -387,16 +522,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // --------------------------------------
     const fixedInitial = React.useMemo(() => {
       const init = { ...stableInitial };
+      const out: any = { ...init };
 
-      if (init.customFields && typeof init.customFields === "object") {
-        for (const [k, v] of Object.entries(init.customFields)) {
-          const camel = snakeToCamel(k);
-          init[`customFields.${camel}`] = v;
+      for (const [k, v] of Object.entries(init)) {
+        if (typeof v === "object" && v !== null) {
+          flattenInitialRecursive(v, k, out);
         }
       }
 
-      return init;
+      return out;
     }, [stableInitial]);
+
+    React.useEffect(() => {
+      setAllValues(fixedInitial);
+    }, [fixedInitial]);
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
@@ -430,7 +569,14 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const fields = metadataMap.get(f) ?? [];
           arr.push(...fields);
         } else {
-          arr.push(f);
+          if (f.prop) {
+            arr.push({
+              ...f,
+              name: `${f.prop}.${f.name}`
+            })
+          } else {
+            arr.push(f);
+          }
         }
       }
       return arr;
@@ -475,11 +621,48 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       setValue,
       setAllValues,
       errors,
-      setErrors,
+      // setErrors,
       validateAll,
     } = useAutoForm(baseFields, fixedInitial, {
       asyncValidate: schema.hooks?.asyncValidate,
     });
+
+    // ----------------------------------------------------
+    // WRAPPED SETTERS WITH changeSource
+    // ----------------------------------------------------
+    const setValueUser = (name: string, v: any) => {
+      setValue(name, v);  // original
+      // schema.onChange?.(name, v, ctxRef.current, "user");
+    };
+
+    const setValueProg = (name: string, v: any) => {
+      setValue(name, v);  // original
+      // schema.onChange?.(name, v, ctxRef.current, "programmatic");
+    };
+
+    const setAllValuesProg = (obj: Record<string, any>) => {
+      setAllValues(obj);  // original setAllValues
+      // schema.onChange?.("*", obj, ctxRef.current, "programmatic");
+    };
+
+    // ----------------------------------------------------
+    // CTX FOR onChange
+    // ----------------------------------------------------
+    const ctxRef = React.useRef<FormContext>(null);
+
+    ctxRef.current = {
+      values,
+      setValue: setValueProg,
+      setAllValues: setAllValuesProg,
+      reset: () => setAllValuesProg(fixedInitial),
+      setInitial: (obj: Record<string, any>) => {
+        const flat = flattenForInitial(obj);
+        setAllValuesProg(flat);
+      },
+      clear: () => {
+        setAllValuesProg({});
+      }
+    };
 
     /* SHOW-IF HASH */
     const allDepsRef = React.useRef<string[]>([]);
@@ -633,9 +816,17 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const vars = extractVars(expr);
 
           const argValues = vars.map((name) => {
+            let path = `customFields.${name}`;
+            if (f.prop) {
+              path = `${f.prop}.${path}`;
+            }
+
+            const rVal = values[path];
+            if (rVal !== undefined) return rVal;
+
             if (name in values) return values[name];
-            const cf = `customFields.${name}`;
-            return values[cf];
+
+            return undefined;
           });
 
           const fn = new Function(...vars, `return (${expr});`);
@@ -656,54 +847,77 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* SUBMIT */
     const [, setSaving] = React.useState(false);
 
-    const doSubmit = React.useCallback(async () => {
+    async function handleSubmitButton(btn: SubmitButton, mode: FormMode) {
       const ok = await validateAll();
       if (!ok) return false;
 
       setSaving(true);
 
-      const dto = schema.hooks?.mapToDto
-        ? schema.hooks.mapToDto(values)
-        : values;
+      const packaged = packageData(metadataBlocks, values);
+      const dto = schema!.hooks?.mapToDto ? schema!.hooks.mapToDto(packaged) : packaged;
 
-      const mode = resolveMode(schema, stableInitial);
+      const ctx = {
+        values: dto,
+        mode,
+        meta: metadataBlocks,
+      };
 
       try {
-        const submitDef = pickSubmit(schema, mode);
-        const result = await runSubmit(submitDef, dto, metadataBlocks);
-
-        if (schema.hooks?.mapFromDto) {
-          const uiVals = schema.hooks.mapFromDto(result);
+        const result = await btn.submit(ctx);
+        if (schema!.hooks?.mapFromDto) {
+          const uiVals = schema!.hooks.mapFromDto(result);
           if (uiVals && typeof uiVals === "object") setAllValues(uiVals);
         }
 
         toasts.success(
-          renderModeText(schema.toasts?.saved, {
-            mode,
-            values,
-            result,
-          }) ?? "Đã lưu thành công"
+          renderModeText(
+            btn.toasts?.saved ?? schema!.toasts?.saved,
+            { mode, values, result }
+          ) ?? "Đã lưu"
         );
 
+        if (btn.afterSaved) await btn.afterSaved(result);
+        if (schema!.afterSaved) await schema!.afterSaved(result);
         if (onSaved) await onSaved(result);
-        if (schema.afterSaved) await schema.afterSaved(result);
 
         return true;
-      } catch (e: any) {
-        toasts.error(e?.message ?? "Lỗi");
-        setErrors((prev) => ({ ...prev, _form: e?.message }));
+      } catch (err: any) {
+        toasts.error(
+          renderModeText(
+            btn.toasts?.failed ?? schema!.toasts?.failed,
+            { mode, values }
+          ) ?? (err?.message ?? "Lỗi")
+        );
         return false;
       } finally {
         setSaving(false);
       }
-    }, [schema, values]);
+    }
+
 
     /* REF OUTPUT */
     React.useImperativeHandle(ref, () => ({
-      submit: doSubmit,
-      reset: () => setAllValues(stableInitial),
+      submit: () => {
+        const mode = resolveMode(schema, stableInitial);
+        const buttons = resolveSubmitButtons(schema, mode);
+        const primary = buttons[0];
+        return handleSubmitButton(primary, mode);
+      },
+      runSubmitButton: handleSubmitButton,
+      getSubmitButtons: () => {
+        const mode = resolveMode(schema, stableInitial);
+        return resolveSubmitButtons(schema, mode);
+      },
+      schema,
       values,
+      reset: () => setAllValuesProg(fixedInitial),
+      setValue: setValueProg,
+      setAllValues: setAllValuesProg,
     }));
+
+    /* RENDER SUBMIT BUTTONS */
+    // const mode = resolveMode(schema, stableInitial);
+    // const submitButtons = resolveSubmitButtons(schema, mode);
 
     /* RENDER */
     return (
@@ -715,10 +929,29 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
             groupMap={groupMap}
             groupsConfig={groupsConfig}
             values={values}
-            setValue={setValue}
+            setValue={setValueUser}
             errors={errors}
+            ctx={ctxRef.current}
           />
         )}
+
+        {/* ======= SUBMIT BUTTONS ======= */}
+        {/* <Stack direction="row" spacing={1} justifyContent="flex-end">
+          {submitButtons.map((btn) => {
+            if (btn.visible && !btn.visible({ values, mode })) return null;
+            return (
+              <SafeButton
+                key={btn.name}
+                variant="contained"
+                color={btn.color ?? "primary"}
+                onClick={() => handleSubmitButton(btn, mode)}
+                startIcon={btn.icon}
+              >
+                {btn.label ?? btn.name}
+              </SafeButton>
+            );
+          })}
+        </Stack> */}
       </Stack>
     );
   }

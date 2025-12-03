@@ -3,7 +3,6 @@ import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { registerFormDialog } from "@root/core/form/form-dialog.registry";
-import { searchWithRoleName } from "@root/features/staff/api/staff.api";
 import type { OrderItemProcessUpsertModel } from "../model/order-item-process.model";
 import { update } from "../api/order-item-process.api";
 import { invalidate } from "@root/core/hooks/use-async";
@@ -22,18 +21,6 @@ export function buildOrderProcessesSchema(): FormSchema {
             name: "status",
             asText: true,
           },
-          {
-            name: "assignedId",
-            searchPage: async (kw, page, limit) => {
-              const searched = await searchWithRoleName("technician", {
-                keyword: kw,
-                page: page,
-                limit: limit,
-                orderBy: "name",
-              });
-              return searched.items;
-            }
-          }
         ],
       },
     },

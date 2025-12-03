@@ -27,6 +27,7 @@ interface Props<T> {
   ) => void;
   renderCard: (id: number, status: string, item: T) => React.ReactNode;
   onCardClick?: (id: number, status: string, obj: T) => void;
+  priorityToColor?: (priority?: string) => string;
 }
 
 export default function StatusBoard<T>({
@@ -35,6 +36,7 @@ export default function StatusBoard<T>({
   onStatusChange,
   renderCard,
   onCardClick,
+  priorityToColor,
 }: Props<T>) {
   const [data, setData] = useState<BoardItem<T>[]>(() => items);
 
@@ -104,6 +106,7 @@ export default function StatusBoard<T>({
                 renderCard={renderCard}
                 onCardClick={onCardClick}
                 activeId={activeItem?.id}
+                priorityToColor={priorityToColor}
               />
             </SortableContext>
           );

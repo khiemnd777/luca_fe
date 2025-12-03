@@ -8,6 +8,7 @@ interface Props<T> {
   render: (id: number, status: string, obj: T) => React.ReactNode;
   activeId?: number | null;
   onClick?: (id: number, status: string, obj: T) => void;
+  dragHandleColor?: string;
 }
 
 export default function StatusCard<T>({
@@ -15,6 +16,7 @@ export default function StatusCard<T>({
   render,
   activeId,
   onClick,
+  dragHandleColor,
 }: Props<T>) {
   const sortable = useSortable({
     id: item.id,
@@ -60,7 +62,7 @@ export default function StatusCard<T>({
           cursor: "grab",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
-          background: isDark ? "#555" : "#ddd",
+          background: dragHandleColor ?? (isDark ? "#555" : "#ddd"),
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -99,7 +101,6 @@ export default function StatusCard<T>({
           />
         </Box>
       </Box>
-
 
       {/* CARD BODY - CLICKABLE */}
       <Box

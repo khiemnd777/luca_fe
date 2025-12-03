@@ -15,6 +15,7 @@ import { id, updateStatus } from "../api/order.api";
 import { useAsync } from "@root/core/hooks/use-async";
 import StatusBoard from "@root/shared/components/status-board/status-board";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
+import { priorityColor } from "@root/shared/utils/order.utils";
 
 export function OrderDetailProcessesStatusBoardWidget() {
   const { orderId, orderItemId } = useParams();
@@ -61,6 +62,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
         items={(list ?? []).map(it => ({
           id: it.id!,
           status: it.customFields?.status || "waiting",
+          priority: it.customFields?.priority || "normal",
           obj: it,
         }))}
         statuses={[
@@ -70,6 +72,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
           { label: "Làm lại", value: "rework" },
           { label: "Hoàn thành", value: "completed" },
         ]}
+        priorityToColor={(priority) => priorityColor(priority)}
         renderCard={(_id, _status, o) => (
           <Stack spacing={1}>
             <Typography fontWeight={700}>{o.processName}</Typography>
@@ -94,7 +97,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
         }}
         onStatusChange={async (id, newStatus, _oldStatus) => {
           await updateStatus(Number(orderId ?? 0), id, newStatus);
-          
+
         }}
       />
 

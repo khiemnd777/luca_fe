@@ -6,5 +6,6 @@ export interface StatusOption {
 export interface BoardItem<T = any> {
   id: number;
   status: string;
+  priority?: string;
   obj: T;
 }

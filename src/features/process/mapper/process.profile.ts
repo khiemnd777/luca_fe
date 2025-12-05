@@ -9,6 +9,8 @@ mapper.register<ProcessModel>({
     id: 0,
     code: "",
     name: "",
+    sectionId: null,
+    sectionName: null,
     active: true,
     customFields: null,
   }),

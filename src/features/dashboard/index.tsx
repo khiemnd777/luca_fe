@@ -4,6 +4,7 @@ import { registerModule } from "@root/core/module/registry";
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 const SamplePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-page"));
+const SampleCreatableStatusBoardPage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-status-board"));
 const SampleTablePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-table-page"));
 const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
@@ -25,6 +26,13 @@ const mod: ModuleDescriptor = {
           title: "Sample",
           path: "/sample",
           element: <SamplePage />,
+        },
+        {
+          hidden: true,
+          key: "status-board",
+          title: "Creatable Status Board",
+          path: "/status-board",
+          element: <SampleCreatableStatusBoardPage />,
         },
         {
           hidden: true,

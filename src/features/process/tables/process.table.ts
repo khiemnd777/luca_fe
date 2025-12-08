@@ -6,8 +6,9 @@ import type { ProcessModel } from "@features/process/model/process.model";
 import { table, unlink } from "@features/process/api/process.api";
 
 const columns: ColumnDef<ProcessModel>[] = [
-  { key: "code", header: "Mã công đoạn", sortable: true, },
   { key: "name", header: "Tên công đoạn", sortable: true, labelField: true },
+  { key: "sectionName", header: "Phòng ban", sortable: true },
+  { key: "color", header: "Màu phòng ban", type: "color" },
   {
     key: "",
     type: "metadata",

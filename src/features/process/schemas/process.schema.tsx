@@ -10,15 +10,6 @@ import type { ProcessModel } from "@features/process/model/process.model";
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
-      name: "code",
-      label: "Mã công đoạn",
-      kind: "text",
-      rules: {
-        required: "Yêu cầu nhập mã công đoạn",
-        maxLength: 30,
-      },
-    },
-    {
       name: "name",
       label: "Tên công đoạn",
       kind: "text",

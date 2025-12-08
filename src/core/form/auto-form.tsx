@@ -220,7 +220,6 @@ async function expandOneMetadataBlock(
         }
         out.push(fd);
       } else {
-
         let fd: FieldDef = {
           prop,
           kind: "searchlist",
@@ -251,7 +250,7 @@ async function expandOneMetadataBlock(
             const table = await relM2m(relation.target, values.id, {
               limit: 10000,
               page: 1,
-              orderBy: "name",
+              orderBy: fd.hydrateOrderField ?? "name",
             });
             const set = new Set(ids.map(String));
             return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
@@ -261,7 +260,7 @@ async function expandOneMetadataBlock(
             const table = await relM2m(relation.target, values.id, {
               limit: 10000,
               page: 1,
-              orderBy: "name",
+              orderBy: fd.hydrateOrderField ?? "name",
             });
             return table.items;
           },

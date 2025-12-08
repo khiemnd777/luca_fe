@@ -623,6 +623,7 @@ export function AutoFormFieldSingle({
         fetchList={f.fetchList}
         onAdd={f.onAdd}
         onDelete={f.onDelete}
+        onDragEnd={f.onDragEnd}
         renderItem={f.renderItem}
         allowDuplicate={f.allowDuplicate}
         dedupeFn={f.dedupeFn as any}

@@ -5,7 +5,7 @@ import { mapper } from "@core/mapper/auto-mapper";
 import type { StaffModel } from "@features/staff/model/staff.model";
 import { create, existsEmail, existsPhone, id, update } from "@features/staff/api/staff.api";
 import { reloadTable } from "@core/table/table-reload";
-import { search as searchSection, tableByStaffId } from "@features/staff/api/section.api";
+import { search as searchSection, tableByStaffId } from "@features/section/api/section.api";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import { fetchRolesByUserId, search as searchRoles } from "@root/features/rbac/api/rbac.api";
 
@@ -119,6 +119,10 @@ function commonFields(): FieldDef[] {
       async fetchList(values: Record<string, any>) {
         const table = await fetchRolesByUserId(values.id, { limit: 20, page: 1, orderBy: "display_name" });
         return table.items;
+      },
+
+      onDragEnd(items) {
+        console.log(items);
       },
 
       renderItem: (d: any) => <> {d.displayName} </>,

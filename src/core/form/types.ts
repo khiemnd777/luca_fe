@@ -103,10 +103,12 @@ export type MiniFieldOverride = {
   onChange?: (value: any, ctx?: FormContext) => void;
   onInputChange?: (text: string) => void;
   onDragEnd?: (items: any[]) => void;
-
+  
   // searchlist, autocomplete, relation
   searchPage?: SearchListSearchPageFn;
   hydrateOrderField?: string;
+  getOptionLabel?: (item: any) => string;
+  renderItem?: (item: any, index: number) => React.ReactNode;
 };
 
 

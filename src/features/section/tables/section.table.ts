@@ -7,6 +7,7 @@ import { reloadTable } from "@root/core/table/table-reload";
 
 const columns: ColumnDef<SectionModel>[] = [
   { key: "name", header: "Tên phòng ban", sortable: true, labelField: true },
+  { key: "color", header: "Màu chủ đề", type: "color" },
   { key: "description", header: "Mô tả" },
 ];
 

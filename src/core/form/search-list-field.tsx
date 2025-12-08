@@ -501,18 +501,20 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
           />
 
           {/* Create new → mở FormDialog, sau đó tự refresh danh sách */}
-          <Tooltip title="Tạo mới">
-            <span>
-              <IconButton
-                color="primary"
-                onClick={onOpenCreate ? handleOpenCreate : undefined}
-                disabled={!onOpenCreate}
-                size={size === "medium" ? "medium" : "small"}
-              >
-                <AddCircleOutlineRounded />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {onOpenCreate != null ? (
+            <Tooltip title="Tạo mới">
+              <span>
+                <IconButton
+                  color="primary"
+                  onClick={handleOpenCreate}
+                  disabled={!onOpenCreate}
+                  size={size === "medium" ? "medium" : "small"}
+                >
+                  <AddCircleOutlineRounded />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
         </Stack>
 
         {/* Helper / Error */}

@@ -102,9 +102,13 @@ export type MiniFieldOverride = {
   onSelect?: (item: any) => void;
   onChange?: (value: any, ctx?: FormContext) => void;
   onInputChange?: (text: string) => void;
-
+  onDragEnd?: (items: any[]) => void;
+  
   // searchlist, autocomplete, relation
   searchPage?: SearchListSearchPageFn;
+  hydrateOrderField?: string;
+  getOptionLabel?: (item: any) => string;
+  renderItem?: (item: any, index: number) => React.ReactNode;
 };
 
 
@@ -171,6 +175,7 @@ export type FieldDef = {
   onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
   onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search
   onDelete?: (item: any) => Promise<void> | void;
+  onDragEnd?: (items: any[]) => void;
   // Extractors (áp dụng cho searchlist)
   getOptionLabel?: (item: any) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
@@ -201,6 +206,7 @@ export type FieldDef = {
   refreshKey?: any;                                              // trigger refetch list hiện có
   autoLoadAllOnMount?: boolean;                                  // rỗng → load ALL ngay từ mount (default false)
   pageLimit?: number;
+  hydrateOrderField?: string;
 
   // equation
   currencyEquation?: string; // price_original * vat

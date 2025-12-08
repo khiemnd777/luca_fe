@@ -1,4 +1,4 @@
-import type { SectionModel } from "@features/staff/model/section.model";
+import type { SectionModel } from "@features/section/model/section.model";
 import { mapper } from "@core/mapper/auto-mapper";
 
 mapper.register<SectionModel>({
@@ -9,6 +9,10 @@ mapper.register<SectionModel>({
     id: 0,
     name: "",
     code: "",
+    color: "",
+    customFields: null,
+    processIds: null,
+    processNames: null,
     description: "",
     active: true,
   }),

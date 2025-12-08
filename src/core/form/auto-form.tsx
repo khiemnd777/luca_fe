@@ -220,7 +220,7 @@ async function expandOneMetadataBlock(
         }
         out.push(fd);
       } else {
-
+        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
         let fd: FieldDef = {
           prop,
           kind: "searchlist",
@@ -231,7 +231,7 @@ async function expandOneMetadataBlock(
           fullWidth: true,
           onSelect: metaField.onSelect,
 
-          getOptionLabel: (d: any) => d?.name,
+          getOptionLabel: override?.getOptionLabel ?? ((d: any) => d?.name),
           getOptionValue: (d: any) => d?.id,
 
           async searchPage(kw: string, page, limit) {
@@ -251,7 +251,7 @@ async function expandOneMetadataBlock(
             const table = await relM2m(relation.target, values.id, {
               limit: 10000,
               page: 1,
-              orderBy: "name",
+              orderBy: fd.hydrateOrderField ?? "name",
             });
             const set = new Set(ids.map(String));
             return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
@@ -261,19 +261,20 @@ async function expandOneMetadataBlock(
             const table = await relM2m(relation.target, values.id, {
               limit: 10000,
               page: 1,
-              orderBy: "name",
+              orderBy: fd.hydrateOrderField ?? "name",
             });
             return table.items;
           },
 
-          renderItem: (d: any) => (<>{d?.name}</>),
+          renderItem: override?.renderItem ?? ((d: any) => (<>{d?.name}</>)),
           disableDelete: (d: any) => d?.locked === true,
-          onOpenCreate: () => relation.form ? openFormDialog(frmDlgKey) : null,
           autoLoadAllOnMount: true,
         };
-        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        if (relation.form) {
+          fd.onOpenCreate = () => openFormDialog(frmDlgKey);
+        }
         if (override) {
-          const { name: _omit, ...rest } = override;
+          const { name: _omit, renderItem: _omitRenderItem, ...rest } = override;
           Object.assign(fd, rest);
         }
         out.push(fd);

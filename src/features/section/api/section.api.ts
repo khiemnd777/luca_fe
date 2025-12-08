@@ -1,6 +1,6 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
-import type { SectionModel } from "@features/staff/model/section.model";
+import type { SectionModel } from "@features/section/model/section.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";

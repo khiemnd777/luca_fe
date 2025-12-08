@@ -60,7 +60,7 @@ registerTable("metadata-collections", () =>
       };
     },
 
-    initialPageSize: 20,
+    initialPageSize: 50,
     initialSort: { by: "id", dir: "asc" },
 
     allowUpdating: ["privilege.metadata"],

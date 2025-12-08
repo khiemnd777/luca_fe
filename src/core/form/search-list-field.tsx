@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddCircleOutlineRounded from "@mui/icons-material/AddCircleOutlineRounded";
+import DragIndicatorRounded from "@mui/icons-material/DragIndicatorRounded";
 import DeleteRounded from "@mui/icons-material/DeleteRounded";
 
 type Size = "small" | "medium";
@@ -47,6 +48,7 @@ export type SearchListFieldProps<T> = {
 
   onAdd?: (item: T) => Promise<void> | void;
   onDelete?: (item: T) => Promise<void> | void;
+  onDragEnd?: (items: T[]) => void;
 
   // Extractors
   getOptionLabel: (item: T) => string;
@@ -111,6 +113,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
     onAdd,
     onDelete,
+    onDragEnd,
 
     getOptionLabel,
     getOptionValue,
@@ -133,10 +136,15 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   const listInset = 3; // 14px
 
   const [items, setItems] = React.useState<T[]>([]);
+  const itemsRef = React.useRef(items);
   const deriveIds = React.useCallback(
     (arr: T[]) => arr.map((x) => getOptionValue(x)),
     [getOptionValue]
   );
+
+  React.useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   // chỉ emit khi IDs thay đổi
   const lastEmittedIdsRef = React.useRef<Array<string | number>>([]);
@@ -218,9 +226,9 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   const [keyword, setKeyword] = React.useState("");
   const [options, setOptions] = React.useState<T[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);   // NEW
-  const [page, setPage] = React.useState(1);                     // NEW
-  const [hasMore, setHasMore] = React.useState(false);           // NEW
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(false);
 
   const eq = React.useMemo(() => makeEquality(getOptionValue, dedupeFn), [getOptionValue, dedupeFn]);
 
@@ -327,6 +335,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   const setItemsAndEmit = React.useCallback(
     (next: T[]) => {
+      itemsRef.current = next;
       setItems(next);
       emitIdsIfChanged(next);
     },
@@ -372,6 +381,65 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       // ignore
     }
   }, [onOpenCreate, doFetchList, loadFirstPage, keyword]);
+
+  // Drag to reorder selected items
+  const dragIndexRef = React.useRef<number | null>(null);
+  const [draggingIndex, setDraggingIndex] = React.useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
+  const handleDragStart = React.useCallback(
+    (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+      dragIndexRef.current = index;
+      setDraggingIndex(index);
+      setDragOverIndex(index);
+      const rowEl = (event.currentTarget as HTMLElement).closest("[data-drag-row]") as
+        | HTMLElement
+        | null;
+      if (rowEl) {
+        const rect = rowEl.getBoundingClientRect();
+        event.dataTransfer.setDragImage(
+          rowEl,
+          event.clientX - rect.left,
+          event.clientY - rect.top
+        );
+      }
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", String(index));
+    },
+    []
+  );
+
+  const handleDragOver = React.useCallback(
+    (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setDragOverIndex(index);
+    },
+    []
+  );
+
+  const handleDrop = React.useCallback(
+    (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const from = dragIndexRef.current;
+      dragIndexRef.current = null;
+      if (from == null || from === index) return;
+      const next = [...items];
+      const [moved] = next.splice(from, 1);
+      if (!moved) return;
+      next.splice(index, 0, moved);
+      setItemsAndEmit(next);
+      setDragOverIndex(null);
+      setDraggingIndex(null);
+    },
+    [items, setItemsAndEmit]
+  );
+
+  const handleDragEnd = React.useCallback(() => {
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+    setDraggingIndex(null);
+    if (onDragEnd) onDragEnd(itemsRef.current);
+  }, [onDragEnd]);
 
   // ListboxProps: detect scroll near bottom để loadNextPage()
   const listboxProps = React.useMemo(
@@ -433,18 +501,20 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
           />
 
           {/* Create new → mở FormDialog, sau đó tự refresh danh sách */}
-          <Tooltip title="Tạo mới">
-            <span>
-              <IconButton
-                color="primary"
-                onClick={onOpenCreate ? handleOpenCreate : undefined}
-                disabled={!onOpenCreate}
-                size={size === "medium" ? "medium" : "small"}
-              >
-                <AddCircleOutlineRounded />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {onOpenCreate != null ? (
+            <Tooltip title="Tạo mới">
+              <span>
+                <IconButton
+                  color="primary"
+                  onClick={handleOpenCreate}
+                  disabled={!onOpenCreate}
+                  size={size === "medium" ? "medium" : "small"}
+                >
+                  <AddCircleOutlineRounded />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
         </Stack>
 
         {/* Helper / Error */}
@@ -471,18 +541,60 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
               {items.map((item, idx) => {
                 const key = String(getOptionValue(item));
                 const disabledDel = disableDelete?.(item) ?? false;
+                const isDragging = draggingIndex === idx;
+                const isOverlayVisible =
+                  draggingIndex != null && dragOverIndex === idx && draggingIndex !== idx;
                 return (
                   <Stack
+                    data-drag-row
                     key={key}
                     direction="row"
                     alignItems="center"
                     justifyContent="space-between"
                     sx={(t) => ({
+                      position: "relative",
                       p: 1,
                       borderRadius: 1,
                       border: `1px solid ${t.palette.divider}`,
+                      opacity: isDragging ? 0.6 : 1,
+                      transition: "opacity 80ms linear",
                     })}
+                    onDragOver={handleDragOver(idx)}
+                    onDrop={handleDrop(idx)}
                   >
+                    {isOverlayVisible ? (
+                      <Box
+                        sx={(t) => ({
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: 1,
+                          border: `2px dashed ${t.palette.primary.main}`,
+                          bgcolor: t.palette.action.hover,
+                          opacity: 0.6,
+                          pointerEvents: "none",
+                        })}
+                      />
+                    ) : null}
+
+                    <Box
+                      draggable={!disabled}
+                      onDragStart={handleDragStart(idx)}
+                      onDragEnd={handleDragEnd}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        pr: 1,
+                        color: "text.secondary",
+                        cursor: disabled ? "default" : "grab",
+                        "&:active": {
+                          cursor: disabled ? "default" : "grabbing",
+                        },
+                      }}
+                      aria-label="Kéo để sắp xếp"
+                    >
+                      <DragIndicatorRounded fontSize="small" />
+                    </Box>
+
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       {renderItem ? renderItem(item, idx) : defaultItemContent(item)}
                     </Box>

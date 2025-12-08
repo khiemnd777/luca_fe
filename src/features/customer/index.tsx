@@ -14,7 +14,7 @@ const mod: ModuleDescriptor = {
       title: "Khách hàng",
       path: "/customer",
       icon: <ContactEmergencyIcon />,
-      priority: 94,
+      priority: 93,
       children: [
         {
           hidden: true,

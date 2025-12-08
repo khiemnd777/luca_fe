@@ -3,8 +3,8 @@ import type { FormSchema } from "@core/form/form.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/staff/api/section.api";
-import type { SectionModel } from "@features/staff/model/section.model";
+import { create, id, update } from "@features/section/api/section.api";
+import type { SectionModel } from "@features/section/model/section.model";
 
 export function buildSectionSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -24,6 +24,27 @@ export function buildSectionSchema(): FormSchema {
       rules: {
         maxLength: 300,
       },
+    },
+    {
+      name: "color", 
+      label: "Màu chủ đề", 
+      kind: "color", 
+      defaultValue: "#6d3ad3ff",
+    },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collection: "section",
+        mode: "whole",
+        def: [
+          {
+            name: "processIds",
+            hydrateOrderField: "display_order",
+          }
+        ]
+      }
     },
   ];
 

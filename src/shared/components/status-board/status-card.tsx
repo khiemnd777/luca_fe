@@ -9,6 +9,7 @@ interface Props<T> {
   activeId?: number | null;
   onClick?: (id: number, status: string, obj: T) => void;
   dragHandleColor?: string;
+  disableDragHandle?: boolean;
 }
 
 export default function StatusCard<T>({
@@ -17,6 +18,7 @@ export default function StatusCard<T>({
   activeId,
   onClick,
   dragHandleColor,
+  disableDragHandle,
 }: Props<T>) {
   const sortable = useSortable({
     id: item.id,
@@ -27,6 +29,8 @@ export default function StatusCard<T>({
   const isDark = theme.palette.mode === "dark";
 
   const isDragging = activeId === item.id;
+  const dragAttributes = disableDragHandle ? {} : sortable.attributes;
+  const dragListeners = disableDragHandle ? {} : sortable.listeners;
 
   // CLICK detection (no conflict)
   const handleClick = () => {
@@ -52,55 +56,56 @@ export default function StatusCard<T>({
           : "0 2px 6px rgba(0,0,0,0.08)",
       }}
     >
-      {/* DRAG HANDLE */}
-      <Box
-        {...sortable.listeners}
-        {...sortable.attributes}
-        sx={{
-          width: "100%",
-          height: 24,
-          cursor: "grab",
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          background: dragHandleColor ?? (isDark ? "#555" : "#ddd"),
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {/* 3 dots */}
+      {!disableDragHandle && (
         <Box
+          {...dragListeners}
+          {...dragAttributes}
           sx={{
+            width: "100%",
+            height: 24,
+            cursor: "grab",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            background: dragHandleColor ?? (isDark ? "#555" : "#ddd"),
             display: "flex",
-            gap: "4px",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
+          {/* 3 dots */}
           <Box
             sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              backgroundColor: isDark ? "#aaa" : "#555",
+              display: "flex",
+              gap: "4px",
             }}
-          />
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              backgroundColor: isDark ? "#aaa" : "#555",
-            }}
-          />
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              backgroundColor: isDark ? "#aaa" : "#555",
-            }}
-          />
+          >
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: isDark ? "#aaa" : "#555",
+              }}
+            />
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: isDark ? "#aaa" : "#555",
+              }}
+            />
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: isDark ? "#aaa" : "#555",
+              }}
+            />
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* CARD BODY - CLICKABLE */}
       <Box

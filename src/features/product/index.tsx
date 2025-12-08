@@ -2,7 +2,6 @@ import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import OneColumnPage from "@root/core/pages/one-column-page";
-import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 
 const mod: ModuleDescriptor = {
   id: "product",
@@ -16,16 +15,6 @@ const mod: ModuleDescriptor = {
       path: "/product",
       icon: <InventoryIcon />,
       priority: 98,
-      children: [{
-        key: "process",
-        permissions: ["process.view"],
-        element: <OneColumnPage />,
-        label: "Công đoạn",
-        title: "Công đoạn",
-        path: "/process",
-        icon: <DeveloperBoardIcon />,
-        priority: 1,
-      }],
     },
   ],
 };

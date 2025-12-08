@@ -6,6 +6,7 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/product/api/product.api";
 import type { ProductUpsertModel } from "@features/product/model/product.model";
+import { Typography } from "@mui/material";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -34,6 +35,20 @@ export function buildSampleSchema(): FormSchema {
       metadata: {
         collection: "product",
         mode: "whole",
+        def: [
+          {
+            name: "processIds",
+            hydrateOrderField: "display_order",
+            getOptionLabel: (item) => {
+              const sectionName = item.sectionName ? `${item.sectionName} >` : ''
+              return `${sectionName} ${item.name}`;
+            },
+            renderItem: (item, _) => {
+              const sectionName = item.sectionName ? `${item.sectionName} >` : ''
+              return (<Typography sx={{ color: item.color }}>{sectionName} {item.name}</Typography>);
+            }
+          }
+        ],
         groups: [
           {
             group: "description",

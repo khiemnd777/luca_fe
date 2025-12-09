@@ -1,13 +1,33 @@
 import { mapper } from "@core/mapper/auto-mapper";
-import type { FieldDef } from "@core/form/types";
+import type { FieldDef, FormContext } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/category/api/category.api";
-import type { CategoryUpsertModel } from "@features/category/model/category.model";
+import { create, id, search as searchCategory, update } from "@features/category/api/category.api";
+import type { CategoryModel, CategoryUpsertModel } from "@features/category/model/category.model";
 
 export function buildCategorySchema(): FormSchema {
+  const syncParentInfo = (parent: CategoryModel | null, ctx?: FormContext | null) => {
+    const nextLevel = (parent?.level ?? 0) + 1;
+    ctx?.setValue("level", nextLevel);
+    ctx?.setValue("parentId", parent?.id ?? null);
+
+    const lv1Id = parent?.categoryIdLv1 ?? (parent?.level === 1 ? parent.id : null);
+    const lv1Name = parent?.categoryNameLv1 ?? (parent?.level === 1 ? parent.name : null);
+    const lv2Id = parent?.categoryIdLv2 ?? (parent?.level === 2 ? parent.id : null);
+    const lv2Name = parent?.categoryNameLv2 ?? (parent?.level === 2 ? parent.name : null);
+    const lv3Id = parent?.categoryIdLv3 ?? (parent?.level === 3 ? parent.id : null);
+    const lv3Name = parent?.categoryNameLv3 ?? (parent?.level === 3 ? parent.name : null);
+
+    ctx?.setValue("categoryIdLv1", lv1Id ?? null);
+    ctx?.setValue("categoryNameLv1", lv1Name ?? null);
+    ctx?.setValue("categoryIdLv2", lv2Id ?? null);
+    ctx?.setValue("categoryNameLv2", lv2Name ?? null);
+    ctx?.setValue("categoryIdLv3", lv3Id ?? null);
+    ctx?.setValue("categoryNameLv3", lv3Name ?? null);
+  };
+
   const fields: FieldDef[] = [
     {
       name: "name",
@@ -17,6 +37,65 @@ export function buildCategorySchema(): FormSchema {
         required: "Yêu cầu nhập tên danh mục",
         maxLength: 200,
       },
+    },
+    {
+      name: "parentId",
+      label: "Danh mục cha",
+      kind: "searchsingle",
+      placeholder: "Chọn danh mục cha",
+      getOptionLabel: (item: CategoryModel) => {
+        const parentName =
+          item.level === 2
+            ? item.categoryNameLv1
+            : item.level === 3
+              ? item.categoryNameLv2
+              : null;
+        if (item.level && item.level > 1 && parentName) {
+          return `${parentName} > ${item.name ?? ""}`;
+        }
+        return item.name ?? "";
+      },
+      getOptionValue: (d: CategoryModel) => d?.id,
+      async search(kw: string) {
+        const result = await searchCategory({
+          keyword: kw,
+          limit: 20,
+          page: 1,
+          orderBy: "parent_id",
+        });
+        return result.items;
+      },
+      async searchPage(kw: string, page, limit) {
+        const result = await searchCategory({
+          keyword: kw,
+          limit,
+          page,
+          orderBy: "parent_id",
+        });
+        return result.items;
+      },
+      async hydrateByIds(ids) {
+        if (!ids?.length) return [];
+        const parent = await id(Number(ids[0]));
+        return parent ? [parent] : [];
+      },
+      async fetchList(values: Record<string, any>) {
+        const pid = values.parentId;
+        if (!pid || (Array.isArray(pid) && !pid.length)) return [];
+        const parent = await id(pid);
+        return parent ? [parent] : [];
+      },
+      onBlur: (_, matched, ctx) => {
+        syncParentInfo(matched as CategoryModel | null, ctx);
+      },
+      pageLimit: 20,
+    },
+    {
+      name: "level",
+      label: "Cấp",
+      kind: "number",
+      defaultValue: 1,
+      disableIf: () => true,
     },
     {
       name: "",

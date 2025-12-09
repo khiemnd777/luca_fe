@@ -6,12 +6,6 @@ import {
   Tooltip,
   IconButton,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TablePagination,
   TableSortLabel,
 } from "@mui/material";
@@ -19,12 +13,23 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import QRCode from "react-qr-code";
 import type { ColumnDef, ImageShape, SortDir } from "@core/table/table.types";
 import { useDisplayUrl } from "@core/photo/use-display-url";
 import { camelToSnake } from "@shared/utils/string.utils";
 import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 import { NumericFormat } from "react-number-format";
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const formatColumnHeader = (label?: string) => label?.toUpperCase();
 
 export type EditTableProps<T> = {
   rows: T[];
@@ -50,6 +55,9 @@ export type EditTableProps<T> = {
 
   /** Khoảng offset top cho header sticky (ví dụ có appbar) */
   stickyTopOffset?: number;
+
+  /** Drag & Drop reorder (client-side) */
+  onReorder?: (newRows: T[], from: number, to: number) => void;
 };
 
 /* ================= Helpers: contrast text for background color ================= */
@@ -211,6 +219,44 @@ function getCellValue<T>(row: T, col: ColumnDef<T>) {
   return (row as any)[k];
 }
 
+type SortableRowRenderProps = {
+  setNodeRef?: (node: HTMLElement | null) => void;
+  transformStyle?: React.CSSProperties;
+  handleProps?: Omit<React.HTMLAttributes<HTMLElement>, "color">;
+  isDragging?: boolean;
+};
+
+function SortableRow({
+  id,
+  disabled,
+  children,
+}: {
+  id: string;
+  disabled?: boolean;
+  children: (props: SortableRowRenderProps) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <>
+      {children({
+        setNodeRef,
+        transformStyle: style,
+        handleProps: { ...attributes, ...listeners } as Omit<React.HTMLAttributes<HTMLElement>, "color">,
+        isDragging,
+      })}
+    </>
+  );
+}
+
 function defaultCompare(a: unknown, b: unknown) {
   const isDate = (v: unknown) => v instanceof Date || (typeof v === "string" && !isNaN(Date.parse(v)));
   if (typeof a === "number" && typeof b === "number") return a - b;
@@ -231,6 +277,7 @@ export function EditTable<T extends { id?: string | number }>({
   sortBy: controlledSortBy,
   sortDirection: controlledSortDir,
   stickyTopOffset = 0,
+  onReorder,
 }: EditTableProps<T>) {
 
   // ==== sort state (uncontrolled for client-side) ====
@@ -263,7 +310,9 @@ export function EditTable<T extends { id?: string | number }>({
   // ==== actions column as first (sticky-left) ====
   const hasActions = Boolean(onView || onEdit || onDelete);
   const actionsWidth = 120;
-  const baseLeftOffset = hasActions ? actionsWidth : 0;
+  const enableDnd = typeof onReorder === "function";
+  const dndWidth = 48;
+  const baseLeftOffset = (enableDnd ? dndWidth : 0) + (hasActions ? actionsWidth : 0);
 
   // ==== compute sticky offsets ====
   const leftOffsets: number[] = [];
@@ -290,6 +339,24 @@ export function EditTable<T extends { id?: string | number }>({
     }
   }
 
+  const gridTemplateColumns = React.useMemo(() => {
+    const parts: string[] = [];
+    if (enableDnd) parts.push(`${dndWidth}px`);
+    if (hasActions) parts.push(`${actionsWidth}px`);
+    columns.forEach((c) => {
+      if (typeof c.width === "number") {
+        parts.push(`${c.width}px`);
+      } else if (typeof c.width === "string") {
+        parts.push(c.width);
+      } else {
+        parts.push("minmax(160px,1fr)");
+      }
+    });
+    return parts.join(" ");
+  }, [columns, enableDnd, hasActions]);
+
+  const totalColumns = columns.length + (hasActions ? 1 : 0) + (enableDnd ? 1 : 0);
+
   // ==== client-side sorted rows (only when onSortChange is not provided) ====
   const sortedRows = React.useMemo(() => {
     if (onSortChange || !orderBy) return rows;
@@ -302,6 +369,37 @@ export function EditTable<T extends { id?: string | number }>({
     arr.sort((a, b) => (order === "asc" ? cmp(a, b) : -cmp(a, b)));
     return arr;
   }, [rows, orderBy, order, onSortChange, columns]);
+
+  // ==== DnD rows ====
+  const [dndRows, setDndRows] = React.useState(sortedRows);
+  React.useEffect(() => {
+    if (enableDnd) {
+      setDndRows(sortedRows);
+    }
+  }, [sortedRows, enableDnd]);
+
+  const displayRows = enableDnd ? dndRows : sortedRows;
+
+  const rowIds = React.useMemo(
+    () => displayRows.map((r, idx) => String((r as any).id ?? idx)),
+    [displayRows]
+  );
+
+  const handleDragEnd = React.useCallback(
+    (event: DragEndEvent) => {
+      if (!enableDnd) return;
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = rowIds.indexOf(String(active.id));
+      const newIndex = rowIds.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return;
+      const newRows = arrayMove(dndRows, oldIndex, newIndex);
+      setDndRows(newRows);
+      const offset = page * pageSize;
+      onReorder?.(newRows, oldIndex + offset, newIndex + offset);
+    },
+    [enableDnd, rowIds, dndRows, onReorder, page, pageSize]
+  );
 
   // ==== renderers for types (UPDATED color + chips) ====
   const renderCell = (row: T, col: ColumnDef<T>) => {
@@ -469,116 +567,322 @@ export function EditTable<T extends { id?: string | number }>({
 
   return (
     <Paper variant="outlined">
-      <TableContainer sx={{ maxHeight: stickyHeader ? 560 : "unset" }}>
-        <Table size={dense ? "small" : "medium"} stickyHeader={stickyHeader}>
-          <TableHead>
-            <TableRow>
-              {hasActions && (
-                <TableCell
-                  align="right"
-                  width={actionsWidth}
+      <Box
+        sx={{
+          overflow: "auto",
+          maxHeight: stickyHeader ? 560 : "unset",
+        }}
+      >
+        <Box sx={{ minWidth: "100%" }}>
+          <Box
+            role="row"
+            sx={{
+              display: "grid",
+              gridTemplateColumns,
+              position: stickyHeader ? "sticky" : "static",
+              top: stickyHeader ? stickyTopOffset : undefined,
+              zIndex: 4,
+              backgroundColor: "background.paper",
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            {enableDnd && (
+              <Box
+                role="columnheader"
+                sx={{
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 6,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  px: 1,
+                  py: dense ? 0.75 : 1,
+                  backgroundColor: "background.paper",
+                  width: dndWidth,
+                  minWidth: dndWidth,
+                }}
+              />
+            )}
+
+            {hasActions && (
+              <Box
+                role="columnheader"
+                sx={{
+                  position: "sticky",
+                  left: enableDnd ? dndWidth : 0,
+                  zIndex: 5,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  px: 1.5,
+                  py: dense ? 0.75 : 1,
+                  backgroundColor: "background.paper",
+                  whiteSpace: "nowrap",
+                  width: actionsWidth,
+                  minWidth: actionsWidth,
+                }}
+              >
+                <span></span>
+              </Box>
+            )}
+
+            {columns.map((c, idx) => {
+              const k = String(c.key);
+              const sortable = !!c.sortable || !!c.accessor || !!c.comparator;
+              const isActive = (controlledSortBy ?? orderBy) === k;
+              const dir = (controlledSortDir ?? order) ?? "asc";
+              const headerLabel = formatColumnHeader(c.header);
+
+              const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[idx] ?? 0) : undefined;
+              const right = c.stickyRight ? (rightOffsets[idx] ?? 0) : undefined;
+
+              return (
+                <Box
+                  key={k}
+                  role="columnheader"
                   sx={{
-                    position: "sticky",
-                    left: 0,
-                    zIndex: 3,
+                    position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
+                    left,
+                    right,
+                    zIndex: (c.stickyLeft || c.stickyRight) ? 4 : 3,
                     backgroundColor: "background.paper",
-                    top: stickyHeader ? stickyTopOffset : undefined,
+                    px: 1.5,
+                    py: dense ? 0.75 : 1,
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <span></span>
-                </TableCell>
-              )}
+                  {sortable ? (
+                    <TableSortLabel
+                      active={isActive}
+                      direction={isActive ? dir : "asc"}
+                      onClick={() => handleSortClick(c)}
+                    >
+                      {headerLabel}
+                    </TableSortLabel>
+                  ) : (
+                    headerLabel
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
 
-              {columns.map((c, idx) => {
-                const k = String(c.key);
-                const sortable = !!c.sortable || !!c.accessor || !!c.comparator;
-                const isActive = (controlledSortBy ?? orderBy) === k;
-                const dir = (controlledSortDir ?? order) ?? "asc";
+          {loading ? (
+            <Box
+              role="row"
+              sx={{
+                display: "grid",
+                gridTemplateColumns,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Box
+                role="cell"
+                sx={{
+                  gridColumn: `1 / span ${totalColumns}`,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "40px",
+                  textAlign: "center",
+                  px: 2,
+                }}
+              >
+                Đang tải…
+              </Box>
+            </Box>
+          ) : sortedRows.length === 0 ? (
+            <Box
+              role="row"
+              sx={{
+                display: "grid",
+                gridTemplateColumns,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Box
+                role="cell"
+                sx={{
+                  gridColumn: `1 / span ${totalColumns}`,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "40px",
+                  textAlign: "center",
+                  px: 2,
+                }}
+              >
+                Không có dữ liệu
+              </Box>
+            </Box>
+          ) : (
+            (enableDnd ? (
+              <DndContext onDragEnd={handleDragEnd}>
+                <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+                  {displayRows.map((r, rowIdx) => {
+                    const rowId = rowIds[rowIdx];
+                    return (
+                      <SortableRow key={rowId} id={rowId}>
+                        {({ setNodeRef, transformStyle, handleProps, isDragging }) => (
+                          <Box
+                            role="row"
+                            ref={setNodeRef}
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns,
+                              borderBottom: "1px solid",
+                              borderColor: "divider",
+                              alignItems: "stretch",
+                              backgroundColor: isDragging ? "action.hover" : undefined,
+                              "&:hover": {
+                                backgroundColor: "action.hover",
+                              },
+                            }}
+                            style={transformStyle}
+                          >
+                            {/* DnD handle */}
+                            <Box
+                              role="cell"
+                              sx={{
+                                position: "sticky",
+                                left: 0,
+                                zIndex: 3,
+                                backgroundColor: "background.paper",
+                                width: dndWidth,
+                                minWidth: dndWidth,
+                                px: 1,
+                                py: dense ? 0.75 : 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <IconButton
+                                size="small"
+                                aria-label="Drag to reorder"
+                                {...handleProps}
+                                sx={{
+                                  cursor: isDragging ? "grabbing" : "grab",
+                                }}
+                              >
+                                <DragIndicatorRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
 
-                const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[idx] ?? 0) : undefined;
-                const right = c.stickyRight ? (rightOffsets[idx] ?? 0) : undefined;
+                            {/* Actions cell, sticky-left */}
+                            {hasActions && (
+                              <Box
+                                role="cell"
+                                sx={{
+                                  position: "sticky",
+                                  left: enableDnd ? dndWidth : 0,
+                                  zIndex: 2,
+                                  backgroundColor: "background.paper",
+                                  whiteSpace: "nowrap",
+                                  width: actionsWidth,
+                                  minWidth: actionsWidth,
+                                  px: 1.5,
+                                  py: dense ? 0.75 : 1,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                                  {onView && (
+                                    <Tooltip title="View">
+                                      <IconButton size="small" onClick={() => onView(r)}>
+                                        <VisibilityRoundedIcon fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  {onEdit && (
+                                    <Tooltip title="Edit">
+                                      <IconButton size="small" onClick={() => onEdit(r)}>
+                                        <EditRoundedIcon fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  {onDelete && (
+                                    <Tooltip title="Delete">
+                                      <IconButton size="small" color="error" onClick={() => onDelete(r)}>
+                                        <DeleteRoundedIcon fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                </Stack>
+                              </Box>
+                            )}
 
-                return (
-                  <TableCell
-                    key={k}
-                    style={{ width: c.width }}
-                    sx={{
-                      position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
-                      left,
-                      right,
-                      zIndex: (c.stickyLeft || c.stickyRight) ? 3 : 2,
-                      backgroundColor: "background.paper",
-                      top: stickyHeader ? stickyTopOffset : undefined,
-                      whiteSpace: "nowrap",
-                    }}
-                    sortDirection={isActive ? dir : false}
-                  >
-                    {sortable ? (
-                      <TableSortLabel
-                        active={isActive}
-                        direction={isActive ? dir : "asc"}
-                        onClick={() => handleSortClick(c)}
-                      >
-                        {c.header}
-                      </TableSortLabel>
-                    ) : (
-                      c.header
-                    )}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: "40px",
-                      textAlign: "center",
-                    }}
-                  >
-                    Đang tải…
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ) : sortedRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: "40px",
-                      textAlign: "center",
-                    }}
-                  >
-                    Không có dữ liệu
-                  </Box>
-                </TableCell>
-              </TableRow>
+                            {/* Columns */}
+                            {columns.map((c, colIdx) => {
+                              const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[colIdx] ?? 0) : undefined;
+                              const right = c.stickyRight ? (rightOffsets[colIdx] ?? 0) : undefined;
+                              return (
+                                <Box
+                                  key={String(c.key)}
+                                  role="cell"
+                                  sx={{
+                                    position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
+                                    left,
+                                    right,
+                                    zIndex: (c.stickyLeft || c.stickyRight) ? 2 : 1,
+                                    backgroundColor: (c.stickyLeft || c.stickyRight) ? "background.paper" : undefined,
+                                    whiteSpace: "nowrap",
+                                    px: 1.5,
+                                    py: dense ? 0.75 : 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {renderCell(r, c)}
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </SortableRow>
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
             ) : (
               sortedRows.map((r, rowIdx) => (
-                <TableRow hover key={(r as any).id ?? rowIdx}>
+                <Box
+                  role="row"
+                  key={(r as any).id ?? rowIdx}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    alignItems: "stretch",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
+                >
                   {/* Actions cell, sticky-left */}
                   {hasActions && (
-                    <TableCell
-                      align="right"
+                    <Box
+                      role="cell"
                       sx={{
                         position: "sticky",
                         left: 0,
-                        zIndex: 1,
+                        zIndex: 2,
                         backgroundColor: "background.paper",
                         whiteSpace: "nowrap",
                         width: actionsWidth,
-                        maxWidth: actionsWidth,
+                        minWidth: actionsWidth,
+                        px: 1.5,
+                        py: dense ? 0.75 : 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
                       }}
                     >
                       <Stack direction="row" spacing={0.5} justifyContent="flex-end">
@@ -604,7 +908,7 @@ export function EditTable<T extends { id?: string | number }>({
                           </Tooltip>
                         )}
                       </Stack>
-                    </TableCell>
+                    </Box>
                   )}
 
                   {/* Columns */}
@@ -612,27 +916,32 @@ export function EditTable<T extends { id?: string | number }>({
                     const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[colIdx] ?? 0) : undefined;
                     const right = c.stickyRight ? (rightOffsets[colIdx] ?? 0) : undefined;
                     return (
-                      <TableCell
+                      <Box
                         key={String(c.key)}
+                        role="cell"
                         sx={{
                           position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
                           left,
                           right,
-                          zIndex: (c.stickyLeft || c.stickyRight) ? 1 : "auto",
+                          zIndex: (c.stickyLeft || c.stickyRight) ? 2 : 1,
                           backgroundColor: (c.stickyLeft || c.stickyRight) ? "background.paper" : undefined,
                           whiteSpace: "nowrap",
+                          px: 1.5,
+                          py: dense ? 0.75 : 1,
+                          display: "flex",
+                          alignItems: "center",
                         }}
                       >
                         {renderCell(r, c)}
-                      </TableCell>
+                      </Box>
                     );
                   })}
-                </TableRow>
+                </Box>
               ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            ))
+          )}
+        </Box>
+      </Box>
 
       <Box sx={{ px: 1 }}>
         <TablePagination

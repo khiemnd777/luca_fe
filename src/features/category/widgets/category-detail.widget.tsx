@@ -15,7 +15,7 @@ function CategoryDetailWidget() {
 
   return (
     <>
-      <SectionCard title="Edit collection" extra={
+      <SectionCard extra={
         <IfPermission permissions={["privilege.metadata"]}>
           <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => frmCategoryRef.current?.submit()}>
             Lưu

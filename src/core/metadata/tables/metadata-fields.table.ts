@@ -11,43 +11,51 @@ import type { FieldModel } from "@core/metadata/data/metadata.model";
 import {
   listFieldsByCollection,
   deleteField,
+  sort,
 } from "@core/metadata/data/metadata.api";
 
 const columns: ColumnDef<FieldModel>[] = [
-  { key: "orderIndex", header: "Order", width: 60, sortable: true },
-  { key: "label", header: "Label", sortable: true },
-  { key: "name", header: "Name", sortable: true, labelField: true },
-  { key: "type", header: "Type", width: 100 },
-  { key: "visibility", header: "Visibility", width: 100 },
+  { key: "label", header: "Label", sortable: true, width: 290, },
+  { key: "name", header: "Name", sortable: true, labelField: true, },
+  {
+    key: "type",
+    header: "Type",
+    width: 90,
+  },
+  {
+    key: "visibility",
+    header: "Visibility",
+    width: 90,
+  },
   {
     key: "required",
     header: "Required?",
     type: "boolean",
-    width: 30,
+    width: 90,
   },
   {
     key: "unique",
     header: "Unique?",
     type: "boolean",
-    width: 30,
+    width: 90,
   },
   {
     key: "table",
     header: "Table?",
     type: "boolean",
-    width: 30,
+    width: 90,
   },
   {
     key: "form",
     header: "Form?",
     type: "boolean",
-    width: 30,
+    width: 90,
   },
   {
     key: "search",
     header: "Search?",
     type: "boolean",
-    width: 30,
+    width: 90,
   },
 ];
 
@@ -72,6 +80,11 @@ registerTable('metadata-fields', () =>
       openFormDialog("metadata-field", {
         initial: { ...row },
       });
+    },
+
+    onReorder: async (newRows, from, to) => {
+      console.log("moved row", from, "->", to, newRows);
+      await sort(newRows[0].collectionId, newRows.map((r) => r.id));
     },
 
     async onDelete(row) {

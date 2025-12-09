@@ -7,7 +7,24 @@ import { table, unlink } from "@features/category/api/category.api";
 import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<CategoryModel>[] = [
-  { key: "name", header: "Tên danh mục", sortable: true, labelField: true },
+  {
+    key: "name",
+    header: "Danh mục",
+    sortable: true,
+    labelField: true,
+    render(item) {
+      const parentName =
+        item.level === 2
+          ? item.categoryNameLv1
+          : item.level === 3
+            ? item.categoryNameLv2
+            : null;
+      if (item.level && item.level > 1 && parentName) {
+        return (<>{parentName} {">"} {item.name ?? ""}</>);
+      }
+      return <>{item.name}</>;
+    },
+  },
   {
     key: "",
     type: "metadata",

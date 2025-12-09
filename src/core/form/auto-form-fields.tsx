@@ -677,6 +677,7 @@ export function AutoFormFieldSingle({
         getOptionLabel={f.getOptionLabel!}
         getOptionValue={f.getOptionValue!}
         fetchList={f.fetchList}
+        hydrateByIds={f.hydrateByIds}
         onAdd={f.onAdd}
         onDelete={f.onDelete}
         renderItem={f.renderItem}
@@ -825,13 +826,15 @@ export function AutoFormFieldSingle({
   // CUSTOM
   if (f.kind === "custom" && f.render) {
     return (
-      f.render({
-        value: values[f.name],
-        setValue: (v) => setValue(f.name, v),
-        error,
-        field: f,
-        values,
-      }) as any
+      <Box sx={{ width: "100%", overflowX: "auto" }}>
+        {f.render({
+          value: values[f.name],
+          setValue: (v) => setValue(f.name, v),
+          error,
+          field: f,
+          values,
+        }) as any}
+      </Box>
     );
   }
 

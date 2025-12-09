@@ -24,20 +24,6 @@ function CategoryDetailWidget() {
       }>
         <AutoForm name="category-with-fields" ref={frmCategoryRef} initial={{ id: categoryId }} />
       </SectionCard>
-      {/* <Spacer />
-      <SectionCard title="Manage fields" extra={
-        <>
-          <IfPermission permissions={["privilege.metadata"]}>
-            <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-              openFormDialog("metadata-field", {
-                initial: { collectionId: categoryId }
-              });
-            }} >New Field</Button>
-          </IfPermission>
-        </>
-      }>
-        <AutoTable name="metadata-fields" params={{ collectionId: categoryId }} />
-      </SectionCard> */}
     </>
   );
 }

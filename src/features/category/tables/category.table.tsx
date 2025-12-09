@@ -10,7 +10,7 @@ const columns: ColumnDef<CategoryModel>[] = [
   {
     key: "name",
     header: "Danh mục",
-    sortable: true,
+    sortable: false,
     labelField: true,
     render(item) {
       const parentName =

@@ -830,6 +830,7 @@ export function AutoFormFieldSingle({
         setValue: (v) => setValue(f.name, v),
         error,
         field: f,
+        values,
       }) as any
     );
   }

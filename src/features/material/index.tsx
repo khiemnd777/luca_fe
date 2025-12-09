@@ -15,7 +15,7 @@ const mod: ModuleDescriptor = {
       title: "Vật tư",
       path: "/material",
       icon: <CategoryIcon />,
-      priority: 99,
+      priority: 100,
       // children: [
       //   {
       //     key: "supplier",

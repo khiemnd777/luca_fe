@@ -76,6 +76,7 @@ export type CustomRenderCtx = {
   setValue: (v: any) => void;
   error?: string | null;
   field: FieldDef;
+  values: Record<string, any>;
 };
 
 // searchlist
@@ -103,7 +104,7 @@ export type MiniFieldOverride = {
   onChange?: (value: any, ctx?: FormContext) => void;
   onInputChange?: (text: string) => void;
   onDragEnd?: (items: any[]) => void;
-  
+
   // searchlist, autocomplete, relation
   searchPage?: SearchListSearchPageFn;
   hydrateOrderField?: string;

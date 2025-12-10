@@ -165,7 +165,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       setItems(sorted);
       lastEmittedIdsRef.current = selectedIds.map(String);
       if (sorted[0]) {
-        setInputValue(getOptionLabel(sorted[0]!));
+        setInputValue(getOptionLabel(sorted[0]!).trim());
       }
     })();
     return () => {
@@ -196,7 +196,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
 
         if (data?.[0]) {
           if (!isTypingRef.current) {
-            setInputValue(getOptionLabel(data[0]));
+            setInputValue(getOptionLabel(data[0]).trim());
           }
         }
         isTypingRef.current = false;
@@ -217,7 +217,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     setItems(data ?? []);
     emitIdsIfChanged(data ?? []);
 
-    if (data?.[0]) setInputValue(getOptionLabel(data[0]));
+    if (data?.[0]) setInputValue(getOptionLabel(data[0]).trim());
     else setInputValue("");
   }, [fetchList, values, emitIdsIfChanged, getOptionLabel]);
 
@@ -342,6 +342,8 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       isTypingRef.current = true;
       internalUpdateRef.current = true;
 
+      v = String(v).trim();
+
       setInputValue(v);
       setKeyword(v);
 
@@ -363,7 +365,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       }
 
       debounceRef.current = setTimeout(() => {
-        loadFirstPage(v).catch(() => void 0);
+        loadFirstPage(String(v).trim()).catch(() => void 0);
       }, 300);
     },
     [loadFirstPage, ensureTempItem, setItemsAndEmit, onInputChange]
@@ -380,7 +382,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     async (item: T) => {
       if (onAdd) await onAdd(item);
       setItemsAndEmit([item]);
-      setInputValue(getOptionLabel(item));
+      setInputValue(getOptionLabel(item).trim());
       reloadAfterSelect();
       return;
     },
@@ -441,7 +443,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
 
                 const label = getOptionLabel(newVal);
                 await addItem(newVal as T);
-                setInputValue(label);
+                setInputValue(label.trim());
                 onSelect?.(newVal as T);
                 return;
               }

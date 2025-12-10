@@ -31,6 +31,7 @@ export type FormContext = {
   values: Record<string, any>;
   setValue: (name: string, v: any) => void;
   setAllValues: (obj: Record<string, any>) => void;
+  setFieldError: (name: string, msg: string | null) => void;
   reset: () => void;
   setInitial: (obj: Record<string, any>) => void;
   clear: () => void;

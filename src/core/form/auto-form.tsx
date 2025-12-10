@@ -623,6 +623,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       setAllValues,
       errors,
       // setErrors,
+      setFieldError,
       validateAll,
     } = useAutoForm(baseFields, fixedInitial, {
       asyncValidate: schema.hooks?.asyncValidate,
@@ -655,6 +656,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       values,
       setValue: setValueProg,
       setAllValues: setAllValuesProg,
+      setFieldError,
       reset: () => setAllValuesProg(fixedInitial),
       setInitial: (obj: Record<string, any>) => {
         const flat = flattenForInitial(obj);

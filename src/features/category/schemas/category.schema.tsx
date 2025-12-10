@@ -43,18 +43,7 @@ export function buildCategorySchema(): FormSchema {
       label: "Danh mục cha",
       kind: "searchsingle",
       placeholder: "Chọn danh mục cha",
-      getOptionLabel: (item: CategoryModel) => {
-        const parentName =
-          item.level === 2
-            ? item.categoryNameLv1
-            : item.level === 3
-              ? item.categoryNameLv2
-              : null;
-        if (item.level && item.level > 1 && parentName) {
-          return `${parentName} > ${item.name ?? ""}`;
-        }
-        return item.name ?? "";
-      },
+      getOptionLabel: (d: CategoryModel) => d?.name ?? "",
       getOptionValue: (d: CategoryModel) => d?.id,
       async search(kw: string) {
         const result = await searchCategory({
@@ -86,7 +75,25 @@ export function buildCategorySchema(): FormSchema {
         return parent ? [parent] : [];
       },
       onBlur: (_, matched, ctx) => {
-        syncParentInfo(matched as CategoryModel | null, ctx);
+        const parent = matched as CategoryModel | null;
+        const id = ctx?.values.id;
+        const prevParentId = ctx?.values.parentId;
+        if (parent && parent.id === id) {
+          ctx?.setFieldError("parentId", "Không thể chọn chính danh mục này làm cha");
+          ctx?.setValue("parentId", prevParentId);
+          return;
+        }
+
+        const level = ctx?.values.level ?? 1;
+        if (ctx?.values.id !== undefined && parent && parent.level! > level) {
+          ctx?.setFieldError("parentId", "Không thể chọn danh mục cấp thấp hơn hoặc ngang bằng làm cha");
+          ctx?.setValue("parentId", prevParentId);
+          return;
+        }
+
+        ctx?.setFieldError("parentId", null);
+
+        syncParentInfo(parent, ctx);
       },
       pageLimit: 20,
     },

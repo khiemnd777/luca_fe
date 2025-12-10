@@ -665,7 +665,7 @@ export function AutoFormFieldSingle({
           const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
           const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
           setValue(f.name, singleId);
-          const label = f.getOptionLabel?.(singleObj);
+          const label = f.getOptionLabel?.(singleObj).trim();
           if (label) {
             setValue(mapIdFieldToNameField(f.name), label)
           }

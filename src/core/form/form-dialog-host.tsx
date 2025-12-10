@@ -38,6 +38,7 @@ function DialogInstance({ payload }: { payload: Payload }) {
   const [submitting, setSubmitting] = React.useState(false);
   const [resolvedInitial, setResolvedInitial] = React.useState<Record<string, any> | null>(null);
   const [resolvingInitial, setResolvingInitial] = React.useState(false);
+  const [autoReady, setAutoReady] = React.useState(false);
   const autoRef = React.useRef<AutoFormRef | null>(null);
   const submitButtons = autoRef.current?.getSubmitButtons?.() ?? [];
 
@@ -151,7 +152,7 @@ function DialogInstance({ payload }: { payload: Payload }) {
       onSubmit={handleSubmit}
       maxWidth={maxWidth}
       actions={
-        submitButtons && submitButtons.length ? (
+        autoReady && submitButtons?.length > 0 ? (
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             {submitButtons.map((btn) => {
               const mode = resolveMode(schema, resolvedInitial ?? {});
@@ -167,10 +168,13 @@ function DialogInstance({ payload }: { payload: Payload }) {
                   key={btn.name}
                   variant="contained"
                   color={btn.color ?? "primary"}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!autoRef.current) return;
                     const mode = resolveMode(schema, resolvedInitial ?? {});
-                    autoRef.current.runSubmitButton(btn, mode);
+                    const submitFlag = await autoRef.current.runSubmitButton(btn, mode);
+                    if (submitFlag) {
+                      handleClose();
+                    }
                   }}
                 >
                   {btn.label ?? btn.name}
@@ -186,7 +190,10 @@ function DialogInstance({ payload }: { payload: Payload }) {
       ) : (
         <AutoForm
           key={payload.id}
-          ref={autoRef}
+          ref={(ref) => {
+            autoRef.current = ref;
+            if (ref) setAutoReady(true);
+          }}
           schema={schema}
           name={name}
           initial={resolvedInitial ?? undefined}

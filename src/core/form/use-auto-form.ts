@@ -253,7 +253,7 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
         break;
       }
       case "searchsingle": {
-        if (!Array.isArray(v)) v = v == null || String(v).trim() === "" ? [] : [v];
+        if (v === undefined || v === null || v === "") v = null;
         break;
       }
       case "date": {

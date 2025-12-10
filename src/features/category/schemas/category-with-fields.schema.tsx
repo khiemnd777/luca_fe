@@ -48,17 +48,9 @@ export function buildCategorySchema(): FormSchema {
       label: "Danh mục cha",
       kind: "searchsingle",
       placeholder: "Chọn danh mục cha",
+      pageLimit: 20,
       getOptionLabel: (d: CategoryModel) => d?.name ?? "",
       getOptionValue: (d: CategoryModel) => d?.id,
-      async search(kw: string) {
-        const result = await searchCategory({
-          keyword: kw,
-          limit: 20,
-          page: 1,
-          orderBy: "parent_id",
-        });
-        return result.items;
-      },
       async searchPage(kw: string, page, limit) {
         const result = await searchCategory({
           keyword: kw,
@@ -68,16 +60,16 @@ export function buildCategorySchema(): FormSchema {
         });
         return result.items;
       },
-      async hydrateByIds(ids) {
-        if (!ids?.length) return [];
-        const parent = await id(Number(ids[0]));
-        return parent ? [parent] : [];
+      async hydrateById(idValue: number | string) {
+        if (!idValue) return null;
+        const parent = await id(Number(idValue));
+        return parent ?? null;
       },
-      async fetchList(values: Record<string, any>) {
+      async fetchOne(values: Record<string, any>) {
         const pid = values.parentId;
-        if (!pid || (Array.isArray(pid) && !pid.length)) return [];
+        if (!pid) return null;
         const parent = await id(pid);
-        return parent ? [parent] : [];
+        return parent ?? null;
       },
       onBlur: (_, matched, ctx) => {
         const parent = matched as CategoryModel | null;
@@ -100,7 +92,6 @@ export function buildCategorySchema(): FormSchema {
 
         syncParentInfo(parent, ctx);
       },
-      pageLimit: 20,
     },
     {
       name: "level",

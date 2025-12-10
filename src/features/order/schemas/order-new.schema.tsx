@@ -18,6 +18,7 @@ export function buildNewOrderSchema(): FormSchema {
       label: "Mã đơn hàng",
       placeholder: "Nhập mã đơn hàng",
       fullWidth: true,
+      pageLimit: 20,
 
       onBlur: async (text, matched, ctx) => {
         ctx?.setValue("code", text);
@@ -30,7 +31,6 @@ export function buildNewOrderSchema(): FormSchema {
             result.latestOrderItem.code = `${alphabetSeq(seq)}${matched.code}`;
             ctx?.setInitial(result);
           }
-          console.log(result);
         } else {
           ctx?.setInitial({ code: text });
         }
@@ -49,21 +49,17 @@ export function buildNewOrderSchema(): FormSchema {
         return searched.items;
       },
 
-      pageLimit: 20,
 
-      async hydrateByIds(ids: Array<number | string>, _: Record<string, any>) {
-        if (!ids || ids.length === 0) return [];
-        const single = await id(ids[0] as number);
-        if (!single) return [];
-        const items = [single];
-        const set = new Set(ids.map(String));
-        return (items ?? []).filter((d: any) => set.has(String(d.id)));
+      async hydrateById(idValue: number | string, _) {
+        if (!idValue) return null;
+        const single = await id(idValue as number);
+        return single ?? null;
       },
-
-      async fetchList(values: Record<string, any>) {
-        const single = await id(values.id);
-        if (!single) return [];
-        return [single];
+      async fetchOne(values: Record<string, any>) {
+        const rawId = values.code;
+        if (!rawId) return null;
+        const single = await id(rawId);
+        return single ?? null;
       },
 
       renderItem: (d: any) => (<>{d?.code}</>),

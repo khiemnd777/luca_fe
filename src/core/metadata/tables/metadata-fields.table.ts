@@ -15,8 +15,8 @@ import {
 } from "@core/metadata/data/metadata.api";
 
 const columns: ColumnDef<FieldModel>[] = [
-  { key: "label", header: "Label", sortable: true, width: 290, },
-  { key: "name", header: "Name", sortable: true, labelField: true, },
+  { key: "label", header: "Label", width: 290, },
+  { key: "name", header: "Name", labelField: true, },
   {
     key: "type",
     header: "Type",

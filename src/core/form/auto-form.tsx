@@ -187,23 +187,17 @@ async function expandOneMetadataBlock(
 
           pageLimit: 20,
 
-          async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
-            if (!ids || ids.length === 0) return [];
-            const refName = `customFields.${mf.name}`;
-            const refId = parseIntSafe(values[refName])
-            const single = await rel1(relation.target, refId);
-            if (!single) return [];
-            const items = [single];
-            const set = new Set(ids.map(String));
-            return (items ?? []).filter((d: any) => set.has(String(d.id)));
+          async hydrateById(id: number | string, _: Record<string, any>) {
+            if (!id) return null;
+            const found = await rel1(relation.target, id as number);
+            return found ?? null;
           },
 
-          async fetchList(values: Record<string, any>) {
-            const refName = `customFields.${mf.name}`;
-            const refId = parseIntSafe(values[refName])
-            const single = await rel1(relation.target, refId);
-            if (!single) return [];
-            return [single];
+          async fetchOne(values: Record<string, any>) {
+            const refName = `${relPrefix}.${mf.name}`;
+            const refId = parseIntSafe(values[refName]);
+            if (!refId) return null;
+            return await rel1(relation.target, refId);
           },
 
           renderItem: (d: any) => (<>{d?.name}</>),

@@ -110,7 +110,7 @@ export type MiniFieldOverride = {
   searchPage?: SearchListSearchPageFn;
   hydrateOrderField?: string;
   getOptionLabel?: (item: any) => string;
-  renderItem?: (item: any, index: number) => React.ReactNode;
+  renderItem?: (item: any, index?: number) => React.ReactNode;
 };
 
 
@@ -183,6 +183,10 @@ export type FieldDef = {
   getOptionValue?: (item: any) => string | number;               // T -> ID
   prop?: string;
 
+  // searchsingle
+  fetchOne?: (values: Record<string, any>) => Promise<any | null>;
+  hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
+
   // metadata
   metadata?: {
     collection: string;
@@ -195,7 +199,7 @@ export type FieldDef = {
   };
 
   // UI render item (không chứa nút delete)
-  renderItem?: (item: any, index: number) => React.ReactNode;
+  renderItem?: (item: any, index?: number) => React.ReactNode;
 
   // Behavior
   allowDuplicate?: boolean;                                      // default false (ẩn item đã chọn)

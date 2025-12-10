@@ -219,7 +219,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
       mounted = false;
     };
   }, [schema.columns]);
-
+  
   return (
     <>
       <EditTable<T>
@@ -246,6 +246,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         onView={hasAnyPermissions(...(schema.allowUpdating ?? [])) ? schema.onView : undefined}
         onEdit={hasAnyPermissions(...(schema.allowUpdating ?? [])) ? schema.onEdit : undefined}
         onDelete={hasAnyPermissions(...(schema.allowDeleting ?? [])) ? (schema.onDelete ? askDelete : undefined) : undefined}
+        onReorder={schema.onReorder}
       />
       {schema.onDelete && (
         <ConfirmDialog

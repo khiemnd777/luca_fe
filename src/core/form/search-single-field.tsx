@@ -15,6 +15,7 @@ import type { FormContext } from "./types";
 type Size = "small" | "medium";
 
 export type SearchSingleFieldProps<T> = {
+  // Field basics
   name: string;
   label?: string;
   placeholder?: string;
@@ -24,58 +25,54 @@ export type SearchSingleFieldProps<T> = {
   error?: string | null;
   helperText?: string;
 
-  selectedIds?: Array<string | number>;
-  onIdsChange?: (nextIds: Array<string | number>) => void;
+  /** Controlled mode */
+  selectedId?: string | number | null;
+  onChange?: (value: string | number | null, obj: T | null) => void;
 
-  value?: any;
-  onChange?: (next: any, nextObj: any) => void;
-  onSelect?: (item: any) => void;
-  onBlur?: (text: string, matched: T | null, ctx?: FormContext | null) => void;
+  /** Events */
+  onSelect?: (item: T | null) => void;
+  onBlur?: (input: string, matched: T | null, ctx?: FormContext | null) => void;
   onInputChange?: (text: string) => void;
 
+  /** Data fetchers */
   search: (keyword: string) => Promise<T[]>;
   searchPage?: (keyword: string, page: number, limit: number) => Promise<T[]>;
+  fetchOne?: (values: Record<string, any>) => Promise<T | null>;
+  hydrateById?: (id: string | number, values: Record<string, any>) => Promise<T | null>;
 
-  fetchList?: (values: Record<string, any>) => Promise<T[]>;
-  hydrateByIds?: (ids: Array<string | number>, values: Record<string, any>) => Promise<T[]>;
+  /** Create */
+  onOpenCreate?: () => Promise<void> | void;
 
-  onAdd?: (item: T) => Promise<void> | void;
-  onDelete?: (item: T) => Promise<void> | void;
-
+  /** Rendering */
   getOptionLabel: (item: T) => string;
   getOptionValue: (item: T) => string | number;
+  renderItem?: (item: T) => React.ReactNode;
 
-  renderItem?: (item: T, index: number) => React.ReactNode;
+  /** Paging */
+  autoLoadAllOnMount?: boolean;
+  pageLimit?: number;
 
-  allowDuplicate?: boolean;
-  dedupeFn?: (a: T, b: T) => boolean;
-  maxItems?: number;
-  disableDelete?: (item: T) => boolean;
-
-  onOpenCreate?: () => Promise<unknown> | void;
   values: Record<string, any>;
   refreshKey?: any;
-  autoLoadAllOnMount?: boolean;
-
-  fetchDeps?: any[];
-  pageLimit?: number;
   ctx?: FormContext | null;
 };
 
-function makeEquality<T>(
-  getOptionValue: (t: T) => string | number,
-  dedupeFn?: (a: T, b: T) => boolean
-) {
-  if (dedupeFn) return dedupeFn;
-  return (a: T, b: T) => getOptionValue(a) === getOptionValue(b);
-}
+/* ============================================================
+   HELPERS
+============================================================ */
+const useDebounce = () => {
+  const ref = React.useRef<any>(null);
+  return (fn: () => void, ms = 300) => {
+    clearTimeout(ref.current);
+    ref.current = setTimeout(fn, ms);
+  };
+};
 
-const sameIds = (a: Array<string | number>, b: Array<string | number>) =>
-  a.length === b.length && a.every((x, i) => String(x) === String(b[i]));
-
+/* ============================================================
+   MAIN COMPONENT
+============================================================ */
 export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   const {
-    name,
     label,
     placeholder,
     size = "small",
@@ -84,8 +81,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     error,
     helperText,
 
-    selectedIds,
-    onIdsChange,
+    selectedId,
     onChange,
     onSelect,
     onBlur,
@@ -93,167 +89,84 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
 
     search,
     searchPage,
-    fetchList,
-    hydrateByIds,
+    fetchOne,
+    hydrateById,
 
-    onAdd,
+    onOpenCreate,
 
     getOptionLabel,
     getOptionValue,
-    allowDuplicate = false,
-    dedupeFn,
-    maxItems,
-    onOpenCreate,
+    renderItem,
+
     values,
     refreshKey,
+
     autoLoadAllOnMount = false,
-    fetchDeps,
     pageLimit = 20,
     ctx,
   } = props;
 
-  const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
-
-  const [items, setItems] = React.useState<T[]>([]);
+  /* ======================================================
+     INTERNAL STATE
+  ====================================================== */
+  const [value, setValue] = React.useState<T | null>(null);
+  const [options, setOptions] = React.useState<T[]>([]);
   const [inputValue, setInputValue] = React.useState("");
   const [keyword, setKeyword] = React.useState("");
 
-  const [options, setOptions] = React.useState<T[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [hasMore, setHasMore] = React.useState(false);
 
-  const deriveIds = React.useCallback(
-    (arr: T[]) => arr.map((x) => getOptionValue(x)),
-    [getOptionValue]
-  );
+  const debounce = useDebounce();
 
-  const internalUpdateRef = React.useRef(false);
-  const isTypingRef = React.useRef(false);
-
-  const lastEmittedIdsRef = React.useRef<Array<string | number>>([]);
-  const emitIdsIfChanged = React.useCallback(
-    (arr: T[]) => {
-      const ids = deriveIds(arr);
-      if (!sameIds(ids, lastEmittedIdsRef.current)) {
-        lastEmittedIdsRef.current = ids;
-        if (onIdsChange) onIdsChange(ids);
-        else if (onChange) onChange(ids as any, arr);
-      }
-    },
-    [deriveIds, onIdsChange, onChange]
-  );
-
-  // -----------------------------
-  // Controlled by IDs
-  // -----------------------------
+  /* ======================================================
+     Controlled mode → hydrateById
+  ====================================================== */
   React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!isControlledByIds || !selectedIds || !hydrateByIds) return;
+    if (selectedId == null) {
+      setValue(null);
+      setInputValue("");
+      return;
+    }
 
-      const hydrated = await hydrateByIds(selectedIds, values);
+    if (!hydrateById) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const obj = await hydrateById(selectedId, values);
       if (cancelled) return;
-
-      const order = new Map(selectedIds.map((id, i) => [String(id), i]));
-      const sorted = [...hydrated].sort((a, b) => {
-        const ia = order.get(String(getOptionValue(a))) ?? 0;
-        const ib = order.get(String(getOptionValue(b))) ?? 0;
-        return ia - ib;
-      });
-      setItems(sorted);
-      lastEmittedIdsRef.current = selectedIds.map(String);
-      if (sorted[0]) {
-        setInputValue(getOptionLabel(sorted[0]!));
-      }
+      setValue(obj);
+      setInputValue(obj ? getOptionLabel(obj) : "");
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isControlledByIds, selectedIds, hydrateByIds, values, getOptionLabel, getOptionValue]);
 
-  // -----------------------------
-  // Uncontrolled fetchList
-  // -----------------------------
-  const defaultFetchKey = values && "id" in values ? (values as any).id : "__NO_ID__";
-  const depsForFetch = fetchDeps ?? [defaultFetchKey, isControlledByIds, fetchList, values[name]];
+    return () => { cancelled = true };
+  }, [selectedId, hydrateById, values]);
 
+  /* ======================================================
+     FetchOne (initial)
+  ====================================================== */
   React.useEffect(() => {
+    if (!fetchOne) return;
     let cancelled = false;
+
     (async () => {
-      if (isControlledByIds || !fetchList) return;
-
-      if (internalUpdateRef.current) {
-        internalUpdateRef.current = false;
-        return;
-      }
-
-      const data = await fetchList(values);
-      if (!cancelled) {
-        setItems(data ?? []);
-        emitIdsIfChanged(data ?? []);
-
-        if (data?.[0]) {
-          if (!isTypingRef.current) {
-            setInputValue(getOptionLabel(data[0]));
-          }
-        }
-        isTypingRef.current = false;
+      const obj = await fetchOne(values);
+      if (cancelled) return;
+      if (obj) {
+        setValue(obj);
+        setInputValue(getOptionLabel(obj));
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, depsForFetch);
 
-  // -----------------------------
-  // refreshKey → refetch
-  // -----------------------------
-  const doFetchList = React.useCallback(async () => {
-    if (!fetchList) return;
+    return () => { cancelled = true };
+  }, [fetchOne, values]);
 
-    const data = await fetchList(values);
-    setItems(data ?? []);
-    emitIdsIfChanged(data ?? []);
-
-    if (data?.[0]) setInputValue(getOptionLabel(data[0]));
-    else setInputValue("");
-  }, [fetchList, values, emitIdsIfChanged, getOptionLabel]);
-
-  React.useEffect(() => {
-    if (refreshKey === undefined) return;
-    doFetchList().catch(() => void 0);
-  }, [refreshKey, doFetchList]);
-
-  // -----------------------------
-  // search paging
-  // -----------------------------
-  const eq = React.useMemo(() => makeEquality(getOptionValue, dedupeFn), [getOptionValue, dedupeFn]);
-
-  const filterOutSelected = React.useCallback(
-    (arr: T[]) => {
-      return arr;
-    },
-    [allowDuplicate, items, eq]
-  );
-
-  const dedupById = React.useCallback(
-    (arr: T[]) => {
-      const seen = new Set<string>();
-      const out: T[] = [];
-      for (const it of arr) {
-        const key = String(getOptionValue(it));
-        if (!seen.has(key)) {
-          seen.add(key);
-          out.push(it);
-        }
-      }
-      return out;
-    },
-    [getOptionValue]
-  );
-
+  /* ======================================================
+     Paging search
+  ====================================================== */
   const loadFirstPage = React.useCallback(
     async (kw: string) => {
       setLoading(true);
@@ -261,201 +174,116 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       try {
         if (searchPage) {
           const data = await searchPage(kw, 1, pageLimit);
-          const filtered = filterOutSelected(data ?? []);
-          setOptions(filtered);
+          setOptions(data ?? []);
           setHasMore((data?.length ?? 0) >= pageLimit);
         } else {
           const data = await search(kw);
-          const filtered = filterOutSelected(data ?? []);
-          setOptions(filtered);
+          setOptions(data ?? []);
           setHasMore(false);
         }
       } finally {
         setLoading(false);
       }
     },
-    [searchPage, pageLimit, filterOutSelected, search]
+    [search, searchPage, pageLimit]
   );
 
   const loadNextPage = React.useCallback(async () => {
     if (!searchPage || loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const nextPage = page + 1;
-      const data = await searchPage(keyword, nextPage, pageLimit);
-      const filtered = filterOutSelected(data ?? []);
-      setOptions((prev) => dedupById([...prev, ...filtered]));
-      setPage(nextPage);
+      const next = page + 1;
+      const data = await searchPage(keyword, next, pageLimit);
+      setOptions((prev) => [...prev, ...(data ?? [])]);
+      setPage(next);
       setHasMore((data?.length ?? 0) >= pageLimit);
     } finally {
       setLoadingMore(false);
     }
-  }, [searchPage, loadingMore, hasMore, page, keyword, pageLimit, filterOutSelected, dedupById]);
+  }, [searchPage, keyword, page, pageLimit, loadingMore, hasMore]);
 
+  /* ======================================================
+     AutoLoad options on mount
+  ====================================================== */
   React.useEffect(() => {
-    if (autoLoadAllOnMount) {
-      loadFirstPage("").catch(() => void 0);
-    }
-  }, [autoLoadAllOnMount, loadFirstPage]);
+    if (autoLoadAllOnMount) loadFirstPage("");
+  }, [autoLoadAllOnMount]);
 
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* ======================================================
+     refreshKey → fetchOne again
+  ====================================================== */
+  React.useEffect(() => {
+    if (!refreshKey || !fetchOne) return;
 
-  const setItemsAndEmit = React.useCallback(
-    (next: T[]) => {
-      setItems(next);
-      emitIdsIfChanged(next);
-    },
-    [emitIdsIfChanged]
-  );
+    (async () => {
+      const obj = await fetchOne(values);
+      setValue(obj ?? null);
+      setInputValue(obj ? getOptionLabel(obj) : "");
+    })();
+  }, [refreshKey]);
 
-  // -----------------------------
-  // SingleChoice logic — sync temp item
-  // -----------------------------
-  const ensureTempItem = React.useCallback(
-    (_: string) => {
-      const temp: any = { __temp: true }; // minimal temp item
-      setItemsAndEmit([temp as T]);
-    },
-    [setItemsAndEmit]
-  );
+  /* ======================================================
+     Input change
+  ====================================================== */
+  const handleInput = (_: any, text: string, reason: string) => {
+    const v = text.trim();
+    setInputValue(v);
+    setKeyword(v);
 
-  const showLabel = React.useCallback(
-    (item: T | null) => {
-      if (!item) return "";
-      if ((item as any).__temp) return inputValue;
-      return getOptionLabel(item);
-    },
-    [getOptionLabel, inputValue]
-  );
+    onInputChange?.(v);
 
-  const showValue = React.useCallback(
-    (item: T | null) => {
-      if (!item) return "";
-      if ((item as any).__temp) return inputValue;
-      return getOptionValue(item);
-    },
-    [getOptionValue, inputValue]
-  );
-
-  const handleInputChange = React.useCallback(
-    (_: any, v: string, reason: string) => {
-      isTypingRef.current = true;
-      internalUpdateRef.current = true;
-
-      setInputValue(v);
-      setKeyword(v);
-
-      if (onInputChange) {
-        onInputChange(v);
-      }
-
-      if (v === "") {
-        setItemsAndEmit([]);
-      } else {
-        ensureTempItem(v);
-      }
-
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-
-      if (v === "" || reason === "clear") {
-        loadFirstPage("").catch(() => void 0);
-        return;
-      }
-
-      debounceRef.current = setTimeout(() => {
-        loadFirstPage(v).catch(() => void 0);
-      }, 300);
-    },
-    [loadFirstPage, ensureTempItem, setItemsAndEmit, onInputChange]
-  );
-
-  // -----------------------------
-  // Add/remove logic
-  // -----------------------------
-  const reloadAfterSelect = React.useCallback(() => {
-    loadFirstPage("").catch(() => void 0);
-  }, [loadFirstPage]);
-
-  const addItem = React.useCallback(
-    async (item: T) => {
-      if (onAdd) await onAdd(item);
-      setItemsAndEmit([item]);
-      setInputValue(getOptionLabel(item));
-      reloadAfterSelect();
+    if (v === "" || reason === "clear") {
+      debounce(() => loadFirstPage(""), 0);
       return;
+    }
+
+    debounce(() => loadFirstPage(v), 300);
+  };
+
+  /* ======================================================
+     Select option
+  ====================================================== */
+  const handleSelect = async (obj: T | null) => {
+    setValue(obj);
+    setInputValue(obj ? getOptionLabel(obj) : "");
+
+    const val = obj ? getOptionValue(obj) : null;
+    onChange?.(val, obj);
+    onSelect?.(obj);
+  };
+
+  /* ======================================================
+     Render
+  ====================================================== */
+  const listboxProps = {
+    onScroll: (e: React.UIEvent<HTMLUListElement>) => {
+      const el = e.currentTarget;
+      const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 32;
+      if (nearBottom) loadNextPage();
     },
-    [
-      items,
-      eq,
-      onAdd,
-      allowDuplicate,
-      maxItems,
-      setItemsAndEmit,
-      reloadAfterSelect,
-      getOptionLabel,
-    ]
-  );
+  };
 
-  const handleOpenCreate = React.useCallback(async () => {
-    if (!onOpenCreate) return;
-    await onOpenCreate();
-    await doFetchList();
-    loadFirstPage(keyword).catch(() => void 0);
-  }, [onOpenCreate, doFetchList, loadFirstPage, keyword]);
-
-  const listboxProps = React.useMemo(
-    () => ({
-      onScroll: (e: React.UIEvent<HTMLUListElement>) => {
-        const el = e.currentTarget;
-        const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 32;
-        if (nearBottom) loadNextPage();
-      },
-    }),
-    [loadNextPage]
-  );
-
-  // -----------------------------
-  // Render
-  // -----------------------------
   return (
-    <FormControl error={!!error} fullWidth={fullWidth} disabled={disabled}>
+    <FormControl fullWidth={fullWidth} disabled={disabled} error={!!error}>
       <Stack spacing={1}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Autocomplete
             sx={{ flex: 1 }}
             options={options}
             loading={loading || loadingMore}
-            value={(items[0] ?? null)}
-            getOptionLabel={(o) => showLabel(o as T)}
-            isOptionEqualToValue={(a, b) => showValue(a as T) === showValue(b as T)}
-            onOpen={() => {
-              loadFirstPage("").catch(() => void 0);
-            }}
+            value={value}
+            getOptionLabel={(o) => (o ? getOptionLabel(o as T) : "")}
+            isOptionEqualToValue={(a, b) =>
+              getOptionValue(a as T) === getOptionValue(b as T)
+            }
             inputValue={inputValue}
-            onInputChange={handleInputChange}
-            filterOptions={(opts) => filterOutSelected(opts as T[])}
+            onInputChange={handleInput}
             ListboxProps={listboxProps}
-            onChange={async (_e, newVal) => {
-              if (newVal) {
-                internalUpdateRef.current = true;
-
-                const label = getOptionLabel(newVal);
-                await addItem(newVal as T);
-                setInputValue(label);
-                onSelect?.(newVal as T);
-                return;
-              }
-
-              const input = inputValue.trim();
-              if (onOpenCreate) {
-                const matched = options.some((o) => getOptionLabel(o) === input);
-                if (!matched) {
-                  setInputValue("");
-                  onSelect?.(null);
-                }
-              }
-            }}
-
+            renderOption={(props, opt) => (
+              <li {...props}>{renderItem ? renderItem(opt as T) : getOptionLabel(opt as T)}</li>
+            )}
+            onChange={(_, newVal) => handleSelect(newVal as T)}
+            onOpen={() => loadFirstPage("")}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -463,19 +291,12 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
                 placeholder={placeholder}
                 size={size}
                 onBlur={() => {
-                  const text = inputValue.trim();
-                  const matched =
-                    options.find((o) => getOptionLabel(o) === text) ?? null;
+                  const t = inputValue.trim();
+                  const matched = options.find((o) => getOptionLabel(o) === t) ?? null;
+                  onBlur?.(t, matched, ctx);
 
-                  onBlur?.(text, matched, ctx);
-
-                  if (onOpenCreate && !matched) {
-                    setInputValue("");
-                    onSelect?.(null);
-                  }
+                  if (!matched) handleSelect(null);
                 }}
-
-
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
@@ -492,11 +313,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
           {onOpenCreate && (
             <Tooltip title="Tạo mới">
               <span>
-                <IconButton
-                  color="primary"
-                  onClick={handleOpenCreate}
-                  size={size === "medium" ? "medium" : "small"}
-                >
+                <IconButton color="primary" onClick={onOpenCreate} size={size}>
                   <AddCircleOutlineRounded />
                 </IconButton>
               </span>

@@ -67,7 +67,6 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
 
   // SEARCHSINGLE
   if (f.kind === "searchsingle") {
-    // cố lấy name từ altName
     const nameValue = f.altName ? values[f.altName] : null;
     return <Typography>{nameValue ?? String(v)}</Typography>;
   }
@@ -638,9 +637,7 @@ export function AutoFormFieldSingle({
 
   // SEARCHSINGLE
   if (f.kind === "searchsingle") {
-    let raw = values[f.name] ?? (f.altName ? values[f.altName] : undefined);
-
-    const selectedIds = (raw ? [raw] : []);
+    const rawId = values[f.name] ?? (f.altName ? values[f.altName] : null);
     const isFreeSolo = !f.onOpenCreate;
 
     return (
@@ -653,7 +650,7 @@ export function AutoFormFieldSingle({
         fullWidth={f.fullWidth ?? true}
         helperText={f.helperText}
         error={error}
-        selectedIds={selectedIds}
+        selectedId={rawId ?? null}
         onInputChange={(text) => {
           if (isFreeSolo) {
             setValue(f.name, text);
@@ -661,13 +658,12 @@ export function AutoFormFieldSingle({
             setValue(mapped, text);
           }
         }}
-        onChange={(nextIds, nextObjs) => {
-          const singleId = nextIds && nextIds.length > 0 ? nextIds[0] : null;
-          const singleObj = nextObjs && nextObjs.length > 0 ? nextObjs[0] : null;
-          setValue(f.name, singleId);
-          const label = f.getOptionLabel?.(singleObj);
-          if (label) {
-            setValue(mapIdFieldToNameField(f.name), label)
+        onChange={(val, obj) => {
+          setValue(f.name, val);
+          const mapped = mapIdFieldToNameField(f.name);
+          if (obj && f.getOptionLabel) {
+            const label = f.getOptionLabel(obj)?.trim();
+            if (label) setValue(mapped, label);
           }
         }}
         search={f.search!}
@@ -676,14 +672,9 @@ export function AutoFormFieldSingle({
         onBlur={f.onBlur}
         getOptionLabel={f.getOptionLabel!}
         getOptionValue={f.getOptionValue!}
-        fetchList={f.fetchList}
-        onAdd={f.onAdd}
-        onDelete={f.onDelete}
+        fetchOne={f.fetchOne}
+        hydrateById={f.hydrateById}    
         renderItem={f.renderItem}
-        allowDuplicate={f.allowDuplicate}
-        dedupeFn={f.dedupeFn as any}
-        maxItems={f.maxItems}
-        disableDelete={f.disableDelete}
         onOpenCreate={f.onOpenCreate}
         refreshKey={f.refreshKey}
         pageLimit={f.pageLimit}
@@ -825,12 +816,15 @@ export function AutoFormFieldSingle({
   // CUSTOM
   if (f.kind === "custom" && f.render) {
     return (
-      f.render({
-        value: values[f.name],
-        setValue: (v) => setValue(f.name, v),
-        error,
-        field: f,
-      }) as any
+      <Box sx={{ width: "100%", overflowX: "auto" }}>
+        {f.render({
+          value: values[f.name],
+          setValue: (v) => setValue(f.name, v),
+          error,
+          field: f,
+          values,
+        }) as any}
+      </Box>
     );
   }
 

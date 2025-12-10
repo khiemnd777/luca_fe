@@ -178,6 +178,17 @@ export async function updateField(
   return result;
 }
 
+export async function sort(
+  collectionId: number,
+  ids: number[],
+): Promise<void> {
+  const { data } = await apiClient.put<string>(`${env.apiBasePath}/metadata/fields/sort`, {
+    'collection_id': collectionId,
+    ids,
+  });
+  invalidateApiCache([`metadata:collection:${data}`]);
+}
+
 export async function deleteField(id: number): Promise<void> {
   await apiClient.delete(`${env.apiBasePath}/metadata/fields/${id}`);
 }

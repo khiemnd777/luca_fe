@@ -248,9 +248,12 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
         v = v ?? (f.freeSolo ? "" : "");
         break;
       }
-      case "searchlist":
-      case "searchsingle": {
+      case "searchlist": {
         v = Array.isArray(v) ? v : [];
+        break;
+      }
+      case "searchsingle": {
+        if (v === undefined || v === null || v === "") v = null;
         break;
       }
       case "date": {
@@ -362,7 +365,7 @@ export function useAutoForm(
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const [validating, setValidating] = React.useState<Record<string, boolean>>({});
 
-  // track fields manually edited
+  const hardErrorsRef = React.useRef<Record<string, string | null>>({});
   const manualEditedRef = React.useRef<Set<string>>(new Set());
 
   // hydrate
@@ -403,8 +406,21 @@ export function useAutoForm(
   }, [schemaNames]);
 
   const setFieldError = React.useCallback((name: string, msg: string | null) => {
+    if (msg) {
+      hardErrorsRef.current = {
+        ...hardErrorsRef.current,
+        [name]: msg,
+      };
+    } else {
+      if (name in hardErrorsRef.current) {
+        const copy = { ...hardErrorsRef.current };
+        delete copy[name];
+        hardErrorsRef.current = copy;
+      }
+    }
     setErrors((e) => ({ ...e, [name]: msg }));
   }, []);
+
 
   const values = React.useMemo(
     () => ({ ...extrasRef.current, ...formValues }),
@@ -454,6 +470,7 @@ export function useAutoForm(
   // validations
   const validate = React.useCallback(() => {
     const err: Record<string, string | null> = {};
+
     for (const f of schema) {
       let msg: string | null = null;
 
@@ -465,11 +482,19 @@ export function useAutoForm(
         msg = validateOneSync(formValues[f.name], f.rules, f.label, f.kind);
       }
 
-      if (msg) err[f.name] = msg;
+      err[f.name] = msg ?? null;
     }
-    setErrors(err);
-    return Object.values(err).every((x) => !x);
+
+    // hard errors (business errors from ctx.setFieldError)
+    const merged: Record<string, string | null> = {
+      ...err,
+      ...hardErrorsRef.current,
+    };
+
+    setErrors(merged);
+    return Object.values(merged).every((x) => !x);
   }, [schema, formValues, values]);
+
 
   const validateFieldAsync = React.useCallback(async (name: string) => {
     const def = schema.find((x) => x.name === name);

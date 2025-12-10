@@ -46,13 +46,13 @@ function convertSubmitToButton(
 
   return {
     name: "submit",
-    label: "Save",
+    label: "Lưu",
     color: "primary",
     submit: async ({ values, meta }) => {
-      if (submitDef.type === "fn") {
+      if (submitDef?.type === "fn") {
         return submitDef.run(values, meta);
       }
-      if (submitDef.type === "http") {
+      if (submitDef?.type === "http") {
         const body = submitDef.transform ? submitDef.transform(values) : values;
         const fetcher = submitDef.fetcher ?? fetch;
         const res = await fetcher(submitDef.url, {

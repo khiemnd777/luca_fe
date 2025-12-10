@@ -6,6 +6,8 @@ export interface ProductModel {
   customFields?: Record<string, any> | null;
   processIds?: number[];
   processNames?: string;
+  categoryId?: number | null;
+  categoryName?: string | null;
   createdAt: string;
   updatedAt: string;
 }

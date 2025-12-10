@@ -44,8 +44,9 @@ export type SearchSingleFieldProps<T> = {
   onOpenCreate?: () => Promise<void> | void;
 
   /** Rendering */
-  getOptionLabel: (item: T) => string;
+  getOptionLabel: (item: T, items?: T[]) => string;
   getOptionValue: (item: T) => string | number;
+  getInputLabel?: (item: T) => string;
   renderItem?: (item: T) => React.ReactNode;
 
   /** Paging */
@@ -118,12 +119,18 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [hasMore, setHasMore] = React.useState(false);
+  const [cachedOptions, setCachedOptions] = React.useState<T[]>([]);
 
   const debounce = useDebounce();
 
   /* ======================================================
      Controlled mode → hydrateById
   ====================================================== */
+  const valuesRef = React.useRef(values);
+  React.useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+
   React.useEffect(() => {
     if (selectedId == null) {
       setValue(null);
@@ -136,14 +143,16 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     let cancelled = false;
 
     (async () => {
-      const obj = await hydrateById(selectedId, values);
+      const obj = await hydrateById(selectedId, valuesRef.current);
       if (cancelled) return;
       setValue(obj);
       setInputValue(obj ? getOptionLabel(obj) : "");
     })();
 
-    return () => { cancelled = true };
-  }, [selectedId, hydrateById, values]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, hydrateById, getOptionLabel]);
 
   /* ======================================================
      FetchOne (initial)
@@ -153,7 +162,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     let cancelled = false;
 
     (async () => {
-      const obj = await fetchOne(values);
+      const obj = await fetchOne(valuesRef.current);
       if (cancelled) return;
       if (obj) {
         setValue(obj);
@@ -161,8 +170,19 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       }
     })();
 
-    return () => { cancelled = true };
-  }, [fetchOne, values]);
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchOne, getOptionLabel]);
+
+  /* ======================================================
+     Cache options
+  ====================================================== */
+  React.useEffect(() => {
+    if (options.length > 0) {
+      setCachedOptions(options);
+    }
+  }, [options]);
 
   /* ======================================================
      Paging search
@@ -218,7 +238,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     (async () => {
       const obj = await fetchOne(values);
       setValue(obj ?? null);
-      setInputValue(obj ? getOptionLabel(obj) : "");
+      setInputValue(obj ? getOptionLabel(obj, options) : "");
     })();
   }, [refreshKey]);
 
@@ -226,7 +246,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
      Input change
   ====================================================== */
   const handleInput = (_: any, text: string, reason: string) => {
-    const v = text.trim();
+    const v = text;
     setInputValue(v);
     setKeyword(v);
 
@@ -245,7 +265,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   ====================================================== */
   const handleSelect = async (obj: T | null) => {
     setValue(obj);
-    setInputValue(obj ? getOptionLabel(obj) : "");
+    setInputValue(obj ? getOptionLabel(obj, options) : "");
 
     const val = obj ? getOptionValue(obj) : null;
     onChange?.(val, obj);
@@ -263,6 +283,11 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     },
   };
 
+  const getRawLabel = React.useCallback(
+    (o: T) => (props.getInputLabel ? props.getInputLabel(o) : getOptionLabel(o, options)),
+    [props.getInputLabel, getOptionLabel]
+  );
+
   return (
     <FormControl fullWidth={fullWidth} disabled={disabled} error={!!error}>
       <Stack spacing={1}>
@@ -272,16 +297,20 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
             options={options}
             loading={loading || loadingMore}
             value={value}
-            getOptionLabel={(o) => (o ? getOptionLabel(o as T) : "")}
+            getOptionLabel={(o) => (o ? getOptionLabel(o as T, options) : "")}
             isOptionEqualToValue={(a, b) =>
               getOptionValue(a as T) === getOptionValue(b as T)
             }
             inputValue={inputValue}
             onInputChange={handleInput}
             ListboxProps={listboxProps}
-            renderOption={(props, opt) => (
-              <li {...props}>{renderItem ? renderItem(opt as T) : getOptionLabel(opt as T)}</li>
-            )}
+            renderOption={(props, opt) => {
+              return (
+                <li {...props} key={getOptionValue(opt as T)}>
+                  {renderItem ? renderItem(opt as T) : getOptionLabel(opt as T, options)}
+                </li>
+              );
+            }}
             onChange={(_, newVal) => handleSelect(newVal as T)}
             onOpen={() => loadFirstPage("")}
             renderInput={(params) => (
@@ -292,11 +321,24 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
                 size={size}
                 onBlur={() => {
                   const t = inputValue.trim();
-                  const matched = options.find((o) => getOptionLabel(o) === t) ?? null;
+                  const sourceOptions = (options.length > 0 ? options : cachedOptions).slice().reverse();
+
+                  const matched =
+                    sourceOptions.find((o) => {
+                      const raw = getRawLabel(o)?.trim();
+                      if (!raw) return false;
+                      return t.includes(raw);
+                    }) ?? null;
+
                   onBlur?.(t, matched, ctx);
 
-                  if (!matched) handleSelect(null);
+                  if (!matched) {
+                    return;
+                  }
+
+                  handleSelect(matched);
                 }}
+
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (

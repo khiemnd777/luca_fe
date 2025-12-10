@@ -1,7 +1,7 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
 import type { CategoryModel, CategoryUpsertModel } from "@features/category/model/category.model";
-import { apiClient } from "@core/network/api-client";
+import { apiClient, invalidateApiCache } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
@@ -36,6 +36,7 @@ export async function create(model: CategoryUpsertModel): Promise<void> {
 export async function update(model: CategoryUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.put<any>(`${departmentApiPath()}/category/${model.dto.id}`, model);
+  invalidateApiCache([`metadata:collection:category-${model.dto.id}`]);
 }
 
 export async function unlink(id: number): Promise<void> {

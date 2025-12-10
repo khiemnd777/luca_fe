@@ -15,10 +15,16 @@ import type {
 } from "@core/form/form.types";
 
 import type { FieldDef, FieldKind, FormContext } from "@core/form/types";
-import type { FieldModel } from "@core/metadata/data/metadata.model";
+import type {
+  FieldModel,
+  CollectionWithFieldsModel,
+} from "@core/metadata/data/metadata.model";
 
 import { getFormSchema } from "@core/form/form-registry";
-import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+import {
+  getAvailableCollection,
+  listCollectionsByGroup,
+} from "@core/metadata/data/metadata.api";
 
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
@@ -49,12 +55,81 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   }
 }
 
+const metadataGroupCache = new Map<string, Promise<CollectionWithFieldsModel[]>>();
+
+async function fetchMetadataGroupCollections(
+  group: string
+): Promise<CollectionWithFieldsModel[]> {
+  if (!group) return [];
+
+  let promise = metadataGroupCache.get(group);
+  if (!promise) {
+    promise = listCollectionsByGroup(group, {
+      limit: 1000,
+      offset: 0,
+      withFields: false,
+      table: false,
+      form: false,
+    }).then((res) => res.data)
+      .catch((err) => {
+        metadataGroupCache.delete(group);
+        throw err;
+      });
+    metadataGroupCache.set(group, promise);
+  }
+
+  return promise;
+}
+
+async function expandMetadataBlock(
+  metaField: FieldDef,
+  values: any,
+  changedDeps: string[],
+): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
+  const metadata = metaField.metadata;
+  if (!metadata?.group) {
+    return expandOneMetadataBlock(metaField, values, changedDeps);
+  }
+
+  try {
+    const collections = await fetchMetadataGroupCollections(metadata.group);
+    if (!collections.length) return { fields: [], deps: [], collections: [] };
+
+    const { group: _omit, ...restMeta } = metadata;
+    const results = await Promise.all(
+      collections.map((collection) => {
+        const derivedMeta: FieldDef = {
+          ...metaField,
+          metadata: {
+            ...restMeta,
+            collection: collection.slug,
+          },
+        };
+        return expandOneMetadataBlock(derivedMeta, values, changedDeps);
+      })
+    );
+
+    const fields = results.flatMap((res) => res.fields);
+    const deps = Array.from(new Set(results.flatMap((res) => res.deps)));
+    const participatedCollections = Array.from(
+      new Set(results.flatMap((res) => res.collections))
+    );
+    return { fields, deps, collections: participatedCollections };
+  } catch (err) {
+    console.error("Failed to load metadata group", metadata.group, err);
+    return { fields: [], deps: [], collections: [] };
+  }
+}
+
 async function expandOneMetadataBlock(
   metaField: FieldDef,
   values: any,
   changedDeps: string[],
-): Promise<{ fields: FieldDef[]; deps: string[] }> {
+): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
   const { collection, mode = "whole", fields, ignoreFields } = metaField.metadata!;
+  if (!collection) {
+    return { fields: [], deps: [], collections: [] };
+  }
   const params = changedDeps.map((dep) => ({
     field: dep,
     value: values[dep],
@@ -69,7 +144,7 @@ async function expandOneMetadataBlock(
     params,
   );
 
-  if (!coll) return { fields: [], deps: [] };
+  if (!coll) return { fields: [], deps: [], collections: [] };
 
   // parse showIf deps
   let deps: string[] = [];
@@ -160,6 +235,8 @@ async function expandOneMetadataBlock(
       const relation = isJSON(mf.relation ?? "") ? parseJSON(mf.relation ?? "{}") : {};
       const singleChoice = relation.type && relation.type === '1';
       const frmDlgKey = relation.form ?? relation.ref;
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+
       if (singleChoice) {
         const fd: FieldDef = {
           prop,
@@ -200,14 +277,13 @@ async function expandOneMetadataBlock(
             return await rel1(relation.target, refId);
           },
 
-          renderItem: (d: any) => (<>{d?.name}</>),
-          disableDelete: (d: any) => d?.locked === true,
+          // renderItem: (d: any) => (<>{d?.name}</>),
+          // disableDelete: (d: any) => d?.locked === true,
           autoLoadAllOnMount: true,
         };
         if (relation.form) {
           fd.onOpenCreate = () => openFormDialog(frmDlgKey);
         }
-        const override = metaField.metadata?.def?.find(d => d.name === mf.name);
         if (override) {
           const { name: _omit, ...rest } = override;
           Object.assign(fd, rest);
@@ -296,7 +372,11 @@ async function expandOneMetadataBlock(
     out.push(fd);
   }
 
-  return { fields: out, deps };
+  return {
+    fields: out,
+    deps,
+    collections: out.length > 0 ? [collection] : [],
+  };
 }
 
 /* ========================================================================
@@ -354,13 +434,25 @@ function flattenInitialRecursive(obj: any, prefix: string, out: any) {
   if (obj.relation_fields && typeof obj.relation_fields === "object") {
     for (const [k, v] of Object.entries(obj.relation_fields)) {
       const camel = snakeToCamel(k);
-      out[`${prefix}.relationFields.${camel}`] = v;
+      const relKey = `${prefix}.relationFields.${camel}`;
+      const rootKey = prefix ? `${prefix}.${camel}` : camel;
+      const cfKey = prefix ? `${prefix}.customFields.${camel}` : `customFields.${camel}`;
+
+      out[relKey] = v;   // relationFields.xxx
+      out[rootKey] = v;  // xxx
+      out[cfKey] = v;    // customFields.xxx
     }
   }
 
   if (obj.relationFields && typeof obj.relationFields === "object") {
     for (const [k, v] of Object.entries(obj.relationFields)) {
-      out[`${prefix}.relationFields.${k}`] = v;
+      const relKey = `${prefix}.relationFields.${k}`;
+      const rootKey = prefix ? `${prefix}.${k}` : k;
+      const cfKey = prefix ? `${prefix}.customFields.${k}` : `customFields.${k}`;
+
+      out[relKey] = v;
+      out[rootKey] = v;
+      out[cfKey] = v;
     }
   }
 
@@ -534,7 +626,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
-      { meta: FieldDef; fields: FieldDef[]; deps: string[] }[]
+      { meta: FieldDef; fields: FieldDef[]; deps: string[]; collections: string[] }[]
     >([]);
 
     if (metadataBlocksRef.current.length === 0) {
@@ -544,6 +636,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           meta,
           fields: [],
           deps: [],
+          collections: [],
         }));
     }
 
@@ -680,7 +773,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       (async () => {
         const results = await Promise.all(
-          metadataBlocks.map((b) => expandOneMetadataBlock(b.meta, values, []))
+          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, []))
         );
 
         if (cancelled) return;
@@ -688,6 +781,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         results.forEach((res, i) => {
           metadataBlocks[i].fields = res.fields;
           metadataBlocks[i].deps = res.deps;
+          metadataBlocks[i].collections = res.collections;
         });
         setMetadataVersion(v => v + 1);
 
@@ -727,7 +821,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandOneMetadataBlock(b.meta, values, initialChanged)
+            expandMetadataBlock(b.meta, values, initialChanged)
           )
         );
 
@@ -735,6 +829,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const actual = reloadList[idx].i;
           metadataBlocks[actual].fields = res.fields;
           metadataBlocks[actual].deps = res.deps;
+          metadataBlocks[actual].collections = res.collections;
         });
 
         allDepsRef.current = metadataBlocks.flatMap((b) => b.deps);
@@ -777,7 +872,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       (async () => {
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandOneMetadataBlock(b.meta, values, changedDeps)
+            expandMetadataBlock(b.meta, values, changedDeps)
           )
         );
 
@@ -787,6 +882,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           const actual = reloadList[idx].i;
           metadataBlocks[actual].fields = res.fields;
           metadataBlocks[actual].deps = res.deps;
+          metadataBlocks[actual].collections = res.collections;
         });
         setMetadataVersion(v => v + 1);
 

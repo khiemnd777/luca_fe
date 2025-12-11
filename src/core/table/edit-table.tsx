@@ -314,32 +314,7 @@ export function EditTable<T extends { id?: string | number }>({
   const dndWidth = 48;
   const baseLeftOffset = (enableDnd ? dndWidth : 0) + (hasActions ? actionsWidth : 0);
 
-  // ==== compute sticky offsets ====
-  const leftOffsets: number[] = [];
-  const rightOffsets: number[] = [];
-  {
-    let acc = 0;
-    columns.forEach((c, i) => {
-      if (c.stickyLeft) {
-        const w = typeof c.width === "number" ? c.width : parseInt(String(c.width ?? "0"));
-        leftOffsets[i] = acc;
-        acc += isNaN(w) ? 0 : w;
-      }
-    });
-  }
-  {
-    let acc = 0;
-    for (let i = columns.length - 1; i >= 0; i--) {
-      const c = columns[i];
-      if (c.stickyRight) {
-        const w = typeof c.width === "number" ? c.width : parseInt(String(c.width ?? "0"));
-        rightOffsets[i] = acc;
-        acc += isNaN(w) ? 0 : w;
-      }
-    }
-  }
-
-  const gridTemplateColumns = React.useMemo(() => {
+  const baseGridTemplateColumns = React.useMemo(() => {
     const parts: string[] = [];
     if (enableDnd) parts.push(`${dndWidth}px`);
     if (hasActions) parts.push(`${actionsWidth}px`);
@@ -354,6 +329,90 @@ export function EditTable<T extends { id?: string | number }>({
     });
     return parts.join(" ");
   }, [columns, enableDnd, hasActions]);
+
+  const [syncedGridTemplateColumns, setSyncedGridTemplateColumns] = React.useState(baseGridTemplateColumns);
+  const [measuredColumnWidths, setMeasuredColumnWidths] = React.useState<number[] | null>(null);
+  const headerRowRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    setSyncedGridTemplateColumns(baseGridTemplateColumns);
+  }, [baseGridTemplateColumns]);
+
+  React.useLayoutEffect(() => {
+    const headerEl = headerRowRef.current;
+    if (!headerEl) return;
+
+    const measure = () => {
+      const cells = Array.from(headerEl.children) as HTMLElement[];
+      if (!cells.length) return;
+
+      const widths = cells.map((el) => Math.round(el.getBoundingClientRect().width));
+      if (!widths.length || widths.some((w) => w === 0)) return;
+
+      const template = widths.map((w) => `${w}px`).join(" ");
+      setSyncedGridTemplateColumns((prev) => (prev !== template ? template : prev));
+
+      const startIdx = (enableDnd ? 1 : 0) + (hasActions ? 1 : 0);
+      const colWidths = widths.slice(startIdx, startIdx + columns.length);
+      setMeasuredColumnWidths((prev) => {
+        if (prev && prev.length === colWidths.length && prev.every((v, i) => v === colWidths[i])) {
+          return prev;
+        }
+        return colWidths;
+      });
+    };
+
+    measure();
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => measure());
+      observer.observe(headerEl);
+      return () => observer.disconnect();
+    }
+  }, [columns, enableDnd, hasActions]);
+
+  const resolveColWidth = React.useCallback(
+    (col: ColumnDef<T>, idx: number) => {
+      const measured = measuredColumnWidths?.[idx];
+      if (typeof measured === "number" && measured > 0) return measured;
+
+      if (typeof col.width === "number") return col.width;
+      if (typeof col.width === "string") {
+        const pxMatch = col.width.match(/([\d.]+)px/);
+        if (pxMatch) return parseFloat(pxMatch[1]);
+        const numeric = Number(col.width);
+        if (!Number.isNaN(numeric)) return numeric;
+      }
+      return 0;
+    },
+    [measuredColumnWidths]
+  );
+
+  // ==== compute sticky offsets ====
+  const leftOffsets: number[] = [];
+  const rightOffsets: number[] = [];
+  {
+    let acc = 0;
+    columns.forEach((c, i) => {
+      if (c.stickyLeft) {
+        const w = resolveColWidth(c, i);
+        leftOffsets[i] = acc;
+        acc += isNaN(w) ? 0 : w;
+      }
+    });
+  }
+  {
+    let acc = 0;
+    for (let i = columns.length - 1; i >= 0; i--) {
+      const c = columns[i];
+      if (c.stickyRight) {
+        const w = resolveColWidth(c, i);
+        rightOffsets[i] = acc;
+        acc += isNaN(w) ? 0 : w;
+      }
+    }
+  }
+
+  const gridTemplateColumns = syncedGridTemplateColumns ?? baseGridTemplateColumns;
 
   const totalColumns = columns.length + (hasActions ? 1 : 0) + (enableDnd ? 1 : 0);
 
@@ -565,6 +624,7 @@ export function EditTable<T extends { id?: string | number }>({
     }
   };
 
+  // TODO: the header cols are not sync width with rows of content below, even crash the last col.
   return (
     <Paper variant="outlined">
       <Box
@@ -576,6 +636,7 @@ export function EditTable<T extends { id?: string | number }>({
         <Box sx={{ minWidth: "100%" }}>
           <Box
             role="row"
+            ref={headerRowRef}
             sx={{
               display: "grid",
               gridTemplateColumns,

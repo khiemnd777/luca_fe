@@ -8,11 +8,20 @@ import { table, unlink } from "@features/product/api/product.api";
 const columns: ColumnDef<ProductModel>[] = [
   { key: "code", header: "Mã sản phẩm", sortable: true, },
   { key: "name", header: "Tên sản phẩm", sortable: true, labelField: true },
+  { key: "categoryName", header: "Danh mục", sortable: true, },
   {
     key: "",
     type: "metadata",
     metadata: {
       collection: "product",
+      mode: "whole",
+    }
+  },
+  {
+    key: "",
+    type: "metadata",
+    metadata: {
+      group: "category",
       mode: "whole",
     }
   },

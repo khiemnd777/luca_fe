@@ -5,10 +5,136 @@ import { subscribeTableReload } from "@core/table/table-reload";
 import { resolveRowLabel } from "@core/table/table-utils";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { hasAnyPermissions } from "../auth/rbac-utils";
-import { getAvailableCollection } from "@core/metadata/data/metadata.api";
+import { getAvailableCollection, listCollectionsByGroup } from "@core/metadata/data/metadata.api";
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
+
+const metadataGroupCache = new Map<string, Promise<string[]>>();
+
+async function fetchMetadataGroupCollections(group: string): Promise<string[]> {
+  if (!group) return [];
+
+  let promise = metadataGroupCache.get(group);
+  if (!promise) {
+    promise = listCollectionsByGroup(group, {
+      limit: 1000,
+      offset: 0,
+      withFields: true,
+      table: true,
+      form: false,
+    })
+      .then((res) => res.data.map((c) => c.slug))
+      .catch((err) => {
+        metadataGroupCache.delete(group);
+        throw err;
+      });
+    metadataGroupCache.set(group, promise);
+  }
+
+  return promise;
+}
+
+async function expandMetadataColumn<T>(col: ColumnDef<T>): Promise<ColumnDef<T>[]> {
+  const metadata = col.metadata!;
+  const result: ColumnDef<T>[] = [];
+
+  if (metadata.group) {
+    try {
+      const collections = await fetchMetadataGroupCollections(metadata.group);
+      if (!collections.length) return [];
+
+      const { group: _omit, ...restMeta } = metadata;
+      const expanded = await Promise.all(
+        collections.map((collection) =>
+          expandMetadataColumn<T>({
+            ...col,
+            metadata: {
+              ...restMeta,
+              collection,
+            },
+          })
+        )
+      );
+      return expanded.flat();
+    } catch (err) {
+      console.error("Failed to load metadata group", metadata.group, err);
+      return [];
+    }
+  }
+
+  const { collection, mode = "whole", fields, ignoreFields, def } = metadata;
+  if (!collection) return [];
+  const schema = await getAvailableCollection(collection, true, true, false);
+
+  let fieldsToUse = schema.fields;
+  fieldsToUse = fieldsToUse?.map((f) => ({
+    ...f,
+    name: snakeToCamel(f.name)
+  }));
+
+  const camelIgnores = ignoreFields?.map(snakeToCamel);
+
+  if (mode === "partial" && fields?.length) {
+    fieldsToUse = fieldsToUse?.filter(f => fields.includes(f.name));
+  }
+
+  if (mode === "whole" && camelIgnores?.length) {
+    fieldsToUse = fieldsToUse?.filter(mf => !camelIgnores.includes(mf.name));
+  }
+
+  if (fieldsToUse != null) {
+    for (const f of fieldsToUse) {
+      const fieldName = f.name;
+      const overrides = def?.[fieldName];
+
+      const baseKey = `customFields.${fieldName}`;
+      const header = overrides?.header ?? f.label ?? fieldName;
+
+      let type: ColumnType;
+      if (overrides?.type) {
+        type = overrides.type;
+      } else if (f.type === "relation") {
+        const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+        const singleChoice = relation.type === "1";
+        type = singleChoice ? "text" : "chips";
+      } else {
+        type = mapFieldTypeToColumnType(f.type);
+      }
+
+      const accessor =
+        overrides?.accessor ??
+        ((row: any) => {
+          if (f.type === "relation") {
+            const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
+            const singleChoice = relation.type === "1";
+            const label = mapIdFieldToNameField(fieldName);
+            return singleChoice
+              ? row.customFields?.[label] ?? row.customFields?.[fieldName]
+              : row.customFields?.[fieldName];
+          }
+          return row.customFields?.[fieldName];
+        });
+
+      const sortable = overrides?.sortable ?? false;
+
+      const render = overrides?.render
+        ? ((row: any) => overrides.render!(accessor(row), row))
+        : undefined;
+
+      result.push({
+        key: baseKey,
+        header,
+        type,
+        accessor,
+        sortable,
+        render,
+      });
+    }
+  }
+
+  return result;
+}
 
 async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<ColumnDef<T>[]> {
   const result: ColumnDef<T>[] = [];
@@ -19,74 +145,8 @@ async function expandMetadataColumns<T>(columns: ColumnDef<T>[]): Promise<Column
       continue;
     }
 
-    const { collection, mode = "whole", fields, ignoreFields } = col.metadata;
-    const schema = await getAvailableCollection(collection, true, true, false);
-
-    let fieldsToUse = schema.fields;
-    fieldsToUse = fieldsToUse?.map((f) => ({
-      ...f,
-      name: snakeToCamel(f.name)
-    }));
-
-    const camelIgnores = ignoreFields?.map(snakeToCamel);
-
-    if (mode === "partial" && fields?.length) {
-      fieldsToUse = fieldsToUse?.filter(f => fields.includes(f.name));
-    }
-
-    if (mode === "whole" && camelIgnores?.length) {
-      fieldsToUse = fieldsToUse?.filter(mf => !camelIgnores.includes(mf.name));
-    }
-
-    if (fieldsToUse != null) {
-      for (const f of fieldsToUse) {
-        const fieldName = f.name;
-        const overrides = col.metadata.def?.[fieldName];
-
-        const baseKey = `customFields.${fieldName}`;
-        const header = overrides?.header ?? f.label ?? fieldName;
-
-        let type: ColumnType;
-        if (overrides?.type) {
-          type = overrides.type;
-        } else if (f.type === "relation") {
-          const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
-          const singleChoice = relation.type === "1";
-          type = singleChoice ? "text" : "chips";
-        } else {
-          type = mapFieldTypeToColumnType(f.type);
-        }
-
-        const accessor =
-          overrides?.accessor ??
-          ((row: any) => {
-            if (f.type === "relation") {
-              const relation = isJSON(f.relation ?? "") ? parseJSON(f.relation ?? "{}") : {};
-              const singleChoice = relation.type === "1";
-              const label = mapIdFieldToNameField(fieldName);
-              return singleChoice
-                ? row.customFields?.[label] ?? row.customFields?.[fieldName]
-                : row.customFields?.[fieldName];
-            }
-            return row.customFields?.[fieldName];
-          });
-
-        const sortable = overrides?.sortable ?? false;
-
-        const render = overrides?.render
-          ? ((row: any) => overrides.render!(accessor(row), row))
-          : undefined;
-
-        result.push({
-          key: baseKey,
-          header,
-          type,
-          accessor,
-          sortable,
-          render,
-        });
-      }
-    }
+    const expanded = await expandMetadataColumn(col);
+    result.push(...expanded);
   }
 
   return result;

@@ -3,9 +3,10 @@ import { camelToSnake } from "@root/shared/utils/string.utils";
 export type MetaBlock = {
   meta: {
     prop?: string;
-    metadata?: { collection: string };
+    metadata?: { collection?: string; group?: string };
   };
   fields: { name: string }[];
+  collections?: string[];
 };
 
 /* ======================================================
@@ -40,16 +41,22 @@ export function packageData(metaBlocks: MetaBlock[], values: any) {
 
   // collect root / nested collections
   for (const b of metaBlocks) {
-    const coll = b.meta.metadata?.collection;
-    if (!coll) continue;
+    const collSource =
+      b.collections && b.collections.length > 0
+        ? b.collections
+        : b.meta.metadata?.collection
+        ? [b.meta.metadata.collection]
+        : [];
+    const usedCollections = Array.from(new Set(collSource));
+    if (usedCollections.length === 0) continue;
 
     if (!b.meta.prop) {
-      output.collections.push(coll);
+      output.collections.push(...usedCollections);
     } else {
       if (!nestedOut[b.meta.prop]) {
         nestedOut[b.meta.prop] = { dto: {}, collections: [] };
       }
-      nestedOut[b.meta.prop].collections.push(coll);
+      nestedOut[b.meta.prop].collections.push(...usedCollections);
     }
   }
 
@@ -174,4 +181,3 @@ function normalizeObject(obj: any) {
     if (v && typeof v === "object") normalizeObject(v);
   }
 }
-

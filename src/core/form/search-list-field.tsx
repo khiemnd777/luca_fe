@@ -51,7 +51,7 @@ export type SearchListFieldProps<T> = {
   onDragEnd?: (items: T[]) => void;
 
   // Extractors
-  getOptionLabel: (item: T) => string;
+  getOptionLabel: (item: T, items?: T[]) => string;
   getOptionValue: (item: T) => string | number;
 
   // Custom render (không chứa nút delete)
@@ -366,7 +366,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   );
 
   const defaultItemContent = React.useCallback(
-    (item: T) => <Chip label={getOptionLabel(item)} size="small" />,
+    (item: T) => <Chip label={getOptionLabel(item, options)} size="small" />,
     [getOptionLabel]
   );
 
@@ -472,7 +472,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
               if (newVal) await addItem(newVal as T);
             }}
             onInputChange={handleInputChange}
-            getOptionLabel={(o) => getOptionLabel(o as T)}
+            getOptionLabel={(o) => getOptionLabel(o as T, options)}
             isOptionEqualToValue={(a, b) => eq(a as T, b as T)}
             onOpen={() => {
               if (options.length === 0) {
@@ -606,7 +606,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
                           color="error"
                           disabled={disabledDel}
                           onClick={() => !disabledDel && removeItem(item)}
-                          aria-label={`Xoá ${getOptionLabel(item)}`}
+                          aria-label={`Xoá ${getOptionLabel(item, options)}`}
                         >
                           <DeleteRounded fontSize="small" />
                         </IconButton>

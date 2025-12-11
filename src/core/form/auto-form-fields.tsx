@@ -105,6 +105,26 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
   return <Typography>{String(v)}</Typography>;
 }
 
+function resolveRelationMirrors(fieldName: string) {
+  // fieldName:
+  // - "relationFields.supplier"
+  // - "product.relationFields.supplier"
+  const parts = fieldName.split(".");
+  const idx = parts.indexOf("relationFields");
+  if (idx === -1 || idx === parts.length - 1) {
+    return null;
+  }
+
+  const prefix = parts.slice(0, idx);      // [] hoặc ["product"]
+  const relField = parts[idx + 1];         // "supplier"
+
+  const root = [...prefix, relField].join(".");               // "supplier" hoặc "product.supplier"
+  const cf = [...prefix, "customFields", relField].join("."); // "customFields.supplier" hoặc "product.customFields.supplier"
+
+  return { root, cf };
+}
+
+
 
 // -----------------------------------------------------------
 // Render SINGLE FIELD — nguyên gốc logic cũ của bạn
@@ -638,7 +658,7 @@ export function AutoFormFieldSingle({
   // SEARCHSINGLE
   if (f.kind === "searchsingle") {
     const rawId = values[f.name] ?? (f.altName ? values[f.altName] : null);
-    const isFreeSolo = !f.onOpenCreate;
+    // const isFreeSolo = !f.onOpenCreate;
 
     return (
       <SearchSingleField
@@ -651,19 +671,27 @@ export function AutoFormFieldSingle({
         helperText={f.helperText}
         error={error}
         selectedId={rawId ?? null}
-        onInputChange={(text) => {
-          if (isFreeSolo) {
-            setValue(f.name, text);
-            const mapped = mapIdFieldToNameField(f.name);
-            setValue(mapped, text);
-          }
-        }}
+        // onInputChange={(text) => {
+        //   if (isFreeSolo) {
+        //     setValue(f.name, text);
+        //     const mapped = mapIdFieldToNameField(f.name);
+        //     setValue(mapped, text);
+        //   }
+        // }}
         onChange={(val, obj) => {
           setValue(f.name, val);
+          const mirrors = resolveRelationMirrors(f.name);
+          if (mirrors) {
+            setValue(mirrors.root, val); // values.xxx
+            setValue(mirrors.cf, val);   // values.customFields.xxx
+          }
           const mapped = mapIdFieldToNameField(f.name);
           if (obj && f.getOptionLabel) {
             const label = f.getOptionLabel(obj)?.trim();
             if (label) setValue(mapped, label);
+          }
+          if (f.onSelect) {
+            f.onSelect(obj);
           }
         }}
         search={f.search!}
@@ -671,9 +699,10 @@ export function AutoFormFieldSingle({
         onSelect={f.onSelect}
         onBlur={f.onBlur}
         getOptionLabel={f.getOptionLabel!}
-        getOptionValue={f.getOptionValue!}
+        getOptionValue={f.getOptionValue ?? ((d: any) => d?.id)}
+        getInputLabel={f.getInputLabel!}
         fetchOne={f.fetchOne}
-        hydrateById={f.hydrateById}    
+        hydrateById={f.hydrateById}
         renderItem={f.renderItem}
         onOpenCreate={f.onOpenCreate}
         refreshKey={f.refreshKey}

@@ -38,6 +38,28 @@ export async function listCollections(
   return { data: result, total: data.total };
 }
 
+export async function listCollectionsByGroup(
+  group: string,
+  params: ListCollectionsParams = {}
+): Promise<{ data: CollectionWithFieldsModel[]; total: number }> {
+  const { query = "", limit = 20, offset = 0, withFields = true, table = true, form = true } = params;
+  const { data } = await apiClient.get<{
+    data: CollectionWithFieldsModel[];
+    total: number;
+  }>(`${env.apiBasePath}/metadata/collections/integration/${group}`, {
+    params: {
+      query,
+      limit,
+      offset,
+      with_fields: withFields,
+      table,
+      form
+    },
+  });
+  const result = mapper.map<any[], CollectionWithFieldsModel[]>("Common", data.data, "dto_to_model");
+  return { data: result, total: data.total };
+}
+
 export async function getCollection(
   idOrSlug: string | number,
   withFields = true,

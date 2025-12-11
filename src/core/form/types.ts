@@ -108,8 +108,11 @@ export type MiniFieldOverride = {
 
   // searchlist, autocomplete, relation
   searchPage?: SearchListSearchPageFn;
+  fetchOne?: (values: Record<string, any>) => Promise<any | null>;
+  hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
   hydrateOrderField?: string;
   getOptionLabel?: (item: any) => string;
+  getInputLabel?: (item: any) => string;
   renderItem?: (item: any, index?: number) => React.ReactNode;
 };
 
@@ -179,8 +182,9 @@ export type FieldDef = {
   onDelete?: (item: any) => Promise<void> | void;
   onDragEnd?: (items: any[]) => void;
   // Extractors (áp dụng cho searchlist)
-  getOptionLabel?: (item: any) => string;                        // T -> label
+  getOptionLabel?: (item: any, items?: any[]) => string;                        // T -> label
   getOptionValue?: (item: any) => string | number;               // T -> ID
+  getInputLabel?: (item: any) => string;
   prop?: string;
 
   // searchsingle
@@ -189,7 +193,8 @@ export type FieldDef = {
 
   // metadata
   metadata?: {
-    collection: string;
+    collection?: string;
+    group?: string;
     mode?: "whole" | "partial";
     fields?: string[];
     ignoreFields?: string[];

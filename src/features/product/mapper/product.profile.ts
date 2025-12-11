@@ -12,5 +12,7 @@ mapper.register<ProductModel>({
     active: true,
     customFields: null,
     processNames: "",
+    categoryId: null,
+    categoryName: null,
   }),
 });

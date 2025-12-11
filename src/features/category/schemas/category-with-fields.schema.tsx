@@ -3,7 +3,7 @@ import type { FieldDef, FormContext } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update, search as searchCategory } from "@features/category/api/category.api";
+import { create, id, update } from "@features/category/api/category.api";
 import type { CategoryModel, CategoryUpsertModel } from "@features/category/model/category.model";
 import { SectionCard } from "@root/shared/components/ui/section-card";
 import { IfPermission } from "@root/core/auth/if-permission";
@@ -11,6 +11,8 @@ import { Button } from "@mui/material";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
 import { AutoTable } from "@root/core/table/auto-table";
 import AddIcon from '@mui/icons-material/Add';
+import { categoryProps } from "../utils/category.utils";
+import { validateParentCategorySelection } from "../utils/category.validate";
 
 export function buildCategorySchema(): FormSchema {
   const syncParentInfo = (parent: CategoryModel | null, ctx?: FormContext | null) => {
@@ -49,41 +51,13 @@ export function buildCategorySchema(): FormSchema {
       kind: "searchsingle",
       placeholder: "Chọn danh mục cha",
       pageLimit: 20,
-      getOptionLabel: (d: CategoryModel) => d?.name ?? "",
-      getOptionValue: (d: CategoryModel) => d?.id,
-      async searchPage(kw: string, page, limit) {
-        const result = await searchCategory({
-          keyword: kw,
-          limit,
-          page,
-          orderBy: "parent_id",
-        });
-        return result.items;
-      },
-      async hydrateById(idValue: number | string) {
-        if (!idValue) return null;
-        const parent = await id(Number(idValue));
-        return parent ?? null;
-      },
-      async fetchOne(values: Record<string, any>) {
-        const pid = values.parentId;
-        if (!pid) return null;
-        const parent = await id(pid);
-        return parent ?? null;
-      },
+      ...categoryProps,
       onBlur: (_, matched, ctx) => {
         const parent = matched as CategoryModel | null;
-        const id = ctx?.values.id;
         const prevParentId = ctx?.values.parentId;
-        if (parent && parent.id === id) {
-          ctx?.setFieldError("parentId", "Không thể chọn chính danh mục này làm cha");
-          ctx?.setValue("parentId", prevParentId);
-          return;
-        }
-
-        const level = ctx?.values.level ?? 1;
-        if (parent && parent.level! > level) {
-          ctx?.setFieldError("parentId", "Không thể chọn danh mục cấp thấp hơn hoặc ngang bằng làm cha");
+        const error = validateParentCategorySelection(parent, ctx?.values);
+        if (error) {
+          ctx?.setFieldError("parentId", error);
           ctx?.setValue("parentId", prevParentId);
           return;
         }

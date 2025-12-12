@@ -48,6 +48,7 @@ export type FieldModel = {
   type: FieldType | string;
   required: boolean;
   unique: boolean;
+  tag?: string | null;
   table: boolean;
   form: boolean;
   search: boolean;
@@ -71,6 +72,7 @@ export type FieldDto = {
   type: string;
   required: boolean;
   unique: boolean;
+  tag?: string | null;
   table: boolean;
   form: boolean;
   search: boolean;

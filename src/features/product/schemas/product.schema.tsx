@@ -82,6 +82,7 @@ export function buildProductSchema(): FormSchema {
       metadata: {
         group: "category",
         mode: "whole",
+        tag: "catalog",
         groups: [
           {
             group: "category_fields",

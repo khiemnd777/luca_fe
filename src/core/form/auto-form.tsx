@@ -58,7 +58,8 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
 const metadataGroupCache = new Map<string, Promise<CollectionWithFieldsModel[]>>();
 
 async function fetchMetadataGroupCollections(
-  group: string
+  group: string,
+  tag?: string | null,
 ): Promise<CollectionWithFieldsModel[]> {
   if (!group) return [];
 
@@ -68,6 +69,7 @@ async function fetchMetadataGroupCollections(
       limit: 1000,
       offset: 0,
       withFields: false,
+      tag,
       table: false,
       form: false,
     }).then((res) => res.data)
@@ -92,7 +94,7 @@ async function expandMetadataBlock(
   }
 
   try {
-    const collections = await fetchMetadataGroupCollections(metadata.group);
+    const collections = await fetchMetadataGroupCollections(metadata.group, metadata.tag);
     if (!collections.length) return { fields: [], deps: [], collections: [] };
 
     const { group: _omit, ...restMeta } = metadata;
@@ -126,7 +128,7 @@ async function expandOneMetadataBlock(
   values: any,
   changedDeps: string[],
 ): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
-  const { collection, mode = "whole", fields, ignoreFields } = metaField.metadata!;
+  const { collection, mode = "whole", fields, tag, ignoreFields } = metaField.metadata!;
   if (!collection) {
     return { fields: [], deps: [], collections: [] };
   }
@@ -138,6 +140,7 @@ async function expandOneMetadataBlock(
   const coll = await getAvailableCollection(
     collection,
     true,
+    tag,
     false,
     true,
     values,

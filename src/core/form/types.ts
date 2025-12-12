@@ -195,6 +195,7 @@ export type FieldDef = {
   metadata?: {
     collection?: string;
     group?: string;
+    tag?: string | null;
     mode?: "whole" | "partial";
     fields?: string[];
     ignoreFields?: string[];

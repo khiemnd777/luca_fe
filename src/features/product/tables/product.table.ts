@@ -22,6 +22,7 @@ const columns: ColumnDef<ProductModel>[] = [
     type: "metadata",
     metadata: {
       group: "category",
+      tag: "catalog",
       mode: "whole",
     }
   },

@@ -17,6 +17,7 @@ import {
 const columns: ColumnDef<FieldModel>[] = [
   { key: "label", header: "Label", width: 290, },
   { key: "name", header: "Name", labelField: true, },
+  { key: "tag", header: "Tag", },
   {
     key: "type",
     header: "Type",

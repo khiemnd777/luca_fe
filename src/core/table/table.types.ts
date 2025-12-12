@@ -31,6 +31,7 @@ export type MetadataColumnMode = "whole" | "partial";
 export type MetadataColumnOptions = {
   collection?: number | string;
   group?: string;
+  tag?: string | null;
   mode?: MetadataColumnMode;
   fields?: string[];
   ignoreFields?: string[];

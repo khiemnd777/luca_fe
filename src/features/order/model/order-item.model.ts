@@ -27,3 +27,8 @@ export interface OrderItemHistoricalModel {
   isCurrent: boolean;
   isHighlight: boolean;
 }
+
+export interface CalculateTotalPricePayload {
+  prices: number[];
+  quantities: number[];
+}

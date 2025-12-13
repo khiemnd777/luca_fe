@@ -13,6 +13,7 @@ import { AutoTable } from "@root/core/table/auto-table";
 import AddIcon from '@mui/icons-material/Add';
 import { categoryProps } from "../utils/category.utils";
 import { validateParentCategorySelection } from "../utils/category.validate";
+import { processProps } from "@root/features/process/utils/process.props";
 
 export function buildCategorySchema(): FormSchema {
   const syncParentInfo = (parent: CategoryModel | null, ctx?: FormContext | null) => {
@@ -81,6 +82,12 @@ export function buildCategorySchema(): FormSchema {
       metadata: {
         collection: "category",
         mode: "whole",
+        def: [
+          {
+            name: "processIds",
+            ...processProps,
+          },
+        ],
       }
     },
     {

@@ -8,6 +8,7 @@ import { create, id, update } from "@features/category/api/category.api";
 import type { CategoryModel, CategoryUpsertModel } from "@features/category/model/category.model";
 import { categoryProps } from "../utils/category.utils";
 import { validateParentCategorySelection } from "../utils/category.validate";
+import { processProps } from "@root/features/process/utils/process.props";
 
 export function buildCategorySchema(): FormSchema {
   const syncParentInfo = (parent: CategoryModel | null, ctx?: FormContext | null) => {
@@ -76,6 +77,12 @@ export function buildCategorySchema(): FormSchema {
       metadata: {
         collection: "category",
         mode: "whole",
+        def: [
+          {
+            name: "processIds",
+            ...processProps,
+          },
+        ],
       }
     },
   ];

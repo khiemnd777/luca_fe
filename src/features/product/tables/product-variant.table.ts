@@ -3,7 +3,7 @@ import { createTableSchema, type ColumnDef, type FetchTableOpts } from "@core/ta
 import { reloadTable } from "@core/table/table-reload";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import type { ProductModel } from "@features/product/model/product.model";
-import { table, unlink } from "@features/product/api/product.api";
+import { unlink, variantTable } from "@features/product/api/product.api";
 import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<ProductModel>[] = [
@@ -29,10 +29,10 @@ const columns: ColumnDef<ProductModel>[] = [
   },
 ];
 
-registerTable("products", () => {
+registerTable("product-variants", () => {
   return createTableSchema<ProductModel>({
     columns,
-    fetch: async (opts: FetchTableOpts) => await table(opts),
+    fetch: async (opts: FetchTableOpts & Record<string, any>) => await variantTable(opts.templateId, opts),
     initialPageSize: 10,
     initialSort: { by: "id", dir: "asc" },
     allowUpdating: ["product.update"],
@@ -45,7 +45,7 @@ registerTable("products", () => {
     },
     async onDelete(row) {
       await unlink(row.id);
-      reloadTable("products");
+      reloadTable("product-variants");
     },
   });
 });

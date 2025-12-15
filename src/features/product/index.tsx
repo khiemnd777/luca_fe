@@ -15,6 +15,16 @@ const mod: ModuleDescriptor = {
       path: "/product",
       icon: <InventoryIcon />,
       priority: 98,
+      children: [
+        {
+          hidden: true,
+          key: "product-detail",
+          permissions: ["product.update"],
+          element: <OneColumnPage />,
+          path: "/product/:id",
+          priority: 99,
+        }
+      ]
     },
   ],
 };

@@ -13,6 +13,13 @@ export async function table(tableOpts: FetchTableOpts): Promise<ListResult<Produ
   return result;
 }
 
+export async function variantTable(productId: number, tableOpts: FetchTableOpts): Promise<ListResult<ProductModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/product/${productId}/variant`, tableOpts);
+  const result = mapper.map<any[], ListResult<ProductModel>>("Product", data, "dto_to_model");
+  return result;
+}
+
 export async function search(opts: SearchOpts): Promise<SearchResult<ProductModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.search<any[]>(`${departmentApiPath()}/product/search`, opts);

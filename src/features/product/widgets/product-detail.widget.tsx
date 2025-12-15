@@ -23,6 +23,10 @@ function ProductDetailWidget() {
   const productId = Number(id ?? 0);
   const [tab, setTab] = React.useState<string>("product");
 
+  React.useEffect(() => {
+    setTab("product");
+  }, [id]);
+
   const { data: detail, loading } = useAsync<ProductModel | null>(
     () => {
       if (!productId) return Promise.resolve(null);
@@ -66,41 +70,48 @@ function ProductDetailWidget() {
                 </IfPermission>
               </>
             }>
-              <AutoForm name="product" ref={frmProductRef} initial={detail} />
+              {detail?.isTemplate ? (
+                <AutoForm name="product" ref={frmProductRef} initial={detail} />
+              ) : (
+                <AutoForm name="product-variant" ref={frmProductRef} initial={detail} />
+              )}
             </SectionCard>
           </Box>
+          {
+            detail?.isTemplate === true && (
+              <Box hidden={tab !== "variants"}>
+                {/* Attributes */}
+                <SectionCard title="Thuộc tính biến thể" extra={
+                  <>
+                    <IfPermission permissions={["privilege.metadata"]}>
+                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
+                        openFormDialog("metadata-field", {
+                          initial: { collectionId: detail?.collectionId },
+                        });
+                      }} >New Field</Button>
+                    </IfPermission>
+                  </>
+                }>
+                  <AutoTable name="metadata-fields" params={{ collectionId: detail?.collectionId }} />
+                </SectionCard>
 
-          <Box hidden={tab !== "variants"}>
-            {/* Attributes */}
-            <SectionCard title="Thuộc tính biến thể" extra={
-              <>
-                <IfPermission permissions={["privilege.metadata"]}>
-                  <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-                    openFormDialog("metadata-field", {
-                      initial: { collectionId: detail?.collectionId },
-                    });
-                  }} >New Field</Button>
-                </IfPermission>
-              </>
-            }>
-              <AutoTable name="metadata-fields" params={{ collectionId: detail?.collectionId }} />
-            </SectionCard>
+                <Spacer />
 
-            <Spacer />
-
-            {/* Variant table */}
-            <SectionCard title="Danh sách biến thể" extra={
-              <IfPermission permissions={["product.create"]}>
-                <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-                  openFormDialog("product-variant", {
-                    initial: { ...detail, id: undefined, templateId: detail?.id, isTemplate: false },
-                  });
-                }} >Thêm biến thể</Button>
-              </IfPermission>
-            }>
-              <AutoTable name="product-variants" params={{ templateId: detail?.id }} />
-            </SectionCard>
-          </Box>
+                {/* Variant table */}
+                <SectionCard title="Danh sách biến thể" extra={
+                  <IfPermission permissions={["product.create"]}>
+                    <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
+                      openFormDialog("product-variant", {
+                        initial: { ...detail, id: undefined, templateId: detail?.id, isTemplate: false },
+                      });
+                    }} >Thêm biến thể</Button>
+                  </IfPermission>
+                }>
+                  <AutoTable name="product-variants" params={{ templateId: detail?.id }} />
+                </SectionCard>
+              </Box>
+            )
+          }
         </>
       )
       }

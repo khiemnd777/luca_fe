@@ -194,6 +194,7 @@ export type FieldDef = {
   // metadata
   metadata?: {
     collection?: string;
+    collectionFn?: (ctx: FormContext) => string;
     group?: string;
     tag?: string | null;
     mode?: "whole" | "partial";

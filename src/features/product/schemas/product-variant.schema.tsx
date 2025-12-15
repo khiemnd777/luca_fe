@@ -82,6 +82,20 @@ export function buildProductSchema(): FormSchema {
         ],
       }
     },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        collectionFn: (ctx) => ctx.values.templateId ? `product-${ctx.values.templateId}` : '',
+        mode: "whole",
+        groups: [
+          {
+            group: "variant_fields",
+          }
+        ],
+      }
+    },
   ];
 
   return {
@@ -91,6 +105,10 @@ export function buildProductSchema(): FormSchema {
       {
         name: "general",
         label: "Thông tin chung:",
+        col: 2,
+      },
+      {
+        name: "variant_fields",
         col: 2,
       },
       {
@@ -146,7 +164,7 @@ export function buildProductSchema(): FormSchema {
     },
 
     async initialResolver(data: any) {
-      if (data && data.id && !data.isTemplate) {
+      if (data && data.id) {
         return await id(data.id);
       }
       return { ...data };

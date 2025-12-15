@@ -83,14 +83,33 @@ async function fetchMetadataGroupCollections(
   return promise;
 }
 
+function resolveMetadataCollection(metaField: FieldDef, ctx?: FormContext | null) {
+  const metadata = metaField.metadata;
+  if (!metadata) return null;
+  if (metadata.collectionFn && ctx) {
+    return metadata.collectionFn(ctx) || metadata.collection || null;
+  }
+  return metadata.collection ?? null;
+}
+
 async function expandMetadataBlock(
   metaField: FieldDef,
   values: any,
   changedDeps: string[],
+  ctx?: FormContext | null,
 ): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
   const metadata = metaField.metadata;
   if (!metadata?.group) {
-    return expandOneMetadataBlock(metaField, values, changedDeps);
+    const derivedMeta = metadata?.collectionFn
+      ? {
+        ...metaField,
+        metadata: {
+          ...metadata,
+          collection: resolveMetadataCollection(metaField, ctx) ?? undefined,
+        },
+      }
+      : metaField;
+    return expandOneMetadataBlock(derivedMeta, values, changedDeps, ctx);
   }
 
   try {
@@ -107,7 +126,7 @@ async function expandMetadataBlock(
             collection: collection.slug,
           },
         };
-        return expandOneMetadataBlock(derivedMeta, values, changedDeps);
+        return expandOneMetadataBlock(derivedMeta, values, changedDeps, ctx);
       })
     );
 
@@ -127,8 +146,11 @@ async function expandOneMetadataBlock(
   metaField: FieldDef,
   values: any,
   changedDeps: string[],
+  ctx?: FormContext | null,
 ): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
-  const { collection, mode = "whole", fields, tag, ignoreFields } = metaField.metadata!;
+  const metadata = metaField.metadata!;
+  const collection = resolveMetadataCollection(metaField, ctx);
+  const { mode = "whole", fields, tag, ignoreFields } = metadata;
   if (!collection) {
     return { fields: [], deps: [], collections: [] };
   }
@@ -776,7 +798,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       (async () => {
         const results = await Promise.all(
-          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, []))
+          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, [], ctxRef.current))
         );
 
         if (cancelled) return;
@@ -824,7 +846,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandMetadataBlock(b.meta, values, initialChanged)
+            expandMetadataBlock(b.meta, values, initialChanged, ctxRef.current)
           )
         );
 
@@ -875,7 +897,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       (async () => {
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandMetadataBlock(b.meta, values, changedDeps)
+            expandMetadataBlock(b.meta, values, changedDeps, ctxRef.current)
           )
         );
 

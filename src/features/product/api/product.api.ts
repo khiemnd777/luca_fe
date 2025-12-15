@@ -1,7 +1,7 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
 import type { ProductModel, ProductUpsertModel } from "@features/product/model/product.model";
-import { apiClient } from "@core/network/api-client";
+import { apiClient, invalidateApiCache } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
@@ -30,7 +30,11 @@ export async function search(opts: SearchOpts): Promise<SearchResult<ProductMode
 export async function id(id: number): Promise<ProductModel> {
   const { departmentApiPath } = useAuthStore.getState();
   id = id === undefined ? -1 : id;
-  const { data } = await apiClient.get<any>(`${departmentApiPath()}/product/${id}`);
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/product/${id}`, {
+    cacheMode: "cache-first",
+    cacheKey: `product:id${id}`,
+    cacheTags: [`product:id${id}`],
+  });
   const result = mapper.map<any, ProductModel>("Product", data, "dto_to_model");
   return result;
 }
@@ -43,9 +47,11 @@ export async function create(model: ProductUpsertModel): Promise<void> {
 export async function update(model: ProductUpsertModel): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.put<any>(`${departmentApiPath()}/product/${model.dto.id}`, model);
+  invalidateApiCache([`product:id${model.dto.id}`]);
 }
 
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/product/${id}`);
+  invalidateApiCache([`product:id${id}`]);
 }

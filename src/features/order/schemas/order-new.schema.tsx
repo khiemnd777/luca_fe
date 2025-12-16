@@ -14,11 +14,11 @@ export function buildNewOrderSchema(): FormSchema {
     {
       kind: "searchsingle",
       name: "code",
+      allowUnmatched: true,
       label: "Mã đơn hàng",
       placeholder: "Nhập mã đơn hàng",
       fullWidth: true,
       pageLimit: 20,
-
       onBlur: async (text, matched, ctx) => {
         ctx?.setValue("code", text);
         if (matched) {
@@ -263,8 +263,8 @@ export function buildNewOrderSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (dto) => {
-          // await create(dto as OrderUpsertModel);
           console.log(dto);
+          await create(dto as OrderUpsertModel);
           return dto;
         },
       },

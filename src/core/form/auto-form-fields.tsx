@@ -665,6 +665,7 @@ export function AutoFormFieldSingle({
         name={f.name}
         label={f.label}
         values={values}
+        allowUnmatched={f.allowUnmatched}
         placeholder={f.placeholder}
         size={f.size ?? "small"}
         fullWidth={f.fullWidth ?? true}

@@ -22,6 +22,7 @@ export type SearchSingleFieldProps<T> = {
   size?: Size;
   fullWidth?: boolean;
   disabled?: boolean;
+  allowUnmatched?: boolean;
   error?: string | null;
   helperText?: string;
 
@@ -79,6 +80,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     size = "small",
     fullWidth = true,
     disabled,
+    allowUnmatched,
     error,
     helperText,
 
@@ -246,6 +248,12 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
      Input change
   ====================================================== */
   const handleInput = (_: any, text: string, reason: string) => {
+    if (
+      allowUnmatched &&
+      (reason === "blur" || reason === "reset")
+    ) {
+      return;
+    }
     const v = text;
     setInputValue(v);
     setKeyword(v);
@@ -321,7 +329,9 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
                 size={size}
                 onBlur={() => {
                   const t = inputValue.trim();
-                  const sourceOptions = (options.length > 0 ? options : cachedOptions).slice().reverse();
+                  const sourceOptions = (options.length > 0 ? options : cachedOptions)
+                    .slice()
+                    .reverse();
 
                   const matched =
                     sourceOptions.find((o) => {

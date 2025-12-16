@@ -190,6 +190,7 @@ export type FieldDef = {
   prop?: string;
 
   // searchsingle
+  allowUnmatched?: boolean;
   fetchOne?: (values: Record<string, any>) => Promise<any | null>;
   hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
 

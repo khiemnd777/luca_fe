@@ -37,6 +37,8 @@ mapper.register<OrderModel>({
         // product
         productId: 0,
         productName: "",
+        // products
+        products: null,
       }
     },
     latestOrderItem: {
@@ -54,6 +56,7 @@ mapper.register<OrderModel>({
       // product
       productId: 0,
       productName: "",
+      products: null,
     },
   }),
 });

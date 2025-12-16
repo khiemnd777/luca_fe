@@ -7,8 +7,7 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
-import { rel1 } from "@root/core/relation/relation.api";
-import type { ProductModel } from "@root/features/product/model/product.model";
+import OrderProductItemList from "../components/order-product-item-list.component";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -90,46 +89,46 @@ export function buildNewOrderSchema(): FormSchema {
         mode: "whole",
       }
     },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item-product",
-        mode: "whole",
-        groups: [
-          {
-            group: "product",
-          }
-        ],
-        def: [
-          {
-            name: "productId",
-            onBlur: async (text, matched, ctx) => {
-              console.log(text, matched, ctx);
-              if (matched) {
-                const result: ProductModel = await rel1("order-product", matched.id);
-                console.log(result);
-                // don't need assign to productId and productName, because they are handled during submitting.
-                // ctx?.setValue("latestOrderItem.customFields.productId", result.id);
-                // ctx?.setValue("latestOrderItem.customFields.productName", result.name);
-                ctx?.setValue("latestOrderItem.customFields.", result.id);
-                if (result.customFields) {
-                  ctx?.setValue("latestOrderItem.customFields.vat", result.customFields.vat);
-                  ctx?.setValue("latestOrderItem.customFields.productCategory", result.customFields.category);
-                  ctx?.setValue("latestOrderItem.customFields.retailPrice", result.customFields.retailPrice);
-                }
-              }
-            },
-          },
-          {
-            name: "productCategory",
-            disableIf: () => true,
-          }
-        ],
-      }
-    },
+    // {
+    //   name: "",
+    //   label: "",
+    //   kind: "metadata",
+    //   prop: "latestOrderItem",
+    //   metadata: {
+    //     collection: "order-item-product",
+    //     mode: "whole",
+    //     groups: [
+    //       {
+    //         group: "product",
+    //       }
+    //     ],
+    //     def: [
+    //       {
+    //         name: "productId",
+    //         onBlur: async (text, matched, ctx) => {
+    //           console.log(text, matched, ctx);
+    //           if (matched) {
+    //             const result: ProductModel = await rel1("order-product", matched.id);
+    //             console.log(result);
+    //             // don't need assign to productId and productName, because they are handled during submitting.
+    //             // ctx?.setValue("latestOrderItem.customFields.productId", result.id);
+    //             // ctx?.setValue("latestOrderItem.customFields.productName", result.name);
+    //             ctx?.setValue("latestOrderItem.customFields.", result.id);
+    //             if (result.customFields) {
+    //               ctx?.setValue("latestOrderItem.customFields.vat", result.customFields.vat);
+    //               ctx?.setValue("latestOrderItem.customFields.productCategory", result.customFields.category);
+    //               ctx?.setValue("latestOrderItem.customFields.retailPrice", result.customFields.retailPrice);
+    //             }
+    //           }
+    //         },
+    //       },
+    //       {
+    //         name: "productCategory",
+    //         disableIf: () => true,
+    //       }
+    //     ],
+    //   }
+    // },
     {
       name: "",
       label: "",
@@ -168,15 +167,16 @@ export function buildNewOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
+        ignoreFields: ["retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
-          {
-            group: "price",
-            fields: ["retailPrice", "quantity", "vat", "discountPrice"],
-          },
-          {
-            group: "total-price",
-            fields: ["totalPrice"],
-          },
+          // {
+          //   group: "price",
+          //   fields: ["retailPrice", "quantity", "vat", "discountPrice"],
+          // },
+          // {
+          //   group: "total-price",
+          //   fields: ["totalPrice"],
+          // },
           {
             group: "status",
             fields: ["status", "priority"],
@@ -187,6 +187,29 @@ export function buildNewOrderSchema(): FormSchema {
           },
         ],
       }
+    },
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "products",
+      label: "Sản phẩm",
+      group: "products",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderProductItemList
+          name="latestOrderItem.products"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+          onUpdate={(item) => console.log("updated", item)}
+        />
+      ),
     },
   ];
 
@@ -212,9 +235,9 @@ export function buildNewOrderSchema(): FormSchema {
         col: 2,
       },
       {
-        name: "product",
-        label: "Sản phẩm:",
-        col: 3,
+        name: "products",
+        label: "Danh sách sản phẩm:",
+        col: 1,
       },
       {
         name: "price",

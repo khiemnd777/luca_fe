@@ -1,3 +1,5 @@
+import type { OrderItemProductModel } from "./order-item-product.model";
+
 export interface OrderItemModel {
   // general
   id: number;
@@ -13,6 +15,8 @@ export interface OrderItemModel {
   // product
   productId?: number | null;
   productName?: string;
+  // products
+  products?: OrderItemProductModel[] | null;
 }
 
 export interface OrderItemUpsertModel {

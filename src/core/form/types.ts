@@ -78,6 +78,7 @@ export type CustomRenderCtx = {
   error?: string | null;
   field: FieldDef;
   values: Record<string, any>;
+  ctx?: FormContext | null;
 };
 
 // searchlist
@@ -156,6 +157,7 @@ export type FieldDef = {
 
   // custom
   render?: (ctx: CustomRenderCtx) => React.ReactNode;
+  normalizeInitial?: (value: any, allValues?: Record<string, any>) => any;
 
   // derive value từ field khác (vd: fullname -> slug)
   derive?: {

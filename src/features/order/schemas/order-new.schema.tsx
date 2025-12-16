@@ -7,7 +7,7 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
-import OrderProductItemList from "../components/order-product-item-list.component";
+import { OrderProductItemList } from "../components/order-product-item-list.component";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -189,6 +189,14 @@ export function buildNewOrderSchema(): FormSchema {
       }
     },
     {
+      kind: "currency",
+      name: "totalPrice",
+      prop: "latestOrderItem",
+      label: "Tổng cộng:",
+      group: "products",
+      asText: true,
+    },
+    {
       kind: "custom",
       prop: "latestOrderItem",
       name: "products",
@@ -255,7 +263,8 @@ export function buildNewOrderSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (dto) => {
-          await create(dto as OrderUpsertModel);
+          // await create(dto as OrderUpsertModel);
+          console.log(dto);
           return dto;
         },
       },

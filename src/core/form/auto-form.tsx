@@ -748,17 +748,17 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // ----------------------------------------------------
     const setValueUser = (name: string, v: any) => {
       setValue(name, v);  // original
-      schema.onChange?.(name, v, ctxRef.current, "user");
+      schema.onChange?.(name, v, ctxRef.current!, "user");
     };
 
     const setValueProg = (name: string, v: any) => {
       setValue(name, v);  // original
-      schema.onChange?.(name, v, ctxRef.current, "programmatic");
+      schema.onChange?.(name, v, ctxRef.current!, "programmatic");
     };
 
     const setAllValuesProg = (obj: Record<string, any>) => {
       setAllValues(obj);  // original setAllValues
-      schema.onChange?.("*", obj, ctxRef.current, "programmatic");
+      schema.onChange?.("*", obj, ctxRef.current!, "programmatic");
     };
 
     // ----------------------------------------------------

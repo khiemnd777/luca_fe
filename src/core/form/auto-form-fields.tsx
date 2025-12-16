@@ -85,7 +85,7 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
 
   // CURRENCY
   if (f.kind === "currency" || f.kind === "currency-equation") {
-    return <Typography>{Number(v).toLocaleString()}</Typography>;
+    return <Typography>₫ {Number(v).toLocaleString()}</Typography>;
   }
 
   // SWITCH / CHECKBOX

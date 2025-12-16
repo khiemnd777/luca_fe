@@ -56,9 +56,6 @@ export function buildOrderProductItemSchema(): FormSchema {
         const product = matched as ProductModel | null;
         ctx?.setValue("productCode", product?.code ?? text ?? "");
         ctx?.setValue("productId", product?.id ?? null);
-        if (product?.customFields?.retailPrice != null) {
-          ctx?.setValue("retailPrice", product.customFields.retailPrice);
-        }
       },
     },
     {

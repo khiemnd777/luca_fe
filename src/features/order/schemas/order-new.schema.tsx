@@ -207,7 +207,6 @@ export function buildNewOrderSchema(): FormSchema {
           onChange={setValue}
           onAdd={(item) => console.log("added", item)}
           onRemove={(item) => console.log("removed", item)}
-          onUpdate={(item) => console.log("updated", item)}
         />
       ),
     },

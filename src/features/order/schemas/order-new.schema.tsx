@@ -10,6 +10,7 @@ import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { Typography } from "@mui/material";
+import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -169,7 +170,7 @@ export function buildNewOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
-        ignoreFields: ["retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
+        ignoreFields: ["status", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
           // {
           //   group: "price",
@@ -181,7 +182,7 @@ export function buildNewOrderSchema(): FormSchema {
           // },
           {
             group: "status",
-            fields: ["status", "priority"],
+            fields: ["priority"],
           },
           {
             group: "note",
@@ -215,6 +216,7 @@ export function buildNewOrderSchema(): FormSchema {
         );
       },
     },
+    // product
     {
       kind: "currency",
       name: "__totalProductPrice",
@@ -245,6 +247,7 @@ export function buildNewOrderSchema(): FormSchema {
         />
       ),
     },
+    // consumable material
     {
       kind: "currency",
       name: "__totalConsumableMaterialPrice",
@@ -266,6 +269,29 @@ export function buildNewOrderSchema(): FormSchema {
       render: ({ value, setValue, ctx, values }) => (
         <OrderConsumableMaterialItemList
           name="latestOrderItem.consumableMaterials"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // loaner material
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "loanerMaterials",
+      label: "Vật tư cho mượn",
+      group: "loaner-materials",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderLoanerMaterialItemList
+          name="latestOrderItem.loanerMaterials"
           value={value}
           ctx={ctx}
           values={values}
@@ -306,6 +332,11 @@ export function buildNewOrderSchema(): FormSchema {
       {
         name: "consumable-materials",
         label: "Danh sách vật tư tiêu hao:",
+        col: 1,
+      },
+      {
+        name: "loaner-materials",
+        label: "Danh sách vật tư cho mượn:",
         col: 1,
       },
       {

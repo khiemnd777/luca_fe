@@ -52,10 +52,10 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
         });
         return result.items?.[0] ?? null;
       },
-      onBlur: (text: string, matched: any, ctx) => {
-        const material = matched as MaterialModel | null;
-        ctx?.setValue("materialCode", material?.code ?? text ?? "");
-        ctx?.setValue("materialId", material?.id ?? null);
+      onBlur: (_text: string, _matched: any, _ctx) => {
+        // const material = matched as MaterialModel | null;
+        // ctx?.setValue("materialCode", material?.code ?? text ?? "");
+        // ctx?.setValue("materialId", material?.id ?? null);
       },
     },
     {

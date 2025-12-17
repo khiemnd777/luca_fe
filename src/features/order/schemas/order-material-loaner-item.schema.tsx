@@ -1,10 +1,10 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
-import { id as fetchProductById, search as searchProduct } from "@features/product/api/product.api";
-import type { ProductModel } from "@features/product/model/product.model";
+import { id as fetchMaterialById, search as searchMaterial } from "@features/material/api/material.api";
+import type { MaterialModel } from "@features/material/model/material.model";
 
-const productLabel = (p?: ProductModel | null) => {
+const materialLabel = (p?: MaterialModel | null) => {
   if (!p) return "";
   const code = p.code ?? "";
   const name = p.name ?? "";
@@ -12,39 +12,39 @@ const productLabel = (p?: ProductModel | null) => {
   return code || name;
 };
 
-export function buildOrderProductItemSchema(): FormSchema {
+function buildOrderLoanerMaterialItemSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
-      name: "productId",
-      label: "Sản phẩm",
+      name: "materialId",
+      label: "Vật tư cho mượn",
       kind: "searchsingle",
-      placeholder: "Nhập mã hoặc tên sản phẩm",
+      placeholder: "Nhập mã hoặc tên vật tư cho mượn",
       fullWidth: true,
       size: "small",
       pageLimit: 50,
       rules: {
-        required: "Vui lòng chọn sản phẩm",
+        required: "Vui lòng chọn vật tư cho mượn",
       },
-      getOptionLabel: (p: ProductModel) => productLabel(p),
-      getInputLabel: (p: ProductModel) => p?.code ?? "",
+      getOptionLabel: (p: MaterialModel) => materialLabel(p),
+      getInputLabel: (p: MaterialModel) => p?.code ?? "",
       async searchPage(keyword: string, page: number, limit: number) {
-        const result = await searchProduct({
+        const result = await searchMaterial({
           keyword,
           limit,
           page,
           orderBy: "code",
-        });
+        }, "loaner");
         return result.items;
       },
       async hydrateById(idValue: number | string) {
         if (!idValue) return null;
-        return await fetchProductById(Number(idValue));
+        return await fetchMaterialById(Number(idValue));
       },
       async fetchOne(values: Record<string, any>) {
-        const key = values.productId ?? values.productCode;
+        const key = values.materialId ?? values.materialCode;
         if (!key) return null;
-        if (typeof key === "number") return await fetchProductById(key);
-        const result = await searchProduct({
+        if (typeof key === "number") return await fetchMaterialById(key);
+        const result = await searchMaterial({
           keyword: String(key),
           limit: 1,
           page: 1,
@@ -52,10 +52,10 @@ export function buildOrderProductItemSchema(): FormSchema {
         });
         return result.items?.[0] ?? null;
       },
-      onBlur: (_text: string, _matched: any, _ctx) => {
-        // const product = matched as ProductModel | null;
-        // ctx?.setValue("productCode", product?.code ?? text ?? "");
-        // ctx?.setValue("productId", product?.id ?? null);
+      onBlur: (text: string, matched: any, ctx) => {
+        const material = matched as MaterialModel | null;
+        ctx?.setValue("materialCode", material?.code ?? text ?? "");
+        ctx?.setValue("materialId", material?.id ?? null);
       },
     },
     {
@@ -67,15 +67,6 @@ export function buildOrderProductItemSchema(): FormSchema {
       rules: {
         required: "Vui lòng nhập số lượng",
         min: 1,
-      },
-    },
-    {
-      name: "retailPrice",
-      label: "Giá bán lẻ",
-      kind: "currency",
-      size: "small",
-      rules: {
-        min: 0,
       },
     },
   ];
@@ -94,10 +85,10 @@ export function buildOrderProductItemSchema(): FormSchema {
     groups: [
       {
         name: "general",
-        col: 3,
+        col: 2,
       },
     ],
   };
 }
 
-registerForm("order-product-item", buildOrderProductItemSchema);
+registerForm("order-loaner-material-item", buildOrderLoanerMaterialItemSchema);

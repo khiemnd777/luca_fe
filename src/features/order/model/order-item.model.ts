@@ -1,3 +1,4 @@
+import type { OrderItemMaterialModel } from "./order-item-material.model";
 import type { OrderItemProductModel } from "./order-item-product.model";
 
 export interface OrderItemModel {
@@ -17,6 +18,10 @@ export interface OrderItemModel {
   productName?: string;
   // products
   products?: OrderItemProductModel[] | null;
+  // consumable materials
+  consumableMaterials?: OrderItemMaterialModel[] | null;
+  // loaner materials
+  loanerMaterials?: OrderItemMaterialModel[] | null;
 }
 
 export interface OrderItemUpsertModel {

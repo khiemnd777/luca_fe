@@ -22,6 +22,7 @@ export type ListItemRenderProps<T> = {
 
   onBlurCommit?: () => void;
   formName: string;
+  labelName: string;
 };
 
 export function ListItemRender<T>({
@@ -34,6 +35,7 @@ export function ListItemRender<T>({
   buildSignature,
   onBlurCommit,
   formName,
+  labelName,
 }: ListItemRenderProps<T>) {
   const formRef = React.useRef<AutoFormRef | null>(null);
   const latestItemRef = React.useRef(item);
@@ -69,7 +71,7 @@ export function ListItemRender<T>({
       <CardHeader
         title={
           <Typography variant="subtitle2" fontWeight={600}>
-            Sản phẩm {index + 1}
+            {labelName} #{index + 1}
           </Typography>
         }
         action={

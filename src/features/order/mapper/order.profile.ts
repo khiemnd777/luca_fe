@@ -39,6 +39,9 @@ mapper.register<OrderModel>({
         productName: "",
         // products
         products: null,
+        // materials
+        consumableMaterials: null,
+        loanerMaterials: null,
       }
     },
     latestOrderItem: {
@@ -56,7 +59,11 @@ mapper.register<OrderModel>({
       // product
       productId: 0,
       productName: "",
+      // products
       products: null,
+      // materials
+      consumableMaterials: null,
+      loanerMaterials: null,
     },
   }),
 });

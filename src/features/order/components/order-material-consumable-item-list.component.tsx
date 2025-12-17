@@ -1,15 +1,15 @@
 import * as React from "react";
 import type { FormContext } from "@core/form/types";
-import type { OrderItemProductModel } from "@features/order/model/order-item-product.model";
+import type { OrderItemMaterialModel } from "@features/order/model/order-item-material.model";
 import { useAsyncDebounce } from "@core/hooks/use-async/use-async-debounce";
 import { calculateTotalPrice } from "@features/order/api/order-item.api";
 
 import { ListItemRender } from "@shared/components/list/list-item-render.component";
 import { GenericItemList } from "@root/shared/components/list/list-item.component";
 
-export type OrderProductItemListProps = {
+export type OrderMaterialItemListProps = {
   /** Controlled value from AutoForm (or any parent). */
-  value?: OrderItemProductModel[] | null;
+  value?: OrderItemMaterialModel[] | null;
 
   /** Name inside FormContext to auto-sync when onChange is not provided. */
   name?: string;
@@ -19,27 +19,27 @@ export type OrderProductItemListProps = {
 
   values?: Record<string, any>;
 
-  onChange?: (items: OrderItemProductModel[]) => void;
+  onChange?: (items: OrderItemMaterialModel[]) => void;
   onAdd?: (
-    item: OrderItemProductModel,
-    items: OrderItemProductModel[],
+    item: OrderItemMaterialModel,
+    items: OrderItemMaterialModel[],
     ctx?: FormContext | null
   ) => void;
   onRemove?: (
-    item: OrderItemProductModel,
-    items: OrderItemProductModel[],
+    item: OrderItemMaterialModel,
+    items: OrderItemMaterialModel[],
     ctx?: FormContext | null
   ) => void;
 
-  createItem?: (values: Record<string, any>) => OrderItemProductModel;
+  createItem?: (values: Record<string, any>) => OrderItemMaterialModel;
   addLabel?: string;
 };
 
-function defaultFactory(values: Record<string, any>): OrderItemProductModel {
+function defaultFactory(values: Record<string, any>): OrderItemMaterialModel {
   return {
     id: Date.now(),
-    productCode: "",
-    productId: null,
+    materialCode: "",
+    materialId: null,
     orderItemId: values.orderItemId ?? values.id ?? null,
     orderId: values.orderId ?? null,
     quantity: 1,
@@ -47,20 +47,20 @@ function defaultFactory(values: Record<string, any>): OrderItemProductModel {
   };
 }
 
-function normalizeItem(item: OrderItemProductModel) {
+function normalizeItem(item: OrderItemMaterialModel) {
   return {
-    productId: item.productId ?? null,
-    productCode: item.productCode ?? "",
+    materialId: item.materialId ?? null,
+    materialCode: item.materialCode ?? "",
     quantity: Number(item.quantity) || 0,
     retailPrice: item.retailPrice == null ? null : Number(item.retailPrice) || 0,
   };
 }
 
 function buildSignature(vals: Record<string, any>) {
-  return `${vals.productId ?? "null"}|${vals.productCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}`;
+  return `${vals.materialId ?? "null"}|${vals.materialCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}`;
 }
 
-export function OrderProductItemList({
+export function OrderConsumableMaterialItemList({
   value,
   name,
   ctx,
@@ -69,8 +69,8 @@ export function OrderProductItemList({
   onAdd,
   onRemove,
   createItem,
-  addLabel = "Thêm sản phẩm",
-}: OrderProductItemListProps) {
+  addLabel = "Thêm vật tư tiêu hao",
+}: OrderMaterialItemListProps) {
   const resolvedValues = values ?? ctx?.values ?? {};
   const ctxRef = React.useRef<FormContext | null>(ctx ?? null);
   const lastTotalRef = React.useRef<number | null>(null);
@@ -80,7 +80,7 @@ export function OrderProductItemList({
   }, [ctx]);
 
   // ===== SINGLE SOURCE OF TRUTH =====
-  const [items, setItems] = React.useState<OrderItemProductModel[]>(() => {
+  const [items, setItems] = React.useState<OrderItemMaterialModel[]>(() => {
     if (Array.isArray(value)) return value;
     if (name && ctx && Array.isArray((ctx.values as any)?.[name])) {
       return (ctx.values as any)[name];
@@ -99,7 +99,7 @@ export function OrderProductItemList({
   }, [value, name, ctx, ctx?.values]);
 
   const propagate = React.useCallback(
-    (next: OrderItemProductModel[]) => {
+    (next: OrderItemMaterialModel[]) => {
       setItems(next);
 
       if (onChange) {
@@ -115,10 +115,10 @@ export function OrderProductItemList({
   const { prices, quantities, signature } = React.useMemo(() => {
     const prices: number[] = [];
     const quantities: number[] = [];
-    const productIds: (number | null)[] = [];
+    const materialIds: (number | null)[] = [];
 
     for (const it of items) {
-      productIds.push(it.productId ?? null);
+      materialIds.push(it.materialId ?? null);
       quantities.push(Number(it.quantity) || 0);
       prices.push(it.retailPrice == null ? 0 : Number(it.retailPrice) || 0);
     }
@@ -126,7 +126,7 @@ export function OrderProductItemList({
     return {
       prices,
       quantities,
-      signature: `${productIds.join(",")}|${quantities.join(",")}|${prices.join(",")}`,
+      signature: `${materialIds.join(",")}|${quantities.join(",")}|${prices.join(",")}`,
     };
   }, [items]);
 
@@ -146,26 +146,26 @@ export function OrderProductItemList({
     if (lastTotalRef.current === calculatedTotalPrice) return;
 
     lastTotalRef.current = calculatedTotalPrice;
-    targetCtx.setValue("latestOrderItem.__totalProductPrice", calculatedTotalPrice);
+    targetCtx.setValue("latestOrderItem.__totalConsumableMaterialPrice", calculatedTotalPrice);
   }, [calculatedTotalPrice]);
 
   return (
-    <GenericItemList<OrderItemProductModel>
+    <GenericItemList<OrderItemMaterialModel>
       value={items}
       addLabel={addLabel}
-      emptyLabel="Chưa có sản phẩm nào."
+      emptyLabel="Không có vật tư tiêu hao nào."
       createItem={() => (createItem ?? defaultFactory)(resolvedValues)}
       onChange={propagate}
       onAdd={(item, list) => onAdd?.(item, list, ctx)}
       onRemove={(item, list) => onRemove?.(item, list, ctx)}
       renderItem={({ item, index, onChange, onRemove }) => (
-        <ListItemRender<OrderItemProductModel>
+        <ListItemRender<OrderItemMaterialModel>
           item={item}
-          labelName="Sản phẩm"
+          labelName="Vật tư"
           index={index}
           onChange={onChange}
           onRemove={onRemove}
-          formName="order-product-item"
+          formName="order-consumable-material-item"
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}
           buildSignature={buildSignature}

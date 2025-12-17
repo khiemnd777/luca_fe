@@ -4,10 +4,19 @@ import { reloadTable } from "@core/table/table-reload";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import type { MaterialModel } from "@features/material/model/material.model";
 import { table, unlink } from "@features/material/api/material.api";
+import { materialTypeLabel } from "../utils/material.utils";
 
 const columns: ColumnDef<MaterialModel>[] = [
   { key: "code", header: "Mã vật tư", sortable: true, },
   { key: "name", header: "Tên vật tư", sortable: true, labelField: true },
+  { 
+    key: "type", 
+    header: "Loại", 
+    render(row) {
+      return <>{materialTypeLabel(row.type)}</>;
+    },
+    sortable: true, 
+  },
   // { key: "supplierNames", header: "Nhà cung cấp", width: 140, type: "chips" },
   {
     key: "",

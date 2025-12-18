@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 
 import {
   Stack,
@@ -16,7 +18,7 @@ import { openFormDialog } from "@root/core/form/form-dialog.service";
 import { priorityColor } from "@root/shared/utils/order.utils";
 import ResponsiveStatusBoard from "@root/shared/components/status-board/responsive-status-board";
 
-export function OrderDetailProcessesStatusBoardWidget() {
+export function OrderProcessesStatusBoard() {
   const { orderId, orderItemId } = useParams();
 
   const { data: list, loading } = useAsync(() => {
@@ -44,7 +46,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
     });
 
   return (
-    <SectionCard title="Công đoạn gia công">
+    <SectionCard>
       {loading && (
         <Stack alignItems="center" py={2}>
           <CircularProgress size={22} />
@@ -62,6 +64,7 @@ export function OrderDetailProcessesStatusBoardWidget() {
           id: it.id!,
           status: it.customFields?.status || "waiting",
           priority: it.customFields?.priority || "normal",
+          color: it.color,
           obj: it,
         }))}
         statuses={[
@@ -74,7 +77,16 @@ export function OrderDetailProcessesStatusBoardWidget() {
         priorityToColor={(priority) => priorityColor(priority)}
         renderCard={(_id, _status, o) => (
           <Stack spacing={1}>
-            <Typography fontWeight={700}>{o.processName}</Typography>
+            {o.sectionName && (
+              <Stack direction="row" alignItems="left" spacing={1}>
+                <MapsHomeWorkIcon fontSize="small" />
+                <Typography fontWeight={600} color={o.color ?? undefined}>{o.sectionName}</Typography>
+              </Stack>
+            )}
+            <Stack direction="row" alignItems="left" spacing={1}>
+              <FactCheckIcon fontSize="small" />
+              <Typography fontWeight={700}>{o.processName}</Typography>
+            </Stack>
             <Stack direction="row" alignItems="left" spacing={1}>
               {o.assignedName &&
                 <Chip size="small" label={o.assignedName} />
@@ -103,17 +115,3 @@ export function OrderDetailProcessesStatusBoardWidget() {
     </SectionCard>
   );
 }
-
-// registerSlot({
-//   id: "order-detail-processes-status-board",
-//   name: "order-detail:left",
-//   priority: 98,
-//   render: () => <OrderDetailProcessesStatusBoardWidget />,
-// });
-
-// registerSlot({
-//   id: "order-detail-processes-status-board",
-//   name: "order-detail-historical:left",
-//   priority: 98,
-//   render: () => <OrderDetailProcessesStatusBoardWidget />,
-// });

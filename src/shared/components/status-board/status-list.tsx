@@ -17,7 +17,6 @@ interface Props<T> {
   statuses: StatusOption[];
   renderCard: (id: number, status: string, obj: T) => React.ReactNode;
   onCardClick?: (id: number, status: string, obj: T) => void;
-  priorityToColor?: (priority?: string) => string;
 }
 
 export default function StatusListView<T>({
@@ -25,7 +24,6 @@ export default function StatusListView<T>({
   statuses,
   renderCard,
   onCardClick,
-  priorityToColor,
 }: Props<T>) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -86,7 +84,7 @@ export default function StatusListView<T>({
                     item={it}
                     render={renderCard}
                     onClick={onCardClick}
-                    priorityColor={priorityToColor?.(it.priority)}
+                    color={it.color}
                   />
                 ))}
               </Stack>

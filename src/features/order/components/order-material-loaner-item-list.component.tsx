@@ -11,6 +11,7 @@ export type OrderMaterialItemListProps = {
 
   /** Name inside FormContext to auto-sync when onChange is not provided. */
   name?: string;
+  frmName?: string;
 
   /** Access to AutoForm context */
   ctx?: FormContext | null;
@@ -61,6 +62,7 @@ function buildSignature(vals: Record<string, any>) {
 export function OrderLoanerMaterialItemList({
   value,
   name,
+  frmName,
   ctx,
   values,
   onChange,
@@ -123,7 +125,7 @@ export function OrderLoanerMaterialItemList({
           index={index}
           onChange={onChange}
           onRemove={onRemove}
-          formName="order-loaner-material-item"
+          formName={frmName ?? "order-loaner-material-item"}
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}
           buildSignature={buildSignature}

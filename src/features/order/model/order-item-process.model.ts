@@ -5,6 +5,8 @@ export interface OrderItemProcessModel {
 
   orderCode?: string | null;
   processName?: string | null;
+  sectionName?: string | null;
+  color?: string | null;
   stepNumber?: number;
 
   startedAt?: string | null;

@@ -23,7 +23,6 @@ export default function ResponsiveStatusBoard<T>({
   renderCard,
   onCardClick,
   onStatusChange,
-  priorityToColor,
 }: Props<T>) {
 
   const theme = useTheme();
@@ -37,7 +36,6 @@ export default function ResponsiveStatusBoard<T>({
         statuses={statuses}
         renderCard={renderCard}
         onCardClick={onCardClick}
-        priorityToColor={priorityToColor}
       />
     );
   }
@@ -49,7 +47,6 @@ export default function ResponsiveStatusBoard<T>({
       renderCard={renderCard}
       onCardClick={onCardClick}
       onStatusChange={onStatusChange}
-      priorityToColor={priorityToColor}
     />
   );
 }

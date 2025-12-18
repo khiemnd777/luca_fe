@@ -463,6 +463,82 @@ function flattenInitialRecursive(obj: any, prefix: string, out: any) {
       const rootKey = prefix ? `${prefix}.${camel}` : camel;
       const cfKey = prefix ? `${prefix}.customFields.${camel}` : `customFields.${camel}`;
 
+      out[relKey] = v;
+      out[rootKey] = v;
+      out[cfKey] = v;
+    }
+  }
+
+  if (obj.relationFields && typeof obj.relationFields === "object") {
+    for (const [k, v] of Object.entries(obj.relationFields)) {
+      const relKey = `${prefix}.relationFields.${k}`;
+      const rootKey = prefix ? `${prefix}.${k}` : k;
+      const cfKey = prefix ? `${prefix}.customFields.${k}` : `customFields.${k}`;
+
+      out[relKey] = v;
+      out[rootKey] = v;
+      out[cfKey] = v;
+    }
+  }
+
+  // flatten NORMAL FIELDS
+  for (const [k, v] of Object.entries(obj)) {
+    if (
+      k === "custom_fields" ||
+      k === "customFields" ||
+      k === "relation_fields" ||
+      k === "relationFields"
+    ) {
+      continue;
+    }
+
+    const camel = snakeToCamel(k);
+    const key = `${prefix}.${camel}`;
+
+    // 1️⃣ primitive → flatten
+    if (typeof v !== "object" || v === null) {
+      out[key] = v;
+      continue;
+    }
+
+    // 2️⃣ array → keep as-is
+    if (Array.isArray(v)) {
+      out[key] = v;
+      continue;
+    }
+
+    // 3️⃣ plain object → recurse
+    flattenInitialRecursive(v, key, out);
+  }
+}
+
+// deprecated
+export function flattenInitialRecursive2(obj: any, prefix: string, out: any) {
+  if (!obj || typeof obj !== "object") return;
+
+  // flatten custom_fields → prefix.customFields.*
+  if (obj.custom_fields && typeof obj.custom_fields === "object") {
+    for (const [k, v] of Object.entries(obj.custom_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.customFields.${camel}`] = v;
+    }
+  }
+
+  // flatten customFields → prefix.customFields.*
+  if (obj.customFields && typeof obj.customFields === "object") {
+    for (const [k, v] of Object.entries(obj.customFields)) {
+      out[`${prefix}.customFields.${k}`] = v;
+    }
+  }
+
+  // flatten relation_fields → prefix.relationFields.*
+  if (obj.relation_fields && typeof obj.relation_fields === "object") {
+    for (const [k, v] of Object.entries(obj.relation_fields)) {
+      const camel = snakeToCamel(k);
+      const relKey = `${prefix}.relationFields.${camel}`;
+      const rootKey = prefix ? `${prefix}.${camel}` : camel;
+      const cfKey = prefix ? `${prefix}.customFields.${camel}` : `customFields.${camel}`;
+
       out[relKey] = v;   // relationFields.xxx
       out[rootKey] = v;  // xxx
       out[cfKey] = v;    // customFields.xxx

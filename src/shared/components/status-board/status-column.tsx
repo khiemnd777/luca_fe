@@ -21,7 +21,6 @@ export default function StatusColumn<T>({
   activeId,
   renderCard,
   onCardClick,
-  priorityToColor,
 }: Props<T>) {
   const { setNodeRef } = useDroppable({
     id: `col-${statusValue}`,
@@ -50,7 +49,7 @@ export default function StatusColumn<T>({
         {label}
       </Typography>
       {items.map((it) => (
-        <StatusCard key={it.id} item={it} activeId={activeId} render={renderCard} dragHandleColor={priorityToColor?.(it.priority)} onClick={onCardClick} />
+        <StatusCard key={it.id} item={it} activeId={activeId} render={renderCard} dragHandleColor={it.color ?? undefined} onClick={onCardClick} />
       ))}
     </Box>
   );

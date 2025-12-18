@@ -1,7 +1,6 @@
 import { mapper } from "@core/mapper/auto-mapper";
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
-import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/order/api/order.api";
@@ -11,102 +10,8 @@ import { OrderLoanerMaterialItemList } from "../components/order-material-loaner
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 
-export function buildEditOrderSchema(): FormSchema {
+export function buildEditProductsSchema(): FormSchema {
   const fields: FieldDef[] = [
-    {
-      kind: "text",
-      name: "productName",
-      label: "Sản phẩm",
-      group: "product",
-      asText: true,
-    },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item-product",
-        mode: "whole",
-        groups: [
-          {
-            group: "product",
-          }
-        ],
-        ignoreFields: ["productId"],
-        def: [
-          {
-            name: "productCategory",
-            asText: true,
-          }
-        ],
-      }
-    },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item-tooth",
-        mode: "whole",
-        groups: [
-          {
-            group: "product",
-          }
-        ],
-        def: [
-          {
-            name: "toothPositions",
-            asText: true,
-          }
-        ],
-      }
-    },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item-remake",
-        mode: "whole",
-        groups: [
-          {
-            group: "remake",
-          }
-        ],
-      }
-    },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item",
-        mode: "whole",
-        ignoreFields: ["deliveryDate"],
-        groups: [
-          {
-            group: "price",
-            fields: ["retailPrice", "quantity", "vat", "discountPrice"],
-          },
-          {
-            group: "total-price",
-            fields: ["totalPrice"],
-          },
-          {
-            group: "status",
-            fields: ["status", "priority"],
-          },
-          {
-            group: "note",
-            fields: ["note"],
-          },
-        ],
-      }
-    },
     // product
     {
       kind: "currency",
@@ -307,10 +212,4 @@ export function buildEditOrderSchema(): FormSchema {
   };
 }
 
-registerForm("order-edit-body", buildEditOrderSchema);
-
-registerFormDialog("order-edit-body", buildEditOrderSchema, {
-  title: { create: "Tạo đơn hàng mới", update: "Cập nhật đơn hàng" },
-  confirmText: { create: "Thêm", update: "Lưu" },
-  cancelText: "Thoát",
-});
+registerForm("order-edit-products", buildEditProductsSchema);

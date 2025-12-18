@@ -5,14 +5,14 @@ interface Props<T> {
   item: BoardItem<T>;
   render: (id: number, status: string, obj: T) => React.ReactNode;
   onClick?: (id: number, status: string, obj: T) => void;
-  priorityColor?: string;
+  color?: string | null;
 }
 
 export default function StatusListItem<T>({
   item,
   render,
   onClick,
-  priorityColor,
+  color,
 }: Props<T>) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -30,13 +30,13 @@ export default function StatusListItem<T>({
         overflow: "hidden",
       }}
     >
-      {/* PRIORITY COLOR STRIP */}
-      {priorityColor && (
+      {/* COLOR STRIP */}
+      {color && (
         <Box
           sx={{
             height: 4,
             width: "100%",
-            bgcolor: priorityColor,
+            bgcolor: color,
           }}
         />
       )}

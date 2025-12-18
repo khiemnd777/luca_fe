@@ -172,14 +172,6 @@ export function buildNewOrderSchema(): FormSchema {
         mode: "whole",
         ignoreFields: ["status", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
-          // {
-          //   group: "price",
-          //   fields: ["retailPrice", "quantity", "vat", "discountPrice"],
-          // },
-          // {
-          //   group: "total-price",
-          //   fields: ["totalPrice"],
-          // },
           {
             group: "status",
             fields: ["priority"],
@@ -191,6 +183,8 @@ export function buildNewOrderSchema(): FormSchema {
         ],
       }
     },
+
+    // Total Price
     {
       kind: "custom",
       name: "__totalPrice",
@@ -292,6 +286,7 @@ export function buildNewOrderSchema(): FormSchema {
       render: ({ value, setValue, ctx, values }) => (
         <OrderLoanerMaterialItemList
           name="latestOrderItem.loanerMaterials"
+          frmName="order-loaner-material-item"
           value={value}
           ctx={ctx}
           values={values}
@@ -344,10 +339,6 @@ export function buildNewOrderSchema(): FormSchema {
         label: "Thành tiền:",
         col: 1,
       },
-      {
-        name: "total-price",
-        col: 1,
-      }
     ],
     modeResolver: (_) => {
       return "create";

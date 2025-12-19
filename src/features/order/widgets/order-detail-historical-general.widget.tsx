@@ -36,7 +36,7 @@ function OrderDetailHistoricalGeneralWidget() {
 
   React.useEffect(() => {
     setTab("info");
-  }, [orderId]);
+  }, [orderId, orderItemId]);
 
   return (
     <>

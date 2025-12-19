@@ -1,0 +1,22 @@
+import { mapper } from "@root/core/mapper/auto-mapper";
+import type { OrderItemProcessInProgressModel } from "../model/order-item-process-inprogress.model";
+
+mapper.register<OrderItemProcessInProgressModel>({
+  name: "OrderItemProcessInProgress",
+  dtoToModelNaming: "snake_to_camel",
+  modelToDtoNaming: "camel_to_snake",
+  defaultModel: () => ({
+    id: 0,
+    processId: null,
+    prevProcessId: null,
+    nextProcessId: null,
+    note: null,
+    orderItemId: null,
+    orderId: null,
+    assignedId: null,
+    assignedName: null,
+    startedAt: null,
+    completedAt: null,
+    updatedAt: "",
+  }),
+});

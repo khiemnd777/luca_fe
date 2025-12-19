@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { SectionCard } from "@shared/components/ui/section-card";
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
@@ -17,6 +16,7 @@ import { useAsync } from "@root/core/hooks/use-async";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
 import { priorityColor } from "@root/shared/utils/order.utils";
 import ResponsiveStatusBoard from "@root/shared/components/status-board/responsive-status-board";
+import { Section } from "@root/shared/components/ui/section";
 
 export function OrderProcessesStatusBoard() {
   const { orderId, orderItemId } = useParams();
@@ -46,7 +46,7 @@ export function OrderProcessesStatusBoard() {
     });
 
   return (
-    <SectionCard>
+    <Section>
       {loading && (
         <Stack alignItems="center" py={2}>
           <CircularProgress size={22} />
@@ -112,6 +112,6 @@ export function OrderProcessesStatusBoard() {
         }}
       />
 
-    </SectionCard>
+    </Section>
   );
 }

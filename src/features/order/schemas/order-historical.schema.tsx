@@ -181,4 +181,4 @@ export function buildHistoricalOrderSchema(): FormSchema {
   };
 }
 
-registerForm("__order-historical-body", buildHistoricalOrderSchema);
+registerForm("order-historical-body", buildHistoricalOrderSchema);

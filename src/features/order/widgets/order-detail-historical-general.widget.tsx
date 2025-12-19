@@ -7,28 +7,31 @@ import { useParams } from "react-router-dom";
 import { AutoForm } from "@core/form/auto-form";
 import type { AutoFormRef } from "@root/core/form/form.types";
 import { SafeButton } from "@shared/components/button/safe-button";
-import { id as getById } from "../api/order.api";
+import { getByOrderIdAndOrderItemId } from "../api/order.api";
 import { Section } from "@root/shared/components/ui/section";
 import { Box, CircularProgress, Tab, Tabs } from "@mui/material";
+import type { OrderModel } from "../model/order.model";
 import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
 
-function OrderDetailBodyWidget() {
-  const { orderId } = useParams();
+function OrderDetailHistoricalGeneralWidget() {
+  const { orderId, orderItemId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
   const [tab, setTab] = React.useState<"info" | "process">("info");
 
-  const { data: detail, loading } = useAsync<any>(() => {
-    if (!orderId) return Promise.resolve(null);
-    return getById(Number(orderId ?? 0));
-  }, [orderId], {
-    key: `order-detail:${orderId ?? "new"}`,
-  });
+  const { data: detail, loading } = useAsync<OrderModel | null>(
+    () => {
+      if (!orderId) return Promise.resolve(null);
+      return getByOrderIdAndOrderItemId(Number(orderId ?? 0), Number(orderItemId ?? 0));
+    },
+    [orderId, orderItemId],
+    { key: "order-detail-historical-body" }
+  );
 
   const title = React.useMemo(
-    () => generateTitle(detail?.code, detail?.codeLatest),
-    [detail?.code, detail?.codeLatest]
+    () => generateTitle(detail?.code, detail?.latestOrderItem?.code),
+    [detail?.code, detail?.latestOrderItem?.code]
   );
 
   React.useEffect(() => {
@@ -67,7 +70,7 @@ function OrderDetailBodyWidget() {
               </>
             }>
               <AutoForm
-                name="order-edit"
+                name="order-historical"
                 ref={frmOrderEditRef}
                 initial={detail ?? { id: orderId }}
               />
@@ -86,8 +89,8 @@ function OrderDetailBodyWidget() {
 }
 
 registerSlot({
-  id: "order-detail",
-  name: "order-detail:left",
-  render: () => <OrderDetailBodyWidget />,
+  id: "order-detail-historical",
+  name: "order-detail-historical:left",
+  render: () => <OrderDetailHistoricalGeneralWidget />,
   priority: 97,
 });

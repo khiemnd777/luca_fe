@@ -13,4 +13,5 @@ export type SearchOpts = {
   page: number;
   orderBy?: string | null;
   direction?: SortDir;
+  extendWhere?: string[] | null;
 };

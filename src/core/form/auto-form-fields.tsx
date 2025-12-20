@@ -142,9 +142,69 @@ export function AutoFormFieldSingle({
   error?: string | null;
   ctx?: FormContext,
 }) {
+  const nameValue = values[f.name];
+  const altNameValue = f.altName ? values[f.altName] : null;
+  const [searchSingleLabel, setSearchSingleLabel] = React.useState<string | null>(null);
+  const valuesRef = React.useRef(values);
+
+  React.useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+
+  React.useEffect(() => {
+    if (!f.asText || f.kind !== "searchsingle") return;
+
+    if (altNameValue !== null && altNameValue !== undefined && altNameValue !== "") {
+      setSearchSingleLabel(String(altNameValue));
+      return;
+    }
+
+    if (nameValue === null || nameValue === undefined || nameValue === "") {
+      setSearchSingleLabel(null);
+      return;
+    }
+
+    if (!f.hydrateById || !f.getOptionLabel) {
+      setSearchSingleLabel(String(nameValue));
+      return;
+    }
+
+    let active = true;
+    (async () => {
+      try {
+        const obj = await f.hydrateById?.(nameValue, valuesRef.current);
+        if (!active) return;
+        const label = obj ? f.getOptionLabel?.(obj)?.trim() : "";
+        setSearchSingleLabel(label || String(nameValue));
+      } catch {
+        if (active) setSearchSingleLabel(String(nameValue));
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    f.asText,
+    f.kind,
+    f.hydrateById,
+    f.getOptionLabel,
+    altNameValue,
+    nameValue,
+  ]);
 
   // AS TEXT MODE
   if (f.asText) {
+    if (f.kind === "searchsingle") {
+      return (
+        <Stack spacing={0.5}>
+          <Typography variant="caption" color="text.secondary">
+            {f.label}
+          </Typography>
+          <Typography>{searchSingleLabel ?? "—"}</Typography>
+        </Stack>
+      );
+    }
     return (
       <Stack spacing={0.5}>
         <Typography variant="caption" color="text.secondary">
@@ -651,6 +711,7 @@ export function AutoFormFieldSingle({
         onOpenCreate={f.onOpenCreate}
         refreshKey={f.refreshKey}
         pageLimit={f.pageLimit}
+        ctx={ctx}
       />
     );
   }

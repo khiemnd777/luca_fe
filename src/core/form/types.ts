@@ -82,12 +82,18 @@ export type CustomRenderCtx = {
 };
 
 // searchlist
-export type SearchListSearchFn = (keyword: string) => Promise<any[]>;
-export type SearchListSearchPageFn = (keyword: string, page: number, limit: number) => Promise<any[]>;
-export type SearchListFetchListFn = (values: Record<string, any>) => Promise<any[]>;
+export type SearchListSearchFn = (keyword: string, ctx?: FormContext) => Promise<any[]>;
+export type SearchListSearchPageFn = (
+  keyword: string,
+  page: number,
+  limit: number,
+  ctx?: FormContext
+) => Promise<any[]>;
+export type SearchListFetchListFn = (values: Record<string, any>, ctx?: FormContext) => Promise<any[]>;
 export type SearchListHydrateFn = (
   ids: Array<string | number>,
-  values: Record<string, any>
+  values: Record<string, any>,
+  ctx?: FormContext
 ) => Promise<any[]>;
 
 // metadata def

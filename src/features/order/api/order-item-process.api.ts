@@ -2,6 +2,7 @@ import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { OrderItemProcessInProgressModel } from "../model/order-item-process-inprogress.model";
+import type { OrderItemProcessInProgressProcessModel } from "../model/order-item-process-inprogress-process.model";
 import type { OrderItemProcessModel, OrderItemProcessUpsertModel } from "../model/order-item-process.model";
 
 export async function processes(orderId: number, orderItemId: number): Promise<OrderItemProcessModel[]> {
@@ -32,9 +33,34 @@ export async function prepareCheckInOrOut(orderId: number, orderItemId: number):
   return result;
 }
 
+export async function prepareCheckInOrOutByCode(code: string): Promise<OrderItemProcessInProgressModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/processes/check-in-out/prepare-by-code`, {
+    params: {
+      code,
+    }
+  });
+  const result = mapper.map<any, OrderItemProcessInProgressModel>("OrderItemProcessInProgress", data, "dto_to_model");
+  return result;
+}
+
 export async function checkInOrOut(orderId: number, orderItemId: number, payload: OrderItemProcessUpsertModel): Promise<OrderItemProcessInProgressModel> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.post<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}/processes/check-in-out`, payload);
   const result = mapper.map<any, OrderItemProcessInProgressModel>("OrderItemProcessInProgress", data, "dto_to_model");
+  return result;
+}
+
+export async function processInProgressById(inProgressId: number): Promise<OrderItemProcessInProgressProcessModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/processes/in-progress/${inProgressId}`);
+  const result = mapper.map<any, OrderItemProcessInProgressProcessModel>("OrderItemProcessInProgressProcess", data, "dto_to_model");
+  return result;
+}
+
+export async function processesInProgressByProcessId(processId: number): Promise<OrderItemProcessInProgressProcessModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/processes/in-progress/process/${processId}`);
+  const result = mapper.map<any[], OrderItemProcessInProgressProcessModel[]>("OrderItemProcessInProgressProcess", data, "dto_to_model");
   return result;
 }

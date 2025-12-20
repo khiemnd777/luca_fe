@@ -36,10 +36,10 @@ export type SearchSingleFieldProps<T> = {
   onInputChange?: (text: string) => void;
 
   /** Data fetchers */
-  search: (keyword: string) => Promise<T[]>;
-  searchPage?: (keyword: string, page: number, limit: number) => Promise<T[]>;
-  fetchOne?: (values: Record<string, any>) => Promise<T | null>;
-  hydrateById?: (id: string | number, values: Record<string, any>) => Promise<T | null>;
+  search: (keyword: string, ctx?: FormContext) => Promise<T[]>;
+  searchPage?: (keyword: string, page: number, limit: number, ctx?: FormContext) => Promise<T[]>;
+  fetchOne?: (values: Record<string, any>, ctx?: FormContext) => Promise<T | null>;
+  hydrateById?: (id: string | number, values: Record<string, any>, ctx?: FormContext) => Promise<T | null>;
 
   /** Create */
   onOpenCreate?: () => Promise<void> | void;
@@ -56,7 +56,7 @@ export type SearchSingleFieldProps<T> = {
 
   values: Record<string, any>;
   refreshKey?: any;
-  ctx?: FormContext | null;
+  ctx?: FormContext;
 };
 
 /* ============================================================
@@ -145,7 +145,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     let cancelled = false;
 
     (async () => {
-      const obj = await hydrateById(selectedId, valuesRef.current);
+      const obj = await hydrateById(selectedId, valuesRef.current, ctx);
       if (cancelled) return;
       setValue(obj);
       setInputValue(obj ? getOptionLabel(obj) : "");
@@ -164,7 +164,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     let cancelled = false;
 
     (async () => {
-      const obj = await fetchOne(valuesRef.current);
+      const obj = await fetchOne(valuesRef.current, ctx);
       if (cancelled) return;
       if (obj) {
         setValue(obj);
@@ -195,11 +195,11 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       setPage(1);
       try {
         if (searchPage) {
-          const data = await searchPage(kw, 1, pageLimit);
+          const data = await searchPage(kw, 1, pageLimit, ctx);
           setOptions(data ?? []);
           setHasMore((data?.length ?? 0) >= pageLimit);
         } else {
-          const data = await search(kw);
+          const data = await search(kw, ctx);
           setOptions(data ?? []);
           setHasMore(false);
         }
@@ -215,7 +215,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     setLoadingMore(true);
     try {
       const next = page + 1;
-      const data = await searchPage(keyword, next, pageLimit);
+      const data = await searchPage(keyword, next, pageLimit, ctx);
       setOptions((prev) => [...prev, ...(data ?? [])]);
       setPage(next);
       setHasMore((data?.length ?? 0) >= pageLimit);
@@ -238,7 +238,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     if (!refreshKey || !fetchOne) return;
 
     (async () => {
-      const obj = await fetchOne(values);
+      const obj = await fetchOne(values, ctx);
       setValue(obj ?? null);
       setInputValue(obj ? getOptionLabel(obj, options) : "");
     })();

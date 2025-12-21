@@ -7,6 +7,7 @@ import { rel1, search } from "@core/relation/relation.api";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
 import type { OrderItemProcessUpsertModel } from "../model/order-item-process.model";
 import { checkInOrOut } from "../api/order-item-process.api";
+import { navigate } from "@root/core/navigation/navigate";
 
 const buildRelationSearchSingleField = (
   name: string,
@@ -91,8 +92,9 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
     async initialResolver(data: any) {
       return data ?? {};
     },
-    async afterSaved() {
-      console.log("afterSave: handle later");
+    async afterSaved(result, ctx) {
+      console.log("ctx", ctx, "result", result);
+      navigate(`/order/${ctx.values.orderId}/historical/${ctx.values.orderItemId}/process/in-progresses`);
     },
     hooks: {
       mapToDto: (v) => mapper.map("OrderItemProcessInProgress", v, "model_to_dto"),

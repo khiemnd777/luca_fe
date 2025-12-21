@@ -63,20 +63,26 @@ export async function assign(inprogressId: number, assignedId: number, assignedN
   return result;
 }
 
-export async function processInProgressById(inProgressId: number): Promise<OrderItemProcessInProgressProcessModel> {
+export async function getInProgressById(inProgressId: number): Promise<OrderItemProcessInProgressProcessModel> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/processes/in-progress/${inProgressId}`);
   const result = mapper.map<any, OrderItemProcessInProgressProcessModel>("OrderItemProcessInProgressProcess", data, "dto_to_model");
   return result;
 }
 
-export async function processesInProgressByProcessId(processId: number): Promise<OrderItemProcessInProgressProcessModel[]> {
+export async function getInProgressesByProcessId(processId: number): Promise<OrderItemProcessInProgressProcessModel[]> {
   const { departmentApiPath } = useAuthStore.getState();
-  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/processes/in-progress/process/${processId}`);
+  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/processes/${processId}/in-progresses`);
   const result = mapper.map<any[], OrderItemProcessInProgressProcessModel[]>("OrderItemProcessInProgressProcess", data, "dto_to_model");
   return result;
 }
 
+export async function getInProgressesByOrderItemId(orderId: number, orderItemId: number): Promise<OrderItemProcessInProgressProcessModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}/processes/in-progresses`);
+  const result = mapper.map<any[], OrderItemProcessInProgressProcessModel[]>("OrderItemProcessInProgressProcess", data, "dto_to_model");
+  return result;
+}
 
 export async function getCheckoutLatest(orderId: number, orderItemId: number): Promise<OrderItemProcessInProgressProcessModel> {
   const { departmentApiPath } = useAuthStore.getState();

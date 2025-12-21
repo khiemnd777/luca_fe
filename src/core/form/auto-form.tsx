@@ -1071,7 +1071,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         );
 
         if (btn.afterSaved) await btn.afterSaved(result);
-        if (schema!.afterSaved) await schema!.afterSaved(result);
+        if (schema!.afterSaved) await schema!.afterSaved(result, ctx);
         if (onSaved) await onSaved(result);
 
         return true;

@@ -51,6 +51,18 @@ export async function checkInOrOut(orderId: number, orderItemId: number, payload
   return result;
 }
 
+export async function assign(inprogressId: number, assignedId: number, assignedName: string, note: string): Promise<OrderItemProcessInProgressModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.post<any>(`${departmentApiPath()}/order/processes/in-progress/${inprogressId}/assign`, {
+    'in_progress_id': inprogressId,
+    'assigned_id': assignedId,
+    'assigned_name': assignedName,
+    note,
+  });
+  const result = mapper.map<any, OrderItemProcessInProgressModel>("OrderItemProcessInProgress", data, "dto_to_model");
+  return result;
+}
+
 export async function processInProgressById(inProgressId: number): Promise<OrderItemProcessInProgressProcessModel> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/processes/in-progress/${inProgressId}`);
@@ -62,5 +74,13 @@ export async function processesInProgressByProcessId(processId: number): Promise
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/processes/in-progress/process/${processId}`);
   const result = mapper.map<any[], OrderItemProcessInProgressProcessModel[]>("OrderItemProcessInProgressProcess", data, "dto_to_model");
+  return result;
+}
+
+
+export async function getCheckoutLatest(orderId: number, orderItemId: number): Promise<OrderItemProcessInProgressProcessModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}/processes/check-out/latest`);
+  const result = mapper.map<any, OrderItemProcessInProgressProcessModel>("OrderItemProcessInProgressProcess", data, "dto_to_model");
   return result;
 }

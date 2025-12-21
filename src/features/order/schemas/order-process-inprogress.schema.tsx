@@ -1,9 +1,12 @@
+import { mapper } from "@core/mapper/auto-mapper";
 import type { FieldDef, FormContext } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { registerFormDialog } from "@root/core/form/form-dialog.registry";
 import { rel1, search } from "@core/relation/relation.api";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
+import type { OrderItemProcessUpsertModel } from "../model/order-item-process.model";
+import { checkInOrOut } from "../api/order-item-process.api";
 
 const buildRelationSearchSingleField = (
   name: string,
@@ -73,7 +76,26 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
     fields,
     submit: {
       type: "fn",
-      run: async (values) => values,
+      run: async (dto) => {
+        const payload = dto as OrderItemProcessUpsertModel;
+        await checkInOrOut(payload.dto.orderId ?? 0, payload.dto.orderItemId ?? 0, payload);
+        return dto;
+      },
+    },
+    toasts: {
+      saved: ({ values }) =>
+        `Check ${values?.processName ?? ""} thành công!`,
+      failed: ({ values }) =>
+        `Check ${values?.processName ?? ""} thất bại!`,
+    },
+    async initialResolver(data: any) {
+      return data ?? {};
+    },
+    async afterSaved() {
+      console.log("afterSave: handle later");
+    },
+    hooks: {
+      mapToDto: (v) => mapper.map("OrderItemProcessInProgress", v, "model_to_dto"),
     },
   };
 }

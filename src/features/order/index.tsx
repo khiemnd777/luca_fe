@@ -36,6 +36,16 @@ const mod: ModuleDescriptor = {
           path: "/order/:orderId/historical/:orderItemId",
           icon: <ChecklistIcon />,
           priority: 99,
+        },
+        {
+          hidden: true,
+          key: "order-process-check-code",
+          permissions: ["order.view", "order.edit"],
+          label: "Công đoạn gia công",
+          title: "Công đoạn gia công",
+          path: "/order/check/:code",
+          icon: <ChecklistIcon />,
+          priority: 99,
         }
       ],
     },

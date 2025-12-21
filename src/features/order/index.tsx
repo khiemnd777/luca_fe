@@ -59,16 +59,16 @@ const mod: ModuleDescriptor = {
         }
       ],
     },
-    {
-      key: "order-process",
-      permissions: ["order.view"],
-      element: <OneColumnPage />,
-      label: "Gia công",
-      title: "Gia công",
-      path: "/order/processing",
-      icon: <DeveloperBoardIcon />,
-      priority: 96,
-    }
+    // {
+    //   key: "order-process",
+    //   permissions: ["order.view"],
+    //   element: <OneColumnPage />,
+    //   label: "Gia công",
+    //   title: "Gia công",
+    //   path: "/order/processing",
+    //   icon: <DeveloperBoardIcon />,
+    //   priority: 96,
+    // }
   ],
 };
 

@@ -18,6 +18,7 @@ const buildRelationSearchSingleField = (
   getOptionLabel?: (item: any, items?: any[]) => string,
   orderBy?: string,
   extendWhere?: (ctx?: FormContext) => string[],
+  asText?: boolean,
 ): FieldDef => ({
   name,
   label,
@@ -28,6 +29,7 @@ const buildRelationSearchSingleField = (
   pageLimit: 20,
   getInputLabel,
   getOptionLabel,
+  asText,
   async searchPage(keyword: string, page: number, limit: number, ctx?: FormContext) {
     const searched = await search(target, {
       keyword,
@@ -52,9 +54,43 @@ const buildRelationSearchSingleField = (
 
 export function buildOrderProcessInProgressSchema(): FormSchema {
   const fields: FieldDef[] = [
+    {
+      kind: "searchsingle",
+      label: "Công đoạn hiện tại",
+      name: "processId",
+      getOptionLabel: (d: any) => `${d?.sectionName ? `${d?.sectionName} > ` : ""}${d?.processName ?? ""}`,
+      async hydrateById(idValue: number | string) {
+        if (!idValue) return null;
+        return await rel1("orderitem_process", Number(idValue));
+      },
+      asText: true,
+    },
+    {
+      kind: "searchsingle",
+      label: "Kỹ thuật viên",
+      name: "assignedId",
+      getOptionLabel: (d: any) => d?.name ?? "",
+      async hydrateById(idValue: number | string) {
+        if (!idValue) return null;
+        return await rel1("orderitemprocess_assignee", Number(idValue));
+      },
+      asText: true,
+    },
+    {
+      kind: "datetime",
+      label: "Bắt đầu lúc",
+      name: "startedAt",
+      asText: true,
+    },
+    {
+      label: "Ghi chú nhận ca",
+      kind: "textarea",
+      name: "checkInNote",
+      asText: true,
+    },
     buildRelationSearchSingleField(
-      "processId",
-      "Công đoạn",
+      "nextProcessId",
+      "Công đoạn tiếp theo",
       "Chọn công đoạn",
       "orderitem_process",
       (d: any) => d?.processName ?? "",
@@ -62,18 +98,9 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
       "step_number",
       (ctx) => [`order_item_id=${ctx?.values.orderItemId}`, `order_id=${ctx?.values.orderId}`]
     ),
-    buildRelationSearchSingleField(
-      "assignedId",
-      "Kỹ thuật viên",
-      "Chọn kỹ thuật viên",
-      "orderitemprocess_assignee",
-      undefined,
-      (d: any) => d?.name ?? "",
-      "name",
-    ),
     {
-      name: "note",
-      label: "Ghi chú",
+      name: "checkOutNote",
+      label: "Ghi chú giao ca",
       kind: "textarea",
       fullWidth: true,
       rows: 3,
@@ -87,7 +114,7 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
       type: "fn",
       run: async (dto) => {
         const payload = dto as OrderItemProcessUpsertModel;
-        await checkInOrOut(payload.dto.orderId ?? 0, payload.dto.orderItemId ?? 0, payload);
+        await checkInOrOut(payload.dto);
         return dto;
       },
     },
@@ -102,7 +129,9 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
     },
     async afterSaved(result, ctx) {
       console.log("ctx", ctx, "result", result);
-      navigate(`/order/${ctx.values.orderId}/historical/${ctx.values.orderItemId}/process/in-progresses`);
+      const orderId = (result.dto as any).order_id;
+      const orderItemId = (result.dto as any).order_item_id;
+      navigate(`/order/${orderId}/historical/${orderItemId}/process/in-progresses`);
     },
     hooks: {
       mapToDto: (v) => mapper.map("OrderItemProcessInProgress", v, "model_to_dto"),
@@ -110,8 +139,8 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
   };
 }
 
-registerForm("order-process-inprogress", buildOrderProcessInProgressSchema);
-registerFormDialog("order-process-inprogress", buildOrderProcessInProgressSchema, {
+registerForm("order-process-inprogress-check-out", buildOrderProcessInProgressSchema);
+registerFormDialog("order-process-inprogress-check-out", buildOrderProcessInProgressSchema, {
   title: { create: "", update: "Cập nhật công đoạn" },
   confirmText: { create: "", update: "Lưu" },
   cancelText: "Thoát",

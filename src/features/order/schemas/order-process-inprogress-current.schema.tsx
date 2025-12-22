@@ -6,6 +6,8 @@ import { Box, Stack, Typography } from "@mui/material";
 import { formatDateTime } from "@root/shared/utils/datetime.utils";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
 import { assign } from "../api/order-item-process.api";
+import { getContrastText } from "@root/shared/utils/color.utils";
+import { invalidate } from "@root/core/hooks/use-async";
 
 export function buildOrderProcessInProgressCurrentSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -36,7 +38,7 @@ export function buildOrderProcessInProgressCurrentSchema(): FormSchema {
                 py: 0.5,
                 borderRadius: 1,
                 backgroundColor: bgColor ?? "transparent",
-                color: bgColor ? "#fff" : "inherit",
+                color: getContrastText(bgColor),
               }}
             >
               <Typography variant="body2">{content}</Typography>
@@ -92,8 +94,8 @@ export function buildOrderProcessInProgressCurrentSchema(): FormSchema {
       },
     },
     {
-      name: "note",
-      label: "Ghi chú",
+      name: "checkInNote",
+      label: "Ghi chú nhận ca",
       kind: "textarea",
       fullWidth: true,
       rows: 3,
@@ -106,17 +108,25 @@ export function buildOrderProcessInProgressCurrentSchema(): FormSchema {
     modeResolver: () => "update",
     submit: {
       type: "fn",
-      run: async (values) => {
-        const inProgressId = parseIntSafe(values.id);
-        const assignedId = parseIntSafe(values.assignedId);
+      run: async (result) => {
+        const dto = result.dto;
+        const inProgressId = parseIntSafe(dto.id);
+        const assignedId = parseIntSafe(dto.assigned_id);
         await assign(
           inProgressId ?? 0,
           assignedId ?? 0,
-          values.assignedName ?? "",
-          values.note ?? "",
+          dto.assigned_name ?? "",
+          dto.check_in_note ?? "",
         );
-        return values;
+        return result;
       },
+    },
+    afterSaved(result, ctx) {
+      console.log(result, ctx);
+      const dto = result.dto;
+      const orderId = dto.order_id;
+      const orderItemId = dto.order_item_id;
+      invalidate(`order-process-inprogress:${orderId}:${orderItemId}`);
     },
     async initialResolver(data: any) {
       return data ?? {};

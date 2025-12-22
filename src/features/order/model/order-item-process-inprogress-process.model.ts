@@ -1,6 +1,9 @@
 export interface OrderItemProcessInProgressProcessModel {
   id?: number;
-  note?: string | null;
+  orderItemId?: number | null;
+  orderId?: number | null;
+  checkInNote?: string | null;
+  checkOutNote?: string | null;
   assignedId?: number | null;
   assignedName?: string | null;
   startedAt?: string | null;

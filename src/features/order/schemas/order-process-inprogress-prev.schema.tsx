@@ -3,6 +3,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { Box, Stack, Typography } from "@mui/material";
 import { formatDateTime } from "@root/shared/utils/datetime.utils";
+import { getContrastText } from "@root/shared/utils/color.utils";
 
 export function buildOrderProcessInProgressPrevSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -33,7 +34,7 @@ export function buildOrderProcessInProgressPrevSchema(): FormSchema {
                 py: 0.5,
                 borderRadius: 1,
                 backgroundColor: bgColor ?? "transparent",
-                color: bgColor ? "#fff" : "inherit",
+                color: getContrastText(bgColor),
               }}
             >
               <Typography variant="body2">{content}</Typography>
@@ -50,7 +51,7 @@ export function buildOrderProcessInProgressPrevSchema(): FormSchema {
     },
     {
       name: "startedAt",
-      label: "Bắt đầu",
+      label: "Bắt đầu lúc",
       kind: "custom",
       render: ({ value, field }) => {
         const content = formatDateTime(value) || "—";
@@ -66,7 +67,7 @@ export function buildOrderProcessInProgressPrevSchema(): FormSchema {
     },
     {
       name: "completedAt",
-      label: "Hoàn thành",
+      label: "Hoàn thành lúc",
       kind: "custom",
       render: ({ value, field }) => {
         const content = formatDateTime(value) || "—";
@@ -81,9 +82,15 @@ export function buildOrderProcessInProgressPrevSchema(): FormSchema {
       },
     },
     {
-      name: "note",
-      label: "Ghi chú",
-      kind: "text",
+      name: "checkInNote",
+      label: "Ghi chú nhận ca",
+      kind: "textarea",
+      asText: true,
+    },
+    {
+      name: "checkOutNote",
+      label: "Ghi chú giao ca",
+      kind: "textarea",
       asText: true,
     },
   ];

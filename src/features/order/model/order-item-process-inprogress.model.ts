@@ -4,7 +4,9 @@ export interface OrderItemProcessInProgressModel {
   processId?: number | null;
   prevProcessId?: number | null;
   nextProcessId?: number | null;
-  note?: string | null;
+  orderItemCode?: string | null;
+  checkInNote?: string | null;
+  checkOutNote?: string | null;
   orderItemId?: number | null;
   orderId?: number | null;
   assignedId?: number | null;

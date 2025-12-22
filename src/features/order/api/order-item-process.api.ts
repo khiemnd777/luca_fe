@@ -44,8 +44,10 @@ export async function prepareCheckInOrOutByCode(code: string): Promise<OrderItem
   return result;
 }
 
-export async function checkInOrOut(orderId: number, orderItemId: number, payload: OrderItemProcessUpsertModel): Promise<OrderItemProcessInProgressModel> {
+export async function checkInOrOut(payload: OrderItemProcessModel): Promise<OrderItemProcessInProgressModel> {
   const { departmentApiPath } = useAuthStore.getState();
+  const orderId = (payload as any).order_id;
+  const orderItemId = (payload as any).order_item_id;
   const { data } = await apiClient.post<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}/processes/check-in-out`, payload);
   const result = mapper.map<any, OrderItemProcessInProgressModel>("OrderItemProcessInProgress", data, "dto_to_model");
   return result;

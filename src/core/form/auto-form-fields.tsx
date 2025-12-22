@@ -30,6 +30,7 @@ import { humanize } from "@root/shared/utils/string.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 import SearchSingleField from "./search-single-field";
 import { QRField } from "@root/core/form/qr-field";
+import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 
 
 // -----------------------------------------------------------
@@ -46,6 +47,17 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
 
   // null / empty
   if (v === null || v === undefined || v === "") return <Typography>—</Typography>;
+
+  // TEXTAREA
+  if (f.kind === "textarea") {
+    return (
+      <Typography
+        sx={{ whiteSpace: "pre-line" }}
+      >
+        {String(v)}
+      </Typography>
+    );
+  }
 
   // SELECT
   if (f.kind === "select" && !f.multiple) {
@@ -80,8 +92,11 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
   }
 
   // DATE / DATETIME
-  if (f.kind === "date" || f.kind === "datetime") {
-    return <Typography>{String(v)}</Typography>;
+  if (f.kind === "datetime") {
+    return <Typography>{formatDateTime(String(v))}</Typography>;
+  }
+  if (f.kind === "date") {
+    return <Typography>{formatDate(String(v))}</Typography>;
   }
 
   // CURRENCY

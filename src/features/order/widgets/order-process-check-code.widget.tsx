@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 import { AutoForm } from "@core/form/auto-form";
 import type { AutoFormRef } from "@root/core/form/form.types";
 import { useAsync } from "@root/core/hooks/use-async";
-import { CircularProgress, Stack } from "@mui/material";
+import { CircularProgress, Stack, Typography } from "@mui/material";
 import { getCheckoutLatest, prepareCheckInOrOutByCode } from "../api/order-item-process.api";
 import type { OrderItemProcessInProgressModel } from "../model/order-item-process-inprogress.model";
 import type { OrderItemProcessInProgressProcessModel } from "../model/order-item-process-inprogress-process.model";
@@ -15,11 +15,12 @@ import { OrderQrScanner } from "../components/order-scanner.component";
 import { Spacer } from "@root/shared/components/ui/spacer";
 import InputIcon from '@mui/icons-material/Input';
 import OutputIcon from '@mui/icons-material/Output';
+import { Section } from "@root/shared/components/ui/section";
 
 export function OrderProcessCheckCodeWidget() {
   const { code } = useParams();
   const [orderCode, setOrderCode] = React.useState<string | undefined>(code);
-  const frmProcessCheckoutRef = React.useRef<AutoFormRef>(null);
+  const frmProcessCheckInOrOutRef = React.useRef<AutoFormRef>(null);
 
   React.useEffect(() => {
     if (code) {
@@ -46,22 +47,38 @@ export function OrderProcessCheckCodeWidget() {
     });
 
   const isCheckout = Boolean(preparedData?.id);
-  const title = `${isCheckout ? "Check out" : "Check in"}`;
+  const header = "Hiện tại";
+
+  const title = React.useMemo(() => {
+    const codeTitle = preparedData?.orderItemCode;
+    return codeTitle ? `Mã: ${codeTitle}` : "Đơn hàng";
+  }, [preparedData?.orderItemCode]);
 
   return (
     <>
       {preparedData ? (
         <>
-
+          <Section>
+            {loadingPrepared ? (
+              <Stack alignItems="center" py={2}>
+                <CircularProgress size={22} />
+              </Stack>
+            ) : (
+              <Typography variant="subtitle1" fontWeight={700}>
+                {title}
+              </Typography>
+            )}
+          </Section>
+          <Spacer />
           <SectionCard
-            title={title ?? ""}
+            title={header}
             extra={
               <>
                 <IfPermission permissions={["order.update"]}>
                   <SafeButton
                     variant="contained"
                     icon={isCheckout ? <OutputIcon /> : <InputIcon />}
-                    onClick={() => frmProcessCheckoutRef.current?.submit()}
+                    onClick={() => frmProcessCheckInOrOutRef.current?.submit()}
                   >
                     {isCheckout ? "Check out" : "Check in"}
                   </SafeButton>
@@ -75,25 +92,27 @@ export function OrderProcessCheckCodeWidget() {
               </Stack>
             ) : (
               <AutoForm
-                name="order-process-inprogress"
-                ref={frmProcessCheckoutRef}
+                name={isCheckout ? 'order-process-inprogress-check-out' : 'order-process-inprogress-check-in'}
+                ref={frmProcessCheckInOrOutRef}
                 initial={preparedData ?? {}}
               />
             )}
           </SectionCard>
           <Spacer />
-          <SectionCard title="Công đoạn trước">
-            {loadingCheckoutLatest ? (
-              <Stack alignItems="center" py={2}>
-                <CircularProgress size={22} />
-              </Stack>
-            ) : (
-              <AutoForm
-                name="order-process-inprogress-prev"
-                initial={checkoutLatestData ?? {}}
-              />
-            )}
-          </SectionCard>
+          {loadingCheckoutLatest || checkoutLatestData?.id ? (
+            <SectionCard title="Công đoạn trước">
+              {loadingCheckoutLatest ? (
+                <Stack alignItems="center" py={2}>
+                  <CircularProgress size={22} />
+                </Stack>
+              ) : (
+                <AutoForm
+                  name="order-process-inprogress-prev"
+                  initial={checkoutLatestData ?? {}}
+                />
+              )}
+            </SectionCard>
+          ) : null}
         </>
       ) : <OrderQrScanner onDetected={(nextCode) => setOrderCode(nextCode)} />}
     </>

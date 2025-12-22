@@ -7,7 +7,10 @@ mapper.register<OrderItemProcessInProgressProcessModel>({
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
-    note: null,
+    orderId: null,
+    orderItemId: null,
+    checkInNote: null,
+    checkOutNote: null,
     assignedId: null,
     assignedName: null,
     startedAt: null,

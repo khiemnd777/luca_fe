@@ -6,15 +6,13 @@ import { IfPermission } from "@core/auth/if-permission";
 import { SafeButton } from "@shared/components/button/safe-button";
 import { AutoForm } from "@core/form/auto-form";
 import type { AutoFormRef } from "@root/core/form/form.types";
-import { CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAsync } from "@root/core/hooks/use-async";
 import { Section } from "@root/shared/components/ui/section";
 import { getByOrderIdAndOrderItemId, id as getById } from "../api/order.api";
 import { getInProgressesByOrderItemId } from "../api/order-item-process.api";
 import type { OrderItemProcessInProgressProcessModel } from "../model/order-item-process-inprogress-process.model";
 import type { OrderModel } from "../model/order.model";
-import { generateTitle } from "../utils/order.utils";
-
 export function OrderProcessInProgressWidget() {
   const { orderId, orderItemId } = useParams();
   const parsedOrderId = orderId ? Number(orderId) : null;
@@ -41,9 +39,9 @@ export function OrderProcessInProgressWidget() {
   }, [detail?.latestOrderItem?.id, parsedOrderItemId]);
 
   const title = React.useMemo(() => {
-    const codeTitle = generateTitle(detail?.code, detail?.latestOrderItem?.code);
-    return codeTitle ? `Đơn hàng ${codeTitle}` : "Đơn hàng";
-  }, [detail?.code, detail?.latestOrderItem?.code]);
+    const codeTitle = detail?.latestOrderItem?.code;
+    return codeTitle ? `Mã: ${codeTitle}` : "Đơn hàng";
+  }, [detail?.latestOrderItem?.code]);
 
   const { data: inprogressesData, loading: loadingInprogresses } =
     useAsync<OrderItemProcessInProgressProcessModel[]>(
@@ -59,6 +57,13 @@ export function OrderProcessInProgressWidget() {
 
   const latestData = inprogressesData?.[0];
   const previousData = (inprogressesData ?? []).slice(1);
+  const isLatestCompleted = Boolean(latestData?.completedAt);
+  const currentSectionTitle = isLatestCompleted
+    ? "Công đoạn gần nhất"
+    : "Công đoạn hiện tại";
+  const currentFormName = isLatestCompleted
+    ? "order-process-inprogress-prev"
+    : "order-process-inprogress-current";
 
   return (
     <Stack spacing={2}>
@@ -75,16 +80,18 @@ export function OrderProcessInProgressWidget() {
       </Section>
 
       <SectionCard
-        title="Công đoạn hiện tại"
+        title={currentSectionTitle}
         extra={
-          <IfPermission permissions={["order.update"]}>
-            <SafeButton
-              variant="contained"
-              onClick={() => frmCurrentRef.current?.submit()}
-            >
-              Cập nhật
-            </SafeButton>
-          </IfPermission>
+          isLatestCompleted ? null : (
+            <IfPermission permissions={["order.update"]}>
+              <SafeButton
+                variant="contained"
+                onClick={() => frmCurrentRef.current?.submit()}
+              >
+                Lưu
+              </SafeButton>
+            </IfPermission>
+          )
         }
       >
         {loadingInprogresses ? (
@@ -93,8 +100,8 @@ export function OrderProcessInProgressWidget() {
           </Stack>
         ) : (
           <AutoForm
-            name="order-process-inprogress-current"
-            ref={frmCurrentRef}
+            name={currentFormName}
+            ref={isLatestCompleted ? undefined : frmCurrentRef}
             initial={latestData ?? {}}
           />
         )}
@@ -106,15 +113,32 @@ export function OrderProcessInProgressWidget() {
             <CircularProgress size={22} />
           </Stack>
         ) : (
-          <Stack spacing={2}>
-            {previousData.map((item, idx) => (
-              <Section key={item.id ?? idx}>
-                <AutoForm
-                  name="order-process-inprogress-prev"
-                  initial={item ?? {}}
-                />
-              </Section>
-            ))}
+          <Stack>
+            {previousData.map((item, idx) => {
+              const isLast = idx === previousData.length - 1
+
+              return (
+                <Box
+                  key={item.id ?? idx}
+                  pb={4}
+                  mb={2}
+                  sx={{
+                    borderBottom: isLast
+                      ? "none"
+                      : "1px dashed",
+                    borderColor: "divider",
+                  }}
+                >
+                  <Section>
+                    <AutoForm
+                      name="order-process-inprogress-prev"
+                      initial={item ?? {}}
+                    />
+                  </Section>
+                </Box>
+              )
+            })}
+
             {previousData.length === 0 && (
               <Typography variant="body2" color="text.secondary">
                 Không có dữ liệu
@@ -123,6 +147,7 @@ export function OrderProcessInProgressWidget() {
           </Stack>
         )}
       </SectionCard>
+
     </Stack>
   );
 }

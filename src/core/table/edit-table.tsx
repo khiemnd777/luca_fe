@@ -28,6 +28,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { getContrastText } from "@root/shared/utils/color.utils";
 
 const formatColumnHeader = (label?: string) => label?.toUpperCase();
 
@@ -59,35 +60,6 @@ export type EditTableProps<T> = {
   /** Drag & Drop reorder (client-side) */
   onReorder?: (newRows: T[], from: number, to: number) => void;
 };
-
-/* ================= Helpers: contrast text for background color ================= */
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const s = hex.replace("#", "").trim();
-  if (![3, 6].includes(s.length)) return null;
-  const full = s.length === 3 ? s.split("").map((c) => c + c).join("") : s;
-  const n = parseInt(full, 16);
-  if (Number.isNaN(n)) return null;
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
-function srgbToLinear(c: number) {
-  const s = c / 255;
-  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function luminance({ r, g, b }: { r: number; g: number; b: number }) {
-  const R = srgbToLinear(r), G = srgbToLinear(g), B = srgbToLinear(b);
-  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
-}
-
-/** Trả về "#000" hoặc "#fff" tuỳ theo độ tương phản tốt hơn với bg */
-function getContrastText(bg: string): "#000" | "#fff" {
-  const rgb = hexToRgb(bg);
-  if (!rgb) return "#000";
-  const L = luminance(rgb);
-  // Ngưỡng phổ biến: chọn trắng nếu nền tối (L < ~0.5)
-  return L > 0.5 ? "#000" : "#fff";
-}
 
 /* ================= Components ================= */
 export function ImageCell(props: { src: string; shape?: ImageShape }) {

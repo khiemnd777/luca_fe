@@ -18,6 +18,7 @@ export type FieldKind =
   | "autocomplete"
   | "fileupload"
   | "imageupload"
+  | "qr"
   | "custom"
   | "searchlist"
   | "searchsingle"
@@ -70,6 +71,14 @@ export type FieldRules = {
 export type Option = {
   label: string;
   value: string | number | boolean;
+};
+
+export type QROptions = {
+  size?: number;
+  tooltipSize?: number;
+  level?: "L" | "M" | "Q" | "H";
+  fgColor?: string;
+  bgColor?: string;
 };
 
 export type CustomRenderCtx = {
@@ -137,6 +146,7 @@ export type FieldDef = {
   fullWidth?: boolean;
   size?: "small" | "medium";
   rules?: FieldRules;
+  qr?: QROptions;
   step?: number;                                                            // for number
   showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;

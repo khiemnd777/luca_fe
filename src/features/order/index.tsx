@@ -2,7 +2,6 @@ import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import OneColumnPage from "@root/core/pages/one-column-page";
 import ChecklistIcon from '@mui/icons-material/Checklist';
-import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 
 const mod: ModuleDescriptor = {
   id: "order",

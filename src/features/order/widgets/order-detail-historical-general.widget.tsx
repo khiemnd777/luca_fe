@@ -18,7 +18,7 @@ import { generateTitle } from "../utils/order.utils";
 function OrderDetailHistoricalGeneralWidget() {
   const { orderId, orderItemId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
-  const [tab, setTab] = React.useState<"info" | "process">("info");
+  const [tab, setTab] = React.useState<"info" | "qr" | "process">("info");
 
   const { data: detail, loading } = useAsync<OrderModel | null>(
     () => {
@@ -47,6 +47,7 @@ function OrderDetailHistoricalGeneralWidget() {
           sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
         >
           <Tab value="info" label="Thông tin đơn hàng" />
+          <Tab value="qr" label="Mã QR" />
           <Tab value="process" label="Quy trình gia công" />
         </Tabs>
 
@@ -76,6 +77,12 @@ function OrderDetailHistoricalGeneralWidget() {
               />
             </SectionCard>
           )}
+        </Box>
+
+        <Box hidden={tab !== "qr"}>
+          <SectionCard title={title ?? ""}>
+            <AutoForm name="order-qr" initial={detail} />
+          </SectionCard>
         </Box>
 
         <Box hidden={tab !== "process"}>

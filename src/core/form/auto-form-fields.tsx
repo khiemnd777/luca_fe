@@ -29,6 +29,7 @@ import type { GroupConfig } from "./form.types";
 import { humanize } from "@root/shared/utils/string.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 import SearchSingleField from "./search-single-field";
+import { QRField } from "@root/core/form/qr-field";
 
 
 // -----------------------------------------------------------
@@ -99,6 +100,9 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
   }
   if (f.kind === "fileupload") {
     return <Typography>{Array.isArray(v) ? `${v.length} file` : "—"}</Typography>;
+  }
+  if (f.kind === "qr") {
+    return <QRField value={v} {...f.qr} />;
   }
 
   // DEFAULT
@@ -194,6 +198,17 @@ export function AutoFormFieldSingle({
   ]);
 
   // AS TEXT MODE
+  if (f.kind === "qr") {
+    return (
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          {f.label}
+        </Typography>
+        <QRField value={values[f.name]} {...f.qr} />
+      </Stack>
+    );
+  }
+
   if (f.asText) {
     if (f.kind === "searchsingle") {
       return (

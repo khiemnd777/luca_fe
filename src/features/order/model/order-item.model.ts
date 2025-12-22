@@ -12,6 +12,7 @@ export interface OrderItemModel {
   // order
   code: string;
   codeOriginal: string;
+  qrCode?: string | null;
   remakeCount: number;
   // product
   productId?: number | null;

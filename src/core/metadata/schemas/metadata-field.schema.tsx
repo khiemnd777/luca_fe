@@ -29,6 +29,14 @@ export function buildMetadataFieldSchema(): FormSchema {
       },
     },
     {
+      name: "tag",
+      label: "Tag",
+      kind: "text",
+      rules: {
+        maxLength: 50,
+      },
+    },
+    {
       name: "type",
       label: "Type",
       kind: "select",

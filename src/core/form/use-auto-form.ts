@@ -200,6 +200,7 @@ function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
 }
 
 // --- Normalize initial values for schema kinds ---
+// TODO: expose schema.normalizeInitial for kind `custom`
 function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>) {
   const source = normalizeCustomInitial(raw);
 
@@ -215,6 +216,11 @@ function normalizeInitialBySchema(schema: FieldDef[], raw?: Record<string, any>)
       source && f.name in (source ?? {})
         ? source![f.name]
         : (f as any).defaultValue ?? defaultFallback;
+
+    if (f.kind === "custom" && typeof (f as any).normalizeInitial === "function") {
+      const custom = (f as any).normalizeInitial(v, source ?? {});
+      if (custom !== undefined) v = custom;
+    }
 
     switch (f.kind) {
       case "fileupload":

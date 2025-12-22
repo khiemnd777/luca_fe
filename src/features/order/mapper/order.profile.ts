@@ -30,6 +30,7 @@ mapper.register<OrderModel>({
         parentItemId: null,
         code: "",
         codeOriginal: "",
+        qrCode: null,
         remakeCount: 0,
         customFields: null,
         createdAt: "",
@@ -37,6 +38,11 @@ mapper.register<OrderModel>({
         // product
         productId: 0,
         productName: "",
+        // products
+        products: null,
+        // materials
+        consumableMaterials: null,
+        loanerMaterials: null,
       }
     },
     latestOrderItem: {
@@ -50,10 +56,16 @@ mapper.register<OrderModel>({
       // order
       code: "",
       codeOriginal: "",
+      qrCode: null,
       remakeCount: 0,
       // product
       productId: 0,
       productName: "",
+      // products
+      products: null,
+      // materials
+      consumableMaterials: null,
+      loanerMaterials: null,
     },
   }),
 });

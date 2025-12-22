@@ -4,6 +4,7 @@ import { reloadTable } from "@core/table/table-reload";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import type { ProductModel } from "@features/product/model/product.model";
 import { table, unlink } from "@features/product/api/product.api";
+import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<ProductModel>[] = [
   { key: "code", header: "Mã sản phẩm", sortable: true, },
@@ -22,6 +23,7 @@ const columns: ColumnDef<ProductModel>[] = [
     type: "metadata",
     metadata: {
       group: "category",
+      tag: "catalog",
       mode: "whole",
     }
   },
@@ -37,6 +39,9 @@ registerTable("products", () => {
     allowDeleting: ["product.delete"],
     onEdit(row: ProductModel) {
       openFormDialog("product", { initial: { id: row.id } });
+    },
+    onView(row: ProductModel) {
+      navigate(`/product/${row.id}`);
     },
     async onDelete(row) {
       await unlink(row.id);

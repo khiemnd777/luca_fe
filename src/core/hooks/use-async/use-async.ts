@@ -31,6 +31,9 @@ export function useAsync<T>(
   const [error, setError] = React.useState<any>(null);
   const [data, setData] = React.useState<T | null>(null);
 
+  // 🔑 force re-render key
+  const [version, bump] = React.useReducer(v => v + 1, 0);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -49,19 +52,21 @@ export function useAsync<T>(
     }
   }, deps);
 
+  // 👇 version nằm trong dependency
   React.useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, version]);
 
   React.useEffect(() => {
     if (!eventName) return;
 
-    const handler = () => void load();
-    on(eventName, handler);
-    return () => {
-      off(eventName, handler);
+    const handler = () => {
+      bump(); // 🔥 invalidate → re-render chắc chắn
     };
-  }, [eventName, load]);
+
+    on(eventName, handler);
+    return () => off(eventName, handler);
+  }, [eventName]);
 
   return { data, loading, error, reload: load, setData };
 }

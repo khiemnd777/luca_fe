@@ -2,7 +2,6 @@ import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import OneColumnPage from "@root/core/pages/one-column-page";
 import ChecklistIcon from '@mui/icons-material/Checklist';
-import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 
 const mod: ModuleDescriptor = {
   id: "order",
@@ -36,19 +35,40 @@ const mod: ModuleDescriptor = {
           path: "/order/:orderId/historical/:orderItemId",
           icon: <ChecklistIcon />,
           priority: 99,
+        },
+        {
+          hidden: true,
+          key: "order-process-check-code",
+          permissions: ["order.view", "order.edit"],
+          label: "Check in / Check out",
+          title: "Check in / Check out",
+          element: <OneColumnPage />,
+          path: "/order/check",
+          icon: <ChecklistIcon />,
+          priority: 99,
+        },
+        {
+          hidden: true,
+          key: "order-process-inprogress",
+          permissions: ["order.view", "order.edit"],
+          label: "Công đoạn gia công",
+          title: "Công đoạn gia công",
+          path: "/order/:orderId/historical/:orderItemId/process/in-progresses",
+          icon: <ChecklistIcon />,
+          priority: 99,
         }
       ],
     },
-    {
-      key: "order-process",
-      permissions: ["order.view"],
-      element: <OneColumnPage />,
-      label: "Gia công",
-      title: "Gia công",
-      path: "/order/processing",
-      icon: <DeveloperBoardIcon />,
-      priority: 96,
-    }
+    // {
+    //   key: "order-process",
+    //   permissions: ["order.view"],
+    //   element: <OneColumnPage />,
+    //   label: "Gia công",
+    //   title: "Gia công",
+    //   path: "/order/processing",
+    //   icon: <DeveloperBoardIcon />,
+    //   priority: 96,
+    // }
   ],
 };
 

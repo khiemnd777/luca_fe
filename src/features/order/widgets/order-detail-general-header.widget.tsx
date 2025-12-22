@@ -1,7 +1,6 @@
 import React from "react";
 import { SectionCard } from "@shared/components/ui/section-card";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
-import { registerSlot } from "@core/module/registry";
 import { IfPermission } from "@core/auth/if-permission";
 import { useParams } from "react-router-dom";
 import { AutoForm } from "@core/form/auto-form";
@@ -12,7 +11,7 @@ import { Section } from "@root/shared/components/ui/section";
 import { CircularProgress } from "@mui/material";
 import { useAsync } from "@root/core/hooks/use-async";
 
-function OrderDetailWidget() {
+export function OrderDetailWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
 
@@ -63,9 +62,9 @@ function OrderDetailWidget() {
   );
 }
 
-registerSlot({
-  id: "order-detail-header",
-  name: "order-detail:left",
-  render: () => <OrderDetailWidget />,
-  priority: 99,
-});
+// registerSlot({
+//   id: "order-detail-header",
+//   name: "order-detail:left",
+//   render: () => <OrderDetailWidget />,
+//   priority: 99,
+// });

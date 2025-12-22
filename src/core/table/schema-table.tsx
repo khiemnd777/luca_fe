@@ -12,7 +12,7 @@ import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 
 const metadataGroupCache = new Map<string, Promise<string[]>>();
 
-async function fetchMetadataGroupCollections(group: string): Promise<string[]> {
+async function fetchMetadataGroupCollections(group: string, tag?: string | null): Promise<string[]> {
   if (!group) return [];
 
   let promise = metadataGroupCache.get(group);
@@ -21,6 +21,7 @@ async function fetchMetadataGroupCollections(group: string): Promise<string[]> {
       limit: 1000,
       offset: 0,
       withFields: true,
+      tag,
       table: true,
       form: false,
     })
@@ -63,9 +64,9 @@ async function expandMetadataColumn<T>(col: ColumnDef<T>): Promise<ColumnDef<T>[
     }
   }
 
-  const { collection, mode = "whole", fields, ignoreFields, def } = metadata;
+  const { collection, mode = "whole", fields, ignoreFields, def, tag } = metadata;
   if (!collection) return [];
-  const schema = await getAvailableCollection(collection, true, true, false);
+  const schema = await getAvailableCollection(collection, true, tag, true, false);
 
   let fieldsToUse = schema.fields;
   fieldsToUse = fieldsToUse?.map((f) => ({

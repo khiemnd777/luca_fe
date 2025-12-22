@@ -6,6 +6,10 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
+import { Typography } from "@mui/material";
+import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
+import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
+import { OrderProductItemList } from "../components/order-product-item-list.component";
 
 export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -103,6 +107,118 @@ export function buildEditOrderSchema(): FormSchema {
         ],
       }
     },
+    // product
+    {
+      kind: "currency",
+      name: "__totalProductPrice",
+      prop: "latestOrderItem",
+      label: "Tổng cộng:",
+      group: "products",
+      asText: true,
+    },
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "products",
+      label: "Sản phẩm",
+      group: "products",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderProductItemList
+          name="latestOrderItem.products"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // consumable material
+    {
+      kind: "currency",
+      name: "__totalConsumableMaterialPrice",
+      prop: "latestOrderItem",
+      label: "Tổng cộng:",
+      group: "consumable-materials",
+      asText: true,
+    },
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "consumableMaterials",
+      label: "Vật tư tiêu hao",
+      group: "consumable-materials",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderConsumableMaterialItemList
+          name="latestOrderItem.consumableMaterials"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // loaner material
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "loanerMaterials",
+      label: "Vật tư cho mượn",
+      group: "loaner-materials",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderLoanerMaterialItemList
+          name="latestOrderItem.loanerMaterials"
+          frmName="order-loaner-material-with-status-item"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // Total Price
+    {
+      kind: "custom",
+      name: "__totalPrice",
+      prop: "latestOrderItem",
+      label: "Thành tiền = Sản phẩm + Vật tư tiêu hao",
+      group: "total",
+      render(ctx) {
+        const consumableMaterialPrice = ctx.values["latestOrderItem.__totalConsumableMaterialPrice"] as number;
+        const productPrice = ctx.values["latestOrderItem.__totalProductPrice"] as number;
+        if (!Number.isFinite(consumableMaterialPrice) || !Number.isFinite(productPrice)) {
+          return (
+            <Typography>
+              Thành tiền = Sản phẩm + Vật tư tiêu hao: —
+            </Typography>
+          );
+        }
+
+        const total = Number(consumableMaterialPrice) + Number(productPrice);
+        return (
+          <Typography>
+            Thành tiền = Sản phẩm + Vật tư tiêu hao: ₫ {total.toLocaleString()}
+          </Typography>
+        );
+      },
+    },
   ];
 
   return {
@@ -115,25 +231,31 @@ export function buildEditOrderSchema(): FormSchema {
         col: 1,
       },
       {
-        name: "product",
-        label: "Sản phẩm:",
-        col: 3,
-      },
-      {
-        name: "price",
-        label: "Giá:",
-        col: 4,
-      },
-      {
-        name: "total-price",
-        col: 1,
-      },
-      {
         name: "status",
         col: 2,
       },
       {
         name: "note",
+        col: 1,
+      },
+      {
+        name: "products",
+        label: "Danh sách sản phẩm:",
+        col: 1,
+      },
+      {
+        name: "consumable-materials",
+        label: "Danh sách vật tư tiêu hao:",
+        col: 1,
+      },
+      {
+        name: "loaner-materials",
+        label: "Danh sách vật tư cho mượn:",
+        col: 1,
+      },
+      {
+        name: "total",
+        label: "Thành tiền:",
         col: 1,
       },
     ],

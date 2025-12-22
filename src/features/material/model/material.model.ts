@@ -2,6 +2,7 @@ export interface MaterialModel {
   id: number;
   code: string;
   name?: string | null;
+  type?: string | null;
   active: boolean;
   supplierIds?: number[];
   supplierNames?: string;

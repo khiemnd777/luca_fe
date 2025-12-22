@@ -1,4 +1,3 @@
-import { registerSlot } from "@root/core/module/registry";
 import { useParams } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
 import EventNoteIcon from '@mui/icons-material/EventNote';
@@ -105,16 +104,16 @@ export function OrderDetailProcessesStatusBoardWidget() {
   );
 }
 
-registerSlot({
-  id: "order-detail-processes-status-board",
-  name: "order-detail:left",
-  priority: 98,
-  render: () => <OrderDetailProcessesStatusBoardWidget />,
-});
+// registerSlot({
+//   id: "order-detail-processes-status-board",
+//   name: "order-detail:left",
+//   priority: 98,
+//   render: () => <OrderDetailProcessesStatusBoardWidget />,
+// });
 
-registerSlot({
-  id: "order-detail-processes-status-board",
-  name: "order-detail-historical:left",
-  priority: 98,
-  render: () => <OrderDetailProcessesStatusBoardWidget />,
-});
+// registerSlot({
+//   id: "order-detail-processes-status-board",
+//   name: "order-detail-historical:left",
+//   priority: 98,
+//   render: () => <OrderDetailProcessesStatusBoardWidget />,
+// });

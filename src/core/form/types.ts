@@ -18,6 +18,7 @@ export type FieldKind =
   | "autocomplete"
   | "fileupload"
   | "imageupload"
+  | "qr"
   | "custom"
   | "searchlist"
   | "searchsingle"
@@ -72,21 +73,36 @@ export type Option = {
   value: string | number | boolean;
 };
 
+export type QROptions = {
+  size?: number;
+  tooltipSize?: number;
+  level?: "L" | "M" | "Q" | "H";
+  fgColor?: string;
+  bgColor?: string;
+};
+
 export type CustomRenderCtx = {
   value: any;
   setValue: (v: any) => void;
   error?: string | null;
   field: FieldDef;
   values: Record<string, any>;
+  ctx?: FormContext | null;
 };
 
 // searchlist
-export type SearchListSearchFn = (keyword: string) => Promise<any[]>;
-export type SearchListSearchPageFn = (keyword: string, page: number, limit: number) => Promise<any[]>;
-export type SearchListFetchListFn = (values: Record<string, any>) => Promise<any[]>;
+export type SearchListSearchFn = (keyword: string, ctx?: FormContext) => Promise<any[]>;
+export type SearchListSearchPageFn = (
+  keyword: string,
+  page: number,
+  limit: number,
+  ctx?: FormContext
+) => Promise<any[]>;
+export type SearchListFetchListFn = (values: Record<string, any>, ctx?: FormContext) => Promise<any[]>;
 export type SearchListHydrateFn = (
   ids: Array<string | number>,
-  values: Record<string, any>
+  values: Record<string, any>,
+  ctx?: FormContext
 ) => Promise<any[]>;
 
 // metadata def
@@ -130,6 +146,7 @@ export type FieldDef = {
   fullWidth?: boolean;
   size?: "small" | "medium";
   rules?: FieldRules;
+  qr?: QROptions;
   step?: number;                                                            // for number
   showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
@@ -156,6 +173,7 @@ export type FieldDef = {
 
   // custom
   render?: (ctx: CustomRenderCtx) => React.ReactNode;
+  normalizeInitial?: (value: any, allValues?: Record<string, any>) => any;
 
   // derive value từ field khác (vd: fullname -> slug)
   derive?: {
@@ -188,13 +206,16 @@ export type FieldDef = {
   prop?: string;
 
   // searchsingle
+  allowUnmatched?: boolean;
   fetchOne?: (values: Record<string, any>) => Promise<any | null>;
   hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
 
   // metadata
   metadata?: {
     collection?: string;
+    collectionFn?: (ctx: FormContext) => string;
     group?: string;
+    tag?: string | null;
     mode?: "whole" | "partial";
     fields?: string[];
     ignoreFields?: string[];

@@ -11,6 +11,8 @@ mapper.register<OrderItemProcessModel>({
     orderItemId: null,
     orderCode: null,
     processName: null,
+    sectionName: null,
+    color: null,
     stepNumber: 0,
     startedAt: null,
     completedAt: null,

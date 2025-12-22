@@ -7,19 +7,21 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
-import { rel1 } from "@root/core/relation/relation.api";
-import type { ProductModel } from "@root/features/product/model/product.model";
+import { OrderProductItemList } from "../components/order-product-item-list.component";
+import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
+import { Typography } from "@mui/material";
+import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       kind: "searchsingle",
       name: "code",
+      allowUnmatched: true,
       label: "Mã đơn hàng",
       placeholder: "Nhập mã đơn hàng",
       fullWidth: true,
       pageLimit: 20,
-
       onBlur: async (text, matched, ctx) => {
         ctx?.setValue("code", text);
         if (matched) {
@@ -90,46 +92,46 @@ export function buildNewOrderSchema(): FormSchema {
         mode: "whole",
       }
     },
-    {
-      name: "",
-      label: "",
-      kind: "metadata",
-      prop: "latestOrderItem",
-      metadata: {
-        collection: "order-item-product",
-        mode: "whole",
-        groups: [
-          {
-            group: "product",
-          }
-        ],
-        def: [
-          {
-            name: "productId",
-            onBlur: async (text, matched, ctx) => {
-              console.log(text, matched, ctx);
-              if (matched) {
-                const result: ProductModel = await rel1("order-product", matched.id);
-                console.log(result);
-                // don't need assign to productId and productName, because they are handled during submitting.
-                // ctx?.setValue("latestOrderItem.customFields.productId", result.id);
-                // ctx?.setValue("latestOrderItem.customFields.productName", result.name);
-                ctx?.setValue("latestOrderItem.customFields.", result.id);
-                if (result.customFields) {
-                  ctx?.setValue("latestOrderItem.customFields.vat", result.customFields.vat);
-                  ctx?.setValue("latestOrderItem.customFields.productCategory", result.customFields.category);
-                  ctx?.setValue("latestOrderItem.customFields.retailPrice", result.customFields.retailPrice);
-                }
-              }
-            },
-          },
-          {
-            name: "productCategory",
-            disableIf: () => true,
-          }
-        ],
-      }
-    },
+    // {
+    //   name: "",
+    //   label: "",
+    //   kind: "metadata",
+    //   prop: "latestOrderItem",
+    //   metadata: {
+    //     collection: "order-item-product",
+    //     mode: "whole",
+    //     groups: [
+    //       {
+    //         group: "product",
+    //       }
+    //     ],
+    //     def: [
+    //       {
+    //         name: "productId",
+    //         onBlur: async (text, matched, ctx) => {
+    //           console.log(text, matched, ctx);
+    //           if (matched) {
+    //             const result: ProductModel = await rel1("order-product", matched.id);
+    //             console.log(result);
+    //             // don't need assign to productId and productName, because they are handled during submitting.
+    //             // ctx?.setValue("latestOrderItem.customFields.productId", result.id);
+    //             // ctx?.setValue("latestOrderItem.customFields.productName", result.name);
+    //             ctx?.setValue("latestOrderItem.customFields.", result.id);
+    //             if (result.customFields) {
+    //               ctx?.setValue("latestOrderItem.customFields.vat", result.customFields.vat);
+    //               ctx?.setValue("latestOrderItem.customFields.productCategory", result.customFields.category);
+    //               ctx?.setValue("latestOrderItem.customFields.retailPrice", result.customFields.retailPrice);
+    //             }
+    //           }
+    //         },
+    //       },
+    //       {
+    //         name: "productCategory",
+    //         disableIf: () => true,
+    //       }
+    //     ],
+    //   }
+    // },
     {
       name: "",
       label: "",
@@ -168,18 +170,11 @@ export function buildNewOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
+        ignoreFields: ["status", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
           {
-            group: "price",
-            fields: ["retailPrice", "quantity", "vat", "discountPrice"],
-          },
-          {
-            group: "total-price",
-            fields: ["totalPrice"],
-          },
-          {
             group: "status",
-            fields: ["status", "priority"],
+            fields: ["priority"],
           },
           {
             group: "note",
@@ -187,6 +182,119 @@ export function buildNewOrderSchema(): FormSchema {
           },
         ],
       }
+    },
+
+    // Total Price
+    {
+      kind: "custom",
+      name: "__totalPrice",
+      prop: "latestOrderItem",
+      label: "Thành tiền = Sản phẩm + Vật tư tiêu hao",
+      group: "total",
+      render(ctx) {
+        const consumableMaterialPrice = ctx.values["latestOrderItem.__totalConsumableMaterialPrice"] as number;
+        const productPrice = ctx.values["latestOrderItem.__totalProductPrice"] as number;
+        if (!Number.isFinite(consumableMaterialPrice) || !Number.isFinite(productPrice)) {
+          return (
+            <Typography>
+              Thành tiền = Sản phẩm + Vật tư tiêu hao: —
+            </Typography>
+          );
+        }
+
+        const total = Number(consumableMaterialPrice) + Number(productPrice);
+        return (
+          <Typography>
+            Thành tiền = Sản phẩm + Vật tư tiêu hao: ₫ {total.toLocaleString()}
+          </Typography>
+        );
+      },
+    },
+    // product
+    {
+      kind: "currency",
+      name: "__totalProductPrice",
+      prop: "latestOrderItem",
+      label: "Tổng cộng:",
+      group: "products",
+      asText: true,
+    },
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "products",
+      label: "Sản phẩm",
+      group: "products",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderProductItemList
+          name="latestOrderItem.products"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // consumable material
+    {
+      kind: "currency",
+      name: "__totalConsumableMaterialPrice",
+      prop: "latestOrderItem",
+      label: "Tổng cộng:",
+      group: "consumable-materials",
+      asText: true,
+    },
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "consumableMaterials",
+      label: "Vật tư tiêu hao",
+      group: "consumable-materials",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderConsumableMaterialItemList
+          name="latestOrderItem.consumableMaterials"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
+    },
+    // loaner material
+    {
+      kind: "custom",
+      prop: "latestOrderItem",
+      name: "loanerMaterials",
+      label: "Vật tư cho mượn",
+      group: "loaner-materials",
+      normalizeInitial: (val, _) => {
+        const arr = Array.isArray(val) ? val : val ? [val] : [];
+        return arr;
+      },
+      render: ({ value, setValue, ctx, values }) => (
+        <OrderLoanerMaterialItemList
+          name="latestOrderItem.loanerMaterials"
+          frmName="order-loaner-material-item"
+          value={value}
+          ctx={ctx}
+          values={values}
+          onChange={setValue}
+          onAdd={(item) => console.log("added", item)}
+          onRemove={(item) => console.log("removed", item)}
+        />
+      ),
     },
   ];
 
@@ -212,19 +320,25 @@ export function buildNewOrderSchema(): FormSchema {
         col: 2,
       },
       {
-        name: "product",
-        label: "Sản phẩm:",
-        col: 3,
-      },
-      {
-        name: "price",
-        label: "Giá:",
-        col: 4,
-      },
-      {
-        name: "total-price",
+        name: "products",
+        label: "Danh sách sản phẩm:",
         col: 1,
-      }
+      },
+      {
+        name: "consumable-materials",
+        label: "Danh sách vật tư tiêu hao:",
+        col: 1,
+      },
+      {
+        name: "loaner-materials",
+        label: "Danh sách vật tư cho mượn:",
+        col: 1,
+      },
+      {
+        name: "total",
+        label: "Thành tiền:",
+        col: 1,
+      },
     ],
     modeResolver: (_) => {
       return "create";
@@ -233,6 +347,7 @@ export function buildNewOrderSchema(): FormSchema {
       create: {
         type: "fn",
         run: async (dto) => {
+          console.log(dto);
           await create(dto as OrderUpsertModel);
           return dto;
         },

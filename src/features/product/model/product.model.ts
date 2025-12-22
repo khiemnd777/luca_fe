@@ -8,6 +8,11 @@ export interface ProductModel {
   processNames?: string;
   categoryId?: number | null;
   categoryName?: string | null;
+  // template
+  collectionId?: number | null;
+  templateId?: number | null;
+  isTemplate: boolean;
+  // time
   createdAt: string;
   updatedAt: string;
 }

@@ -90,7 +90,7 @@ export type FormSchema = {
 
   showReset?: boolean;
   initialResolver?: (initial?: any) => Promise<Record<string, any> | null> | Record<string, any> | null;
-  afterSaved?: (result: any) => Promise<void> | void;
+  afterSaved?: (result: any, ctx?: any) => Promise<void> | void;
 
   onChange?: (name: string, value: any, ctx: {
     values: Record<string, any>;

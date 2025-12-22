@@ -70,8 +70,8 @@ function OrderDetailHistoricalGeneralWidget() {
 }
 
 registerSlot({
-  id: "order-detail-historical-header",
-  name: "order-detail-historical:left",
+  id: "__order-detail-historical-header",
+  name: "__order-detail-historical:left",
   render: () => <OrderDetailHistoricalGeneralWidget />,
   priority: 99,
 });

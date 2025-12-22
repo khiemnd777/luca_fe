@@ -9,6 +9,7 @@ mapper.register<MaterialModel>({
     id: 0,
     code: "",
     name: "",
+    type: null,
     active: true,
     supplierIds: [],
     supplierNames: "",

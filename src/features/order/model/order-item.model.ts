@@ -1,3 +1,6 @@
+import type { OrderItemMaterialModel } from "./order-item-material.model";
+import type { OrderItemProductModel } from "./order-item-product.model";
+
 export interface OrderItemModel {
   // general
   id: number;
@@ -9,10 +12,17 @@ export interface OrderItemModel {
   // order
   code: string;
   codeOriginal: string;
+  qrCode?: string | null;
   remakeCount: number;
   // product
   productId?: number | null;
   productName?: string;
+  // products
+  products?: OrderItemProductModel[] | null;
+  // consumable materials
+  consumableMaterials?: OrderItemMaterialModel[] | null;
+  // loaner materials
+  loanerMaterials?: OrderItemMaterialModel[] | null;
 }
 
 export interface OrderItemUpsertModel {
@@ -26,4 +36,9 @@ export interface OrderItemHistoricalModel {
   createdAt: string;
   isCurrent: boolean;
   isHighlight: boolean;
+}
+
+export interface CalculateTotalPricePayload {
+  prices: number[];
+  quantities: number[];
 }

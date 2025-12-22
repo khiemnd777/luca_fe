@@ -6,6 +6,7 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/material/api/material.api";
 import type { MaterialModel } from "@features/material/model/material.model";
+import { MATERIAL_TYPES } from "../utils/material.utils";
 
 export function buildSampleSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -28,13 +29,19 @@ export function buildSampleSchema(): FormSchema {
       },
     },
     {
+      name: "type",
+      label: "Loại",
+      kind: "select",
+      options: [...MATERIAL_TYPES],
+    },
+    {
       name: "",
       label: "",
       kind: "metadata",
       metadata: {
         collection: "material",
         mode: "whole",
-        groups:[
+        groups: [
           {
             group: "description",
             fields: ["customFields.description"],

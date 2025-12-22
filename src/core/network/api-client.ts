@@ -731,7 +731,7 @@ export class ApiClient {
 
   async search<T>(
     url: string,
-    opts: SearchOpts,
+    opts: SearchOpts & Record<string, any>,
     config?: DedupConfig,
   ): Promise<AxiosResponse<T>> {
     const dto = mapper.map<SearchOpts, any>(

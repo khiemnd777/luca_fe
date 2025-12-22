@@ -29,6 +29,8 @@ import type { GroupConfig } from "./form.types";
 import { humanize } from "@root/shared/utils/string.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 import SearchSingleField from "./search-single-field";
+import { QRField } from "@root/core/form/qr-field";
+import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 
 
 // -----------------------------------------------------------
@@ -45,6 +47,17 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
 
   // null / empty
   if (v === null || v === undefined || v === "") return <Typography>—</Typography>;
+
+  // TEXTAREA
+  if (f.kind === "textarea") {
+    return (
+      <Typography
+        sx={{ whiteSpace: "pre-line" }}
+      >
+        {String(v)}
+      </Typography>
+    );
+  }
 
   // SELECT
   if (f.kind === "select" && !f.multiple) {
@@ -79,13 +92,16 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
   }
 
   // DATE / DATETIME
-  if (f.kind === "date" || f.kind === "datetime") {
-    return <Typography>{String(v)}</Typography>;
+  if (f.kind === "datetime") {
+    return <Typography>{formatDateTime(String(v))}</Typography>;
+  }
+  if (f.kind === "date") {
+    return <Typography>{formatDate(String(v))}</Typography>;
   }
 
   // CURRENCY
   if (f.kind === "currency" || f.kind === "currency-equation") {
-    return <Typography>{Number(v).toLocaleString()}</Typography>;
+    return <Typography>₫ {Number(v).toLocaleString()}</Typography>;
   }
 
   // SWITCH / CHECKBOX
@@ -99,6 +115,9 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
   }
   if (f.kind === "fileupload") {
     return <Typography>{Array.isArray(v) ? `${v.length} file` : "—"}</Typography>;
+  }
+  if (f.kind === "qr") {
+    return <QRField value={v} {...f.qr} />;
   }
 
   // DEFAULT
@@ -142,9 +161,80 @@ export function AutoFormFieldSingle({
   error?: string | null;
   ctx?: FormContext,
 }) {
+  const nameValue = values[f.name];
+  const altNameValue = f.altName ? values[f.altName] : null;
+  const [searchSingleLabel, setSearchSingleLabel] = React.useState<string | null>(null);
+  const valuesRef = React.useRef(values);
+
+  React.useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+
+  React.useEffect(() => {
+    if (!f.asText || f.kind !== "searchsingle") return;
+
+    if (altNameValue !== null && altNameValue !== undefined && altNameValue !== "") {
+      setSearchSingleLabel(String(altNameValue));
+      return;
+    }
+
+    if (nameValue === null || nameValue === undefined || nameValue === "") {
+      setSearchSingleLabel(null);
+      return;
+    }
+
+    if (!f.hydrateById || !f.getOptionLabel) {
+      setSearchSingleLabel(String(nameValue));
+      return;
+    }
+
+    let active = true;
+    (async () => {
+      try {
+        const obj = await f.hydrateById?.(nameValue, valuesRef.current);
+        if (!active) return;
+        const label = obj ? f.getOptionLabel?.(obj)?.trim() : "";
+        setSearchSingleLabel(label || String(nameValue));
+      } catch {
+        if (active) setSearchSingleLabel(String(nameValue));
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    f.asText,
+    f.kind,
+    f.hydrateById,
+    f.getOptionLabel,
+    altNameValue,
+    nameValue,
+  ]);
 
   // AS TEXT MODE
+  if (f.kind === "qr") {
+    return (
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          {f.label}
+        </Typography>
+        <QRField value={values[f.name]} {...f.qr} />
+      </Stack>
+    );
+  }
+
   if (f.asText) {
+    if (f.kind === "searchsingle") {
+      return (
+        <Stack spacing={0.5}>
+          <Typography variant="caption" color="text.secondary">
+            {f.label}
+          </Typography>
+          <Typography>{searchSingleLabel ?? "—"}</Typography>
+        </Stack>
+      );
+    }
     return (
       <Stack spacing={0.5}>
         <Typography variant="caption" color="text.secondary">
@@ -651,6 +741,7 @@ export function AutoFormFieldSingle({
         onOpenCreate={f.onOpenCreate}
         refreshKey={f.refreshKey}
         pageLimit={f.pageLimit}
+        ctx={ctx}
       />
     );
   }
@@ -665,6 +756,7 @@ export function AutoFormFieldSingle({
         name={f.name}
         label={f.label}
         values={values}
+        allowUnmatched={f.allowUnmatched}
         placeholder={f.placeholder}
         size={f.size ?? "small"}
         fullWidth={f.fullWidth ?? true}
@@ -852,6 +944,7 @@ export function AutoFormFieldSingle({
           error,
           field: f,
           values,
+          ctx,
         }) as any}
       </Box>
     );

@@ -58,7 +58,8 @@ function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
 const metadataGroupCache = new Map<string, Promise<CollectionWithFieldsModel[]>>();
 
 async function fetchMetadataGroupCollections(
-  group: string
+  group: string,
+  tag?: string | null,
 ): Promise<CollectionWithFieldsModel[]> {
   if (!group) return [];
 
@@ -68,6 +69,7 @@ async function fetchMetadataGroupCollections(
       limit: 1000,
       offset: 0,
       withFields: false,
+      tag,
       table: false,
       form: false,
     }).then((res) => res.data)
@@ -81,18 +83,37 @@ async function fetchMetadataGroupCollections(
   return promise;
 }
 
+function resolveMetadataCollection(metaField: FieldDef, ctx?: FormContext | null) {
+  const metadata = metaField.metadata;
+  if (!metadata) return null;
+  if (metadata.collectionFn && ctx) {
+    return metadata.collectionFn(ctx) || metadata.collection || null;
+  }
+  return metadata.collection ?? null;
+}
+
 async function expandMetadataBlock(
   metaField: FieldDef,
   values: any,
   changedDeps: string[],
+  ctx?: FormContext | null,
 ): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
   const metadata = metaField.metadata;
   if (!metadata?.group) {
-    return expandOneMetadataBlock(metaField, values, changedDeps);
+    const derivedMeta = metadata?.collectionFn
+      ? {
+        ...metaField,
+        metadata: {
+          ...metadata,
+          collection: resolveMetadataCollection(metaField, ctx) ?? undefined,
+        },
+      }
+      : metaField;
+    return expandOneMetadataBlock(derivedMeta, values, changedDeps, ctx);
   }
 
   try {
-    const collections = await fetchMetadataGroupCollections(metadata.group);
+    const collections = await fetchMetadataGroupCollections(metadata.group, metadata.tag);
     if (!collections.length) return { fields: [], deps: [], collections: [] };
 
     const { group: _omit, ...restMeta } = metadata;
@@ -105,7 +126,7 @@ async function expandMetadataBlock(
             collection: collection.slug,
           },
         };
-        return expandOneMetadataBlock(derivedMeta, values, changedDeps);
+        return expandOneMetadataBlock(derivedMeta, values, changedDeps, ctx);
       })
     );
 
@@ -125,8 +146,11 @@ async function expandOneMetadataBlock(
   metaField: FieldDef,
   values: any,
   changedDeps: string[],
+  ctx?: FormContext | null,
 ): Promise<{ fields: FieldDef[]; deps: string[]; collections: string[] }> {
-  const { collection, mode = "whole", fields, ignoreFields } = metaField.metadata!;
+  const metadata = metaField.metadata!;
+  const collection = resolveMetadataCollection(metaField, ctx);
+  const { mode = "whole", fields, tag, ignoreFields } = metadata;
   if (!collection) {
     return { fields: [], deps: [], collections: [] };
   }
@@ -138,6 +162,7 @@ async function expandOneMetadataBlock(
   const coll = await getAvailableCollection(
     collection,
     true,
+    tag,
     false,
     true,
     values,
@@ -413,6 +438,82 @@ function resolveMetadataFieldGroup(
 }
 
 function flattenInitialRecursive(obj: any, prefix: string, out: any) {
+  if (!obj || typeof obj !== "object") return;
+
+  // flatten custom_fields → prefix.customFields.*
+  if (obj.custom_fields && typeof obj.custom_fields === "object") {
+    for (const [k, v] of Object.entries(obj.custom_fields)) {
+      const camel = snakeToCamel(k);
+      out[`${prefix}.customFields.${camel}`] = v;
+    }
+  }
+
+  // flatten customFields → prefix.customFields.*
+  if (obj.customFields && typeof obj.customFields === "object") {
+    for (const [k, v] of Object.entries(obj.customFields)) {
+      out[`${prefix}.customFields.${k}`] = v;
+    }
+  }
+
+  // flatten relation_fields → prefix.relationFields.*
+  if (obj.relation_fields && typeof obj.relation_fields === "object") {
+    for (const [k, v] of Object.entries(obj.relation_fields)) {
+      const camel = snakeToCamel(k);
+      const relKey = `${prefix}.relationFields.${camel}`;
+      const rootKey = prefix ? `${prefix}.${camel}` : camel;
+      const cfKey = prefix ? `${prefix}.customFields.${camel}` : `customFields.${camel}`;
+
+      out[relKey] = v;
+      out[rootKey] = v;
+      out[cfKey] = v;
+    }
+  }
+
+  if (obj.relationFields && typeof obj.relationFields === "object") {
+    for (const [k, v] of Object.entries(obj.relationFields)) {
+      const relKey = `${prefix}.relationFields.${k}`;
+      const rootKey = prefix ? `${prefix}.${k}` : k;
+      const cfKey = prefix ? `${prefix}.customFields.${k}` : `customFields.${k}`;
+
+      out[relKey] = v;
+      out[rootKey] = v;
+      out[cfKey] = v;
+    }
+  }
+
+  // flatten NORMAL FIELDS
+  for (const [k, v] of Object.entries(obj)) {
+    if (
+      k === "custom_fields" ||
+      k === "customFields" ||
+      k === "relation_fields" ||
+      k === "relationFields"
+    ) {
+      continue;
+    }
+
+    const camel = snakeToCamel(k);
+    const key = `${prefix}.${camel}`;
+
+    // 1️⃣ primitive → flatten
+    if (typeof v !== "object" || v === null) {
+      out[key] = v;
+      continue;
+    }
+
+    // 2️⃣ array → keep as-is
+    if (Array.isArray(v)) {
+      out[key] = v;
+      continue;
+    }
+
+    // 3️⃣ plain object → recurse
+    flattenInitialRecursive(v, key, out);
+  }
+}
+
+// deprecated
+export function flattenInitialRecursive2(obj: any, prefix: string, out: any) {
   if (!obj || typeof obj !== "object") return;
 
   // flatten custom_fields → prefix.customFields.*
@@ -716,29 +817,29 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       asyncValidate: schema.hooks?.asyncValidate,
     });
 
+    const ctxRef = React.useRef<FormContext>(null);
+
     // ----------------------------------------------------
     // WRAPPED SETTERS WITH changeSource
     // ----------------------------------------------------
     const setValueUser = (name: string, v: any) => {
       setValue(name, v);  // original
-      // schema.onChange?.(name, v, ctxRef.current, "user");
+      schema.onChange?.(name, v, ctxRef.current!, "user");
     };
 
     const setValueProg = (name: string, v: any) => {
       setValue(name, v);  // original
-      // schema.onChange?.(name, v, ctxRef.current, "programmatic");
+      schema.onChange?.(name, v, ctxRef.current!, "programmatic");
     };
 
     const setAllValuesProg = (obj: Record<string, any>) => {
       setAllValues(obj);  // original setAllValues
-      // schema.onChange?.("*", obj, ctxRef.current, "programmatic");
+      schema.onChange?.("*", obj, ctxRef.current!, "programmatic");
     };
 
     // ----------------------------------------------------
     // CTX FOR onChange
     // ----------------------------------------------------
-    const ctxRef = React.useRef<FormContext>(null);
-
     ctxRef.current = {
       values,
       setValue: setValueProg,
@@ -773,7 +874,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       (async () => {
         const results = await Promise.all(
-          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, []))
+          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, [], ctxRef.current))
         );
 
         if (cancelled) return;
@@ -821,7 +922,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandMetadataBlock(b.meta, values, initialChanged)
+            expandMetadataBlock(b.meta, values, initialChanged, ctxRef.current)
           )
         );
 
@@ -872,7 +973,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       (async () => {
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandMetadataBlock(b.meta, values, changedDeps)
+            expandMetadataBlock(b.meta, values, changedDeps, ctxRef.current)
           )
         );
 
@@ -970,7 +1071,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
         );
 
         if (btn.afterSaved) await btn.afterSaved(result);
-        if (schema!.afterSaved) await schema!.afterSaved(result);
+        if (schema!.afterSaved) await schema!.afterSaved(result, ctx);
         if (onSaved) await onSaved(result);
 
         return true;

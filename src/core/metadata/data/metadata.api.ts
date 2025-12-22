@@ -13,6 +13,7 @@ export type ListCollectionsParams = {
   limit?: number;
   offset?: number;
   withFields?: boolean;
+  tag?: string | null;
   table?: boolean;
   form?: boolean;
 };
@@ -20,7 +21,7 @@ export type ListCollectionsParams = {
 export async function listCollections(
   params: ListCollectionsParams = {}
 ): Promise<{ data: CollectionWithFieldsModel[]; total: number }> {
-  const { query = "", limit = 20, offset = 0, withFields = true, table = true, form = true } = params;
+  const { query = "", limit = 20, offset = 0, withFields = true, tag, table = true, form = true } = params;
   const { data } = await apiClient.get<{
     data: CollectionWithFieldsModel[];
     total: number;
@@ -30,6 +31,7 @@ export async function listCollections(
       limit,
       offset,
       with_fields: withFields,
+      tag,
       table,
       form
     },
@@ -42,7 +44,7 @@ export async function listCollectionsByGroup(
   group: string,
   params: ListCollectionsParams = {}
 ): Promise<{ data: CollectionWithFieldsModel[]; total: number }> {
-  const { query = "", limit = 20, offset = 0, withFields = true, table = true, form = true } = params;
+  const { query = "", limit = 20, offset = 0, withFields = true, tag, table = true, form = true } = params;
   const { data } = await apiClient.get<{
     data: CollectionWithFieldsModel[];
     total: number;
@@ -52,6 +54,7 @@ export async function listCollectionsByGroup(
       limit,
       offset,
       with_fields: withFields,
+      tag,
       table,
       form
     },
@@ -63,13 +66,14 @@ export async function listCollectionsByGroup(
 export async function getCollection(
   idOrSlug: string | number,
   withFields = true,
+  tag?: string | null,
   table = false,
   form = false,
 ): Promise<CollectionWithFieldsModel> {
   const res = await apiClient.get<CollectionWithFieldsModel>(
     `${env.apiBasePath}/metadata/collections/${idOrSlug}`,
     {
-      params: { withFields, table, form },
+      params: { withFields, tag, table, form },
     }
   );
 
@@ -109,6 +113,7 @@ function buildCacheSuffixFromEntityData(entityData: any): string {
 export async function getAvailableCollection(
   idOrSlug: string | number,
   withFields = true,
+  tag?: string | null,
   table = false,
   form = false,
   entityData?: any,
@@ -117,7 +122,7 @@ export async function getAvailableCollection(
     value: any;
   }[],
 ): Promise<CollectionWithFieldsModel> {
-  let cacheKey = `metadata:collection:${idOrSlug}:wf${withFields}:tbl${table}:frm${form}`;
+  let cacheKey = `metadata:collection:${idOrSlug}:wf${withFields}:t${tag ?? 'null'}:tbl${table}:frm${form}`;
 
   const suffix = buildCacheSuffixFromEntityData(entityData);
   if (suffix) {
@@ -129,7 +134,7 @@ export async function getAvailableCollection(
     ...entityData
   },
     {
-      params: { withFields, table, form },
+      params: { withFields, tag, table, form },
       cacheMode: "cache-first",
       cacheTTL: 6.048e+8, // ~7d
       cacheKey,

@@ -6,8 +6,8 @@ import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/product/api/product.api";
 import type { ProductUpsertModel } from "@features/product/model/product.model";
-import { Typography } from "@mui/material";
-import { categoryProps } from "@root/features/category/utils/category.utils";
+import { categoryProps } from "@root/features/category/utils/category.props";
+import { processProps } from "@root/features/process/utils/process.props";
 
 export function buildProductSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -40,15 +40,7 @@ export function buildProductSchema(): FormSchema {
         def: [
           {
             name: "processIds",
-            hydrateOrderField: "display_order",
-            getOptionLabel: (item) => {
-              const sectionName = item.sectionName ? `${item.sectionName} >` : ''
-              return `${sectionName} ${item.name}`;
-            },
-            renderItem: (item, _) => {
-              const sectionName = item.sectionName ? `${item.sectionName} >` : ''
-              return (<Typography sx={{ color: item.color }}>{sectionName} {item.name}</Typography>);
-            }
+            ...processProps,
           },
           {
             name: "categoryId",
@@ -82,6 +74,7 @@ export function buildProductSchema(): FormSchema {
       metadata: {
         group: "category",
         mode: "whole",
+        tag: "catalog",
         groups: [
           {
             group: "category_fields",

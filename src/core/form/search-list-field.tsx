@@ -15,6 +15,7 @@ import {
 import AddCircleOutlineRounded from "@mui/icons-material/AddCircleOutlineRounded";
 import DragIndicatorRounded from "@mui/icons-material/DragIndicatorRounded";
 import DeleteRounded from "@mui/icons-material/DeleteRounded";
+import type { FormContext } from "./types";
 
 type Size = "small" | "medium";
 
@@ -38,11 +39,11 @@ export type SearchListFieldProps<T> = {
 
   // Server / client actions
   /** Search “không phân trang” (fallback). kw="" -> load ALL/top-N */
-  search: (keyword: string) => Promise<T[]>;
+  search: (keyword: string, ctx?: FormContext) => Promise<T[]>;
   /** Search “có phân trang” (khuyến nghị để bật infinite scroll) */
-  searchPage?: (keyword: string, page: number, limit: number) => Promise<T[]>;
+  searchPage?: (keyword: string, page: number, limit: number, ctx?: FormContext) => Promise<T[]>;
   /** Hydrate danh sách hiện có theo ngữ cảnh (uncontrolled) */
-  fetchList?: (values: Record<string, any>) => Promise<T[]>;
+  fetchList?: (values: Record<string, any>, ctx?: FormContext) => Promise<T[]>;
   /** Map IDs -> T (controlled) */
   hydrateByIds?: (ids: Array<string | number>, values: Record<string, any>) => Promise<T[]>;
 
@@ -74,11 +75,12 @@ export type SearchListFieldProps<T> = {
   refreshKey?: any;
   autoLoadAllOnMount?: boolean;
 
-  /** NEW: định nghĩa deps để gọi fetchList (tránh loop vì values đổi reference) */
   fetchDeps?: any[];
 
-  /** NEW: page size cho suggestion paging (mặc định 20) */
   pageLimit?: number;
+  
+  // Context
+  ctx?: FormContext;
 };
 
 function makeEquality<T>(
@@ -129,6 +131,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     autoLoadAllOnMount = false,
     fetchDeps,
     pageLimit = 20,
+    ctx,
   } = props;
 
   const isControlledByIds = Array.isArray(selectedIds) && typeof onIdsChange === "function";
@@ -196,7 +199,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       try {
         if (isControlledByIds) return;
         if (!fetchList) return;
-        const data = await fetchList(values);
+        const data = await fetchList(values, ctx);
         if (!cancelled) {
           setItems(data ?? []);
           emitIdsIfChanged(data ?? []);
@@ -212,7 +215,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   // refreshKey → refetch list hiện có
   const doFetchList = React.useCallback(async () => {
     if (!fetchList) return;
-    const data = await fetchList(values);
+    const data = await fetchList(values, ctx);
     setItems(data ?? []);
     emitIdsIfChanged(data ?? []);
   }, [fetchList, values, emitIdsIfChanged]);
@@ -261,12 +264,12 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       setPage(1);
       try {
         if (searchPage) {
-          const data = await searchPage(kw, 1, pageLimit);
+          const data = await searchPage(kw, 1, pageLimit, ctx);
           const filtered = filterOutSelected(data ?? []);
           setOptions(filtered);
           setHasMore((data?.length ?? 0) >= pageLimit);
         } else {
-          const data = await search(kw);
+          const data = await search(kw, ctx);
           const filtered = filterOutSelected(data ?? []);
           setOptions(filtered);
           setHasMore(false);
@@ -287,7 +290,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       setLoadingMore(true);
       try {
         const nextPage = page + 1;
-        const data = await searchPage(keyword, nextPage, pageLimit);
+        const data = await searchPage(keyword, nextPage, pageLimit, ctx);
         const filtered = filterOutSelected(data ?? []);
         // Nối + dedup
         setOptions((prev) => dedupById([...prev, ...filtered]));

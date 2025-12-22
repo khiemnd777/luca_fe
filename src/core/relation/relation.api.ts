@@ -31,6 +31,7 @@ export async function relM2m<T>(key: string, mainId: number, tableOpts: FetchTab
 
 export async function search<T>(key: string, opts: SearchOpts): Promise<SearchResult<T>> {
   const { departmentApiPath } = useAuthStore.getState();
+  console.log(opts);
   const { data } = await apiClient.search<any>(`${departmentApiPath()}/relation/${key}/search`, opts);
   const result = mapper.map<any, SearchResult<T>>("Common", data, "dto_to_model");
   return result;

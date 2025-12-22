@@ -14,6 +14,9 @@ const buildRelationSearchSingleField = (
   label: string,
   placeholder: string,
   target: string,
+  getInputLabel?: (item: any) => string,
+  getOptionLabel?: (item: any, items?: any[]) => string,
+  orderBy?: string,
   extendWhere?: (ctx?: FormContext) => string[],
 ): FieldDef => ({
   name,
@@ -23,15 +26,14 @@ const buildRelationSearchSingleField = (
   fullWidth: true,
   size: "small",
   pageLimit: 20,
-  getInputLabel: (d: any) => d?.processName ?? "",
-  getOptionLabel: (d: any) => `${d?.sectionName ? `${d?.sectionName} > ` : ""}${d?.processName ?? ""}`,
-  getOptionValue: (d: any) => d?.id,
+  getInputLabel,
+  getOptionLabel,
   async searchPage(keyword: string, page: number, limit: number, ctx?: FormContext) {
     const searched = await search(target, {
       keyword,
       page,
       limit,
-      orderBy: "name",
+      orderBy,
       extendWhere: extendWhere?.(ctx),
     });
     return searched.items;
@@ -55,13 +57,19 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
       "Công đoạn",
       "Chọn công đoạn",
       "orderitem_process",
+      (d: any) => d?.processName ?? "",
+      (d: any) => `${d?.sectionName ? `${d?.sectionName} > ` : ""}${d?.processName ?? ""}`,
+      "step_number",
+      (ctx) => [`order_item_id=${ctx?.values.orderItemId}`, `order_id=${ctx?.values.orderId}`]
     ),
     buildRelationSearchSingleField(
       "assignedId",
       "Kỹ thuật viên",
       "Chọn kỹ thuật viên",
       "orderitemprocess_assignee",
-      (ctx) => [`order_item_id=${ctx?.values.orderItemId}`]
+      undefined,
+      (d: any) => d?.name ?? "",
+      "name",
     ),
     {
       name: "note",

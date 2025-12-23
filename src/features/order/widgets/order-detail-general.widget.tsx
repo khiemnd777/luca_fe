@@ -13,7 +13,7 @@ import { Box, CircularProgress, Tab, Tabs } from "@mui/material";
 import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
-import { OrderProcessInProgress } from "../components/order-process-inprogress.component";
+import { OrderInProgress } from "../components/order-inprogress.component";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
@@ -91,7 +91,7 @@ function OrderDetailBodyWidget() {
         </Box>
 
         <Box hidden={tab !== "inprogress"}>
-          <OrderProcessInProgress />
+          <OrderInProgress />
         </Box>
       </Section>
     </>

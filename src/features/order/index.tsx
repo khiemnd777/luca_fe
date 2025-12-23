@@ -49,7 +49,7 @@ const mod: ModuleDescriptor = {
         },
         {
           hidden: true,
-          key: "order-process-inprogress",
+          key: "order-inprogress",
           permissions: ["order.view", "order.edit"],
           label: "Công đoạn gia công",
           title: "Công đoạn gia công",

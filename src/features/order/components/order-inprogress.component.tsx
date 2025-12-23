@@ -14,7 +14,7 @@ import type { OrderItemProcessInProgressProcessModel } from "../model/order-item
 import type { OrderModel } from "../model/order.model";
 import { Spacer } from "@root/shared/components/ui/spacer";
 
-export function OrderProcessInProgress() {
+export function OrderInProgress() {
   const { orderId, orderItemId } = useParams();
   const parsedOrderId = orderId ? Number(orderId) : null;
   const parsedOrderItemId = orderItemId ? Number(orderItemId) : null;

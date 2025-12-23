@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams } from "react-router-dom";
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
@@ -13,13 +14,15 @@ import {
 import { processes } from "../api/order-item-process.api";
 import { id, updateStatus } from "../api/order.api";
 import { useAsync } from "@root/core/hooks/use-async";
-import { openFormDialog } from "@root/core/form/form-dialog.service";
 import { priorityColor } from "@root/shared/utils/order.utils";
 import ResponsiveStatusBoard from "@root/shared/components/status-board/responsive-status-board";
 import { Section } from "@root/shared/components/ui/section";
+import { OrderProcessInProgressDialog } from "./order-process-inprogress-dialog.component";
 
 export function OrderProcessesStatusBoard() {
   const { orderId, orderItemId } = useParams();
+  const [inProgressOpen, setInProgressOpen] = React.useState(false);
+  const [selectedProcessId, setSelectedProcessId] = React.useState<number | null>(null);
 
   const { data: list, loading } = useAsync(() => {
     return (async () => {
@@ -104,7 +107,10 @@ export function OrderProcessesStatusBoard() {
           </Stack>
         )}
         onCardClick={(_id, _status, obj) => {
-          openFormDialog("order-processes", { initial: obj });
+          const processId = (obj as { id?: number; Id?: number }).id ?? (obj as { Id?: number }).Id;
+          if (!processId) return;
+          setSelectedProcessId(processId);
+          setInProgressOpen(true);
         }}
         onStatusChange={async (id, newStatus, _oldStatus) => {
           await updateStatus(Number(orderId ?? 0), id, newStatus);
@@ -112,6 +118,11 @@ export function OrderProcessesStatusBoard() {
         }}
       />
 
+      <OrderProcessInProgressDialog
+        open={inProgressOpen}
+        processId={selectedProcessId}
+        onClose={() => setInProgressOpen(false)}
+      />
     </Section>
   );
 }

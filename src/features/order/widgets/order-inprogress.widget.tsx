@@ -6,10 +6,10 @@ import { useAsync } from "@root/core/hooks/use-async";
 import { Section } from "@root/shared/components/ui/section";
 import { getByOrderIdAndOrderItemId, id as getById } from "../api/order.api";
 import type { OrderModel } from "../model/order.model";
-import { OrderProcessInProgress } from "../components/order-process-inprogress.component";
+import { OrderInProgress } from "../components/order-inprogress.component";
 import { Spacer } from "@root/shared/components/ui/spacer";
 
-export function OrderProcessInProgressWidget() {
+export function OrderInProgressWidget() {
   const { orderId, orderItemId } = useParams();
   const parsedOrderId = orderId ? Number(orderId) : null;
   const parsedOrderItemId = orderItemId ? Number(orderItemId) : null;
@@ -49,14 +49,14 @@ export function OrderProcessInProgressWidget() {
 
       <Spacer />
 
-      <OrderProcessInProgress />
+      <OrderInProgress />
     </>
   );
 }
 
 registerSlot({
-  id: "order-process-inprogress",
-  name: "order-process-inprogress:left",
+  id: "order-inprogress",
+  name: "order-inprogress:left",
   priority: 99,
-  render: () => <OrderProcessInProgressWidget />,
+  render: () => <OrderInProgressWidget />,
 });

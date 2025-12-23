@@ -35,8 +35,20 @@ export function buildEditOrderSchema(): FormSchema {
     },
     {
       kind: "text",
-      name: "customerName",
-      label: "Khách hàng",
+      name: "clinicName",
+      label: "Nha sĩ",
+      asText: true,
+    },
+    {
+      kind: "text",
+      name: "dentistName",
+      label: "Nha sĩ",
+      asText: true,
+    },
+    {
+      kind: "text",
+      name: "patientName",
+      label: "Bệnh nhân",
       asText: true,
     },
     {
@@ -53,17 +65,7 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
-        ignoreFields: ["customerId"],
-        def: [
-          {
-            name: "patientName",
-            asText: true,
-          },
-          // {
-          //   name: "customerId",
-          //   showIf: () => false,
-          // },
-        ]
+        ignoreFields: ["clinicId", "dentistId", "patientId"],
       }
     },
     {

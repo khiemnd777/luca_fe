@@ -6,7 +6,14 @@ export interface OrderModel {
   customFields?: Record<string, any> | null;
   latestOrderItemUpsert?: OrderItemUpsertModel | Record<string, any> | null;
   latestOrderItem?: OrderItemModel | Record<string, any> | null;
-  customerName?: string;
+  customerId?: number | null;
+  customerName?: string | null;
+  clinicId?: number | null;
+  clinicName?: string | null;
+  dentistId?: number | null;
+  dentistName?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
   statusLatest?: string;
   codeLatest?: string;
   priorityLatest?: string;

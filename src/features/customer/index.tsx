@@ -7,6 +7,7 @@ const mod: ModuleDescriptor = {
   id: "customer",
   routes: [
     {
+      hidden: true,
       key: "customer",
       permissions: ["customer.view"],
       element: <OneColumnPage />,

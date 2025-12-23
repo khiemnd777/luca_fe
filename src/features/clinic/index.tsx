@@ -8,7 +8,6 @@ const mod: ModuleDescriptor = {
   id: "clinic",
   routes: [
     {
-      hidden: true,
       key: "clinic",
       permissions: ["clinic.view"],
       element: <OneColumnPage />,
@@ -27,8 +26,16 @@ const mod: ModuleDescriptor = {
           subtitle: "Bác sĩ chuyên ngành răng hàm mặt, thực hiện việc khám, tư vấn và điều trị các bệnh lý răng miệng cho bệnh nhân.",
           path: "/dentist",
           icon: <ContactEmergencyIcon />,
+          priority: 2,
+        },
+        {
+          key: "patient",
+          permissions: ["clinic.view"],
+          label: "Bệnh nhân",
+          title: "Bệnh nhân",
+          path: "/patient",
           priority: 1,
-        }
+        },
       ]
     },
   ],

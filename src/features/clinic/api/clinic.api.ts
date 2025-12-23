@@ -14,6 +14,14 @@ export async function tableByDentistId(dentistId: number, tableOpts: FetchTableO
   return result;
 }
 
+export async function tableByPatientId(patientId: number, tableOpts: FetchTableOpts): Promise<ListResult<ClinicModel>> {
+  patientId = patientId === undefined ? -1 : patientId;
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/patient/${patientId}/clinics`, tableOpts);
+  const result = mapper.map<any[], ListResult<ClinicModel>>("Clinic", data, "dto_to_model");
+  return result;
+}
+
 // common api
 
 export async function table(tableOpts: FetchTableOpts): Promise<ListResult<ClinicModel>> {

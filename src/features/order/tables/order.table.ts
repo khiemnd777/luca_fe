@@ -24,7 +24,9 @@ const columns: ColumnDef<OrderModel>[] = [
   //     mode: "whole",
   //   }
   // },
-  { key: "customerName", header: "Khách hàng", sortable: true, },
+  { key: "clinicName", header: "Nha khoa", sortable: true, },
+  { key: "dentistName", header: "Nha sĩ", sortable: true, },
+  { key: "patientName", header: "Bệnh nhân", sortable: true, },
   {
     key: "statusLatest",
     header: "Trạng thái",

@@ -6,7 +6,8 @@ export interface ClinicModel {
   brief?: string;
   logo?: string;
   active: boolean;
-  dentistIds?: number[];
+  dentistIds?: number[] | null;
+  patientIds?: number[] | null;
   customFields?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;

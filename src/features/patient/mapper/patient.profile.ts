@@ -1,20 +1,18 @@
 import { mapper } from "@root/core/mapper/auto-mapper";
-import type { ClinicModel } from "@features/clinic/model/clinic.model";
+import type { PatientModel } from "@features/patient/model/patient.model";
 
-mapper.register<ClinicModel>({
-  name: "Clinic",
+mapper.register<PatientModel>({
+  name: "Patient",
   dtoToModelNaming: "snake_to_camel",
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
     name: "",
-    address: "",
     phoneNumber: "",
     active: true,
     brief: "",
-    logo: "",
-    dentistIds: null,
-    patientIds: null,
-    customFields: null,
+    clinicIds: [],
+    createdAt: null,
+    updatedAt: null,
   }),
 });

@@ -13,11 +13,12 @@ import { Box, CircularProgress, Tab, Tabs } from "@mui/material";
 import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
+import { OrderProcessInProgress } from "../components/order-process-inprogress.component";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
-  const [tab, setTab] = React.useState<"info" | "qr" | "process">("info");
+  const [tab, setTab] = React.useState<"info" | "qr" | "process" | "inprogress">("info");
 
   const { data: detail, loading } = useAsync<any>(() => {
     if (!orderId) return Promise.resolve(null);
@@ -45,7 +46,8 @@ function OrderDetailBodyWidget() {
         >
           <Tab value="info" label="Thông tin đơn hàng" />
           <Tab value="qr" label="Mã QR" />
-          <Tab value="process" label="Quy trình gia công" />
+          <Tab value="process" label="Trạng thái" />
+          <Tab value="inprogress" label="Tiến trình" />
         </Tabs>
 
         <Box hidden={tab !== "info"}>
@@ -86,6 +88,10 @@ function OrderDetailBodyWidget() {
           <SectionCard title={title ?? ""}>
             <OrderProcessesStatusBoard />
           </SectionCard>
+        </Box>
+
+        <Box hidden={tab !== "inprogress"}>
+          <OrderProcessInProgress />
         </Box>
       </Section>
     </>

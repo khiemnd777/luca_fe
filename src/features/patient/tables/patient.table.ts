@@ -6,8 +6,8 @@ import { table, unlink } from "@features/patient/api/patient.api";
 import { reloadTable } from "@core/table/table-reload";
 
 const columns: ColumnDef<PatientModel>[] = [
-  { key: "name", header: "Tên Nha Sĩ", sortable: true, labelField: true, width: 80 },
-  { key: "phoneNumber", header: "Số Điện Thoại" },
+  { key: "name", header: "Tên bệnh nhân", sortable: true, labelField: true, },
+  { key: "phoneNumber", header: "Số điện thoại" },
   { key: "brief", header: "Mô Tả", width: 500 },
 ];
 

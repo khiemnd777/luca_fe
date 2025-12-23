@@ -7,7 +7,8 @@ import { create, id, update } from "@features/clinic/api/clinic.api";
 import type { ClinicModel } from "@features/clinic/model/clinic.model";
 import { uploadImages } from "@core/form/image-upload-utils";
 import { openFormDialog } from "@root/core/form/form-dialog.service";
-import { search as searchDentist, tableByClinicId } from "@root/features/dentist/api/dentist.api";
+import { search as searchDentist, tableByClinicId as dentistsByClinicId } from "@root/features/dentist/api/dentist.api";
+import { search as searchPatient, tableByClinicId as patientsByClinicId } from "@root/features/patient/api/patient.api";
 
 export function buildClinicSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -96,7 +97,7 @@ export function buildClinicSchema(): FormSchema {
 
       async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
         if (!ids || ids.length === 0) return [];
-        const table = await tableByClinicId(values.id, {
+        const table = await dentistsByClinicId(values.id, {
           limit: 10000,
           page: 1,
           orderBy: "name",
@@ -106,7 +107,7 @@ export function buildClinicSchema(): FormSchema {
       },
 
       async fetchList(values: Record<string, any>) {
-        const table = await tableByClinicId(values.id, {
+        const table = await dentistsByClinicId(values.id, {
           limit: 20,
           page: 1,
           orderBy: "name",
@@ -118,8 +119,54 @@ export function buildClinicSchema(): FormSchema {
       disableDelete: (d: any) => d.locked === true,
       onOpenCreate: () => openFormDialog("dentist-non-clinic"),
       autoLoadAllOnMount: true,
-    }
-    ,
+    },
+    {
+      name: "patientIds",
+      label: "Bệnh nhân",
+      kind: "searchlist",
+      placeholder: "Tìm bệnh nhân...",
+      fullWidth: true,
+
+      getOptionLabel: (d: any) => d?.name,
+      getOptionValue: (d: any) => d?.id,
+
+      async searchPage(kw: string, page, limit) {
+        const searched = await searchPatient({
+          keyword: kw,
+          limit: limit,
+          page: page,
+          orderBy: "name",
+        });
+        return searched.items;
+      },
+
+      pageLimit: 20,
+
+      async hydrateByIds(ids: Array<number | string>, values: Record<string, any>) {
+        if (!ids || ids.length === 0) return [];
+        const table = await patientsByClinicId(values.id, {
+          limit: 10000,
+          page: 1,
+          orderBy: "name",
+        });
+        const set = new Set(ids.map(String));
+        return (table.items ?? []).filter((d: any) => set.has(String(d.id)));
+      },
+
+      async fetchList(values: Record<string, any>) {
+        const table = await patientsByClinicId(values.id, {
+          limit: 20,
+          page: 1,
+          orderBy: "name",
+        });
+        return table.items;
+      },
+
+      renderItem: (d: any) => (<>{d.name}</>),
+      disableDelete: (d: any) => d.locked === true,
+      onOpenCreate: () => openFormDialog("patient-non-clinic"),
+      autoLoadAllOnMount: true,
+    },
   ];
 
   return {

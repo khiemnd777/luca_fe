@@ -13,10 +13,10 @@ export function buildPatientSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
       name: "name",
-      label: "Tên nha sĩ",
+      label: "Tên bệnh nhân",
       kind: "text",
       rules: {
-        required: "Yêu cầu nhập tên nha sĩ",
+        required: "Yêu cầu nhập tên bệnh nhân",
         maxLength: 50,
       },
     },

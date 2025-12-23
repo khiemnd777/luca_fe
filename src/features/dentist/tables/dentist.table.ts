@@ -6,8 +6,7 @@ import { table, unlink } from "@features/dentist/api/dentist.api";
 import { reloadTable } from "@core/table/table-reload";
 
 const columns: ColumnDef<DentistModel>[] = [
-  // { key: "id", header: "ID", width: 80, sortable: true },
-  { key: "name", header: "Tên Nha Sĩ", sortable: true, labelField: true, width: 80 },
+  { key: "name", header: "Tên Nha Sĩ", sortable: true, labelField: true, },
   { key: "phoneNumber", header: "Số Điện Thoại" },
   { key: "brief", header: "Mô Tả", width: 500 },
 ];

@@ -1063,12 +1063,14 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
           if (uiVals && typeof uiVals === "object") setAllValues(uiVals);
         }
 
-        toasts.success(
-          renderModeText(
-            btn.toasts?.saved ?? schema!.toasts?.saved,
-            { mode, values, result }
-          ) ?? "Đã lưu"
-        );
+        if (btn.toasts?.saved !== "") {
+          toasts.success(
+            renderModeText(
+              btn.toasts?.saved ?? schema!.toasts?.saved,
+              { mode, values, result }
+            ) ?? "Đã lưu"
+          );
+        }
 
         if (btn.afterSaved) await btn.afterSaved(result);
         if (schema!.afterSaved) await schema!.afterSaved(result, ctx);

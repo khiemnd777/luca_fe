@@ -1,7 +1,8 @@
 import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
-import { navigate } from "@root/core/navigation/navigate";
+import { emit } from "@root/core/module/event-bus";
+import RepeatOutlinedIcon from '@mui/icons-material/RepeatOutlined';
 
 export function buildOrderProcessCheckCodeSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -18,16 +19,19 @@ export function buildOrderProcessCheckCodeSchema(): FormSchema {
 
   return {
     fields,
-    submit: {
-      type: "fn",
-      run: async (values) => {
-        const code = values.dto?.code;
-        if (code) {
-          navigate(`/order/check/${code}`);
+    submitButtons: [
+      {
+        name: "check",
+        label: "Check",
+        icon: <RepeatOutlinedIcon />,
+        submit: (ctx) => {
+          emit("order:check-code", ctx.values.dto.code);
+        },
+        toasts: {
+          saved: "",
         }
-        return values;
-      },
-    },
+      }
+    ],
   };
 }
 

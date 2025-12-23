@@ -2,6 +2,7 @@ import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
 import OneColumnPage from "@root/core/pages/one-column-page";
 import ChecklistIcon from '@mui/icons-material/Checklist';
+import RepeatOnIcon from '@mui/icons-material/RepeatOn';
 
 const mod: ModuleDescriptor = {
   id: "order",
@@ -36,17 +37,17 @@ const mod: ModuleDescriptor = {
           icon: <ChecklistIcon />,
           priority: 99,
         },
-        {
-          hidden: true,
-          key: "order-process-check-code",
-          permissions: ["order.view", "order.edit"],
-          label: "Check in / Check out",
-          title: "Check in / Check out",
-          element: <OneColumnPage />,
-          path: "/order/check",
-          icon: <ChecklistIcon />,
-          priority: 99,
-        },
+        // {
+        //   hidden: true,
+        //   key: "order-process-check-code",
+        //   permissions: ["order.view", "order.edit"],
+        //   label: "Check in / Check out",
+        //   title: "Check in / Check out",
+        //   element: <OneColumnPage />,
+        //   path: "/order/check",
+        //   icon: <ChecklistIcon />,
+        //   priority: 99,
+        // },
         {
           hidden: true,
           key: "order-inprogress",
@@ -58,6 +59,16 @@ const mod: ModuleDescriptor = {
           priority: 99,
         }
       ],
+    },
+    {
+      key: "order-process-check-code",
+      permissions: ["order.view", "order.edit"],
+      label: "Tiến trình",
+      title: "Tiến trình",
+      element: <OneColumnPage />,
+      path: "/check-code",
+      icon: <RepeatOnIcon />,
+      priority: 96,
     },
     // {
     //   key: "order-process",

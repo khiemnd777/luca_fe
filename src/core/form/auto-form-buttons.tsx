@@ -18,7 +18,7 @@ import { resolveMode } from "@core/form/form-dialog-mode.helper";
 */
 
 type Props = {
-  formRef: React.RefObject<AutoFormRef>;
+  formRef: React.RefObject<AutoFormRef | null>;
   spacing?: number;
   justify?: "flex-start" | "center" | "flex-end";
   fallback?: React.ReactNode;

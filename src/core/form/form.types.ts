@@ -65,7 +65,7 @@ export type SubmitButton = {
     values: Record<string, any>;
     mode: FormMode;
     meta?: { meta: FieldDef; fields: FieldDef[]; deps: string[] }[];
-  }) => Promise<any>;
+  }) => void | Promise<any>;
 
   toasts?: {
     saved?: ModeText;
@@ -77,7 +77,7 @@ export type SubmitButton = {
 
 export type FormSchema = {
   fields: FieldDef[];
-  submit: SubmitDef | { create: SubmitDef | null; update: SubmitDef | null };
+  submit?: SubmitDef | { create: SubmitDef | null; update: SubmitDef | null };
   submitButtons?: SubmitButton[];
   mergeSubmitButtons?: boolean;
   idField?: string; // mặc định "id"

@@ -3,7 +3,6 @@ import { registerSlot } from "@core/module/registry";
 import { SectionCard } from "@shared/components/ui/section-card";
 import { IfPermission } from "@core/auth/if-permission";
 import { SafeButton } from "@shared/components/button/safe-button";
-import { useParams } from "react-router-dom";
 import { AutoForm } from "@core/form/auto-form";
 import type { AutoFormRef } from "@root/core/form/form.types";
 import { useAsync } from "@root/core/hooks/use-async";
@@ -16,25 +15,38 @@ import { Spacer } from "@root/shared/components/ui/spacer";
 import InputIcon from '@mui/icons-material/Input';
 import OutputIcon from '@mui/icons-material/Output';
 import { Section } from "@root/shared/components/ui/section";
+import { useIsMobile } from "@root/shared/utils/media.utils";
+import { AutoFormButtons } from "@root/core/form/auto-form-buttons";
+import { off, on } from "@root/core/module/event-bus";
+import toast from "react-hot-toast";
 
 export function OrderProcessCheckCodeWidget() {
-  const { code } = useParams();
-  const [orderCode, setOrderCode] = React.useState<string | undefined>(code);
+  const [orderCode, setOrderCode] = React.useState<string | undefined>("");
   const frmProcessCheckInOrOutRef = React.useRef<AutoFormRef>(null);
+  const formCheckCodeRef = React.useRef<AutoFormRef>(null);
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
-    if (code) {
-      setOrderCode(code);
-    }
-  }, [code]);
+    const handler = (nextCode: string) => {
+      setOrderCode(nextCode);
+    };
 
-  const { data: preparedData, loading: loadingPrepared } =
+    on("order:check-code", handler);
+    return () => off("order:check-code", handler);
+  }, []);
+
+  const { data: preparedData, loading: loadingPrepared, error: preparedDataError } =
     useAsync<OrderItemProcessInProgressModel | null>(() => {
       if (!orderCode) return Promise.resolve(null);
       return prepareCheckInOrOutByCode(orderCode);
     }, [orderCode], {
       key: `order-process-check-code:${orderCode ?? ""}`,
     });
+  React.useEffect(() => {
+    if (preparedDataError) {
+      toast.error("Mã đơn hàng lỗi hoặc không tồn tại");
+    }
+  }, [preparedDataError]);
 
   const { data: checkoutLatestData, loading: loadingCheckoutLatest } =
     useAsync<OrderItemProcessInProgressProcessModel | null>(() => {
@@ -114,7 +126,15 @@ export function OrderProcessCheckCodeWidget() {
             </SectionCard>
           ) : null}
         </>
-      ) : <OrderQrScanner onDetected={(nextCode) => setOrderCode(nextCode)} />}
+      ) : isMobile ? (
+        <OrderQrScanner onDetected={(nextCode) => setOrderCode(nextCode)} />
+      ) : (
+        <SectionCard>
+          <AutoForm name="order-process-check-code" ref={formCheckCodeRef} />
+          <Spacer />
+          <AutoFormButtons formRef={formCheckCodeRef} />
+        </SectionCard>
+      )}
     </>
   );
 }

@@ -9,7 +9,7 @@ import type { OrderModel } from "../model/order.model";
 import { OrderInProgress } from "../components/order-inprogress.component";
 import { Spacer } from "@root/shared/components/ui/spacer";
 
-export function OrderInProgressWidget() {
+export function OrderInProgressDetailWidget() {
   const { orderId, orderItemId } = useParams();
   const parsedOrderId = orderId ? Number(orderId) : null;
   const parsedOrderItemId = orderItemId ? Number(orderItemId) : null;
@@ -55,8 +55,8 @@ export function OrderInProgressWidget() {
 }
 
 registerSlot({
-  id: "order-inprogress",
-  name: "order-inprogress:left",
+  id: "order-inprogress-detail",
+  name: "order-inprogress-detail:left",
   priority: 99,
-  render: () => <OrderInProgressWidget />,
+  render: () => <OrderInProgressDetailWidget />,
 });

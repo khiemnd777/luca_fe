@@ -26,3 +26,27 @@ export async function historical(orderId: number, orderItemId?: number): Promise
   const result = mapper.map<any[], OrderItemHistoricalModel[]>("Common", data, "dto_to_model");
   return result;
 }
+
+type OrderIdsResponseDto =
+  | [number, number]
+  | { order_id: number; order_item_id: number }
+  | { orderId: number; orderItemId: number };
+
+export async function getOrderIdAndOrderItemIdByCode(code: string): Promise<[number, number]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<OrderIdsResponseDto>(`${departmentApiPath()}/order/item/ids-by-code`, {
+    params: {
+      code,
+    },
+  });
+
+  if (Array.isArray(data)) {
+    return [data[0], data[1]];
+  }
+
+  if ("order_id" in data) {
+    return [data.order_id, data.order_item_id];
+  }
+
+  return [data.orderId, data.orderItemId];
+}

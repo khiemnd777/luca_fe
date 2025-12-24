@@ -131,7 +131,7 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
       console.log("ctx", ctx, "result", result);
       const orderId = (result.dto as any).order_id;
       const orderItemId = (result.dto as any).order_item_id;
-      navigate(`/order/${orderId}/historical/${orderItemId}/process/in-progresses`);
+      navigate(`/in-progresses/${orderId}/${orderItemId}`);
     },
     hooks: {
       mapToDto: (v) => mapper.map("OrderItemProcessInProgress", v, "model_to_dto"),

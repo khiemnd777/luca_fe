@@ -63,7 +63,7 @@ const mod: ModuleDescriptor = {
     },
     {
       key: "order-process-check-code",
-      permissions: ["order.view", "order.edit"],
+      permissions: ["order.development"],
       label: "Gia công",
       title: "Gia công",
       path: "/check-code",
@@ -72,7 +72,7 @@ const mod: ModuleDescriptor = {
     },
     {
       key: "order-inprogress",
-      permissions: ["order.view", "order.edit"],
+      permissions: ["order.development"],
       label: "Tiến trình",
       title: "Tiến trình",
       path: "/in-progresses",
@@ -82,7 +82,7 @@ const mod: ModuleDescriptor = {
         {
           hidden: true,
           key: "order-inprogress-detail",
-          permissions: ["order.view", "order.edit"],
+          permissions: ["order.development"],
           label: "Công đoạn gia công",
           title: "Công đoạn gia công",
           path: "/in-progresses/:orderId/:orderItemId",

@@ -86,7 +86,7 @@ export function OrderProcessCheckCodeWidget() {
             title={header}
             extra={
               <>
-                <IfPermission permissions={["order.update"]}>
+                <IfPermission permissions={["order.development"]}>
                   <SafeButton
                     variant="contained"
                     icon={isCheckout ? <OutputIcon /> : <InputIcon />}

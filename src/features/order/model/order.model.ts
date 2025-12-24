@@ -17,10 +17,12 @@ export interface OrderModel {
   statusLatest?: string;
   codeLatest?: string;
   priorityLatest?: string;
+  processIdLatest?: number | null;
+  processNameLatest?: string | null;
   productId?: number;
-	productName?: string;
-	quantity?: number;
-	totalPrice?: number;
+  productName?: string;
+  quantity?: number;
+  totalPrice?: number;
   deliveryDate?: string | null;
   remakeType?: string;
   remakeCount?: number;

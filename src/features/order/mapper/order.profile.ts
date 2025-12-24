@@ -20,6 +20,8 @@ mapper.register<OrderModel>({
     statusLatest: "",
     codeLatest: "",
     priorityLatest: "",
+    processIdLatest: null,
+    processNameLatest: null,
     productId: 0,
     productName: "",
     quantity: 0,

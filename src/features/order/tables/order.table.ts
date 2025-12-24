@@ -41,15 +41,8 @@ const columns: ColumnDef<OrderModel>[] = [
     sortable: true,
   },
   {
-    key: "productName",
-    header: "Sản phẩm",
-    sortable: true,
-  },
-  {
-    key: "quantity",
-    header: "Số lượng",
-    accessor: (row) => `x${row.quantity}`,
-    sortable: true,
+    key: "processNameLatest",
+    header: "Công đoạn",
   },
   {
     key: "totalPrice",

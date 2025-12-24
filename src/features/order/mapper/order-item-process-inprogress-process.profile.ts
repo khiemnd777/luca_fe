@@ -9,6 +9,7 @@ mapper.register<OrderItemProcessInProgressProcessModel>({
     id: 0,
     orderId: null,
     orderItemId: null,
+    orderItemCode: null,
     checkInNote: null,
     checkOutNote: null,
     assignedId: null,

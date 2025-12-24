@@ -4,6 +4,8 @@ import { mapper } from "@core/mapper/auto-mapper";
 import type { OrderItemProcessInProgressModel } from "../model/order-item-process-inprogress.model";
 import type { OrderItemProcessInProgressProcessModel } from "../model/order-item-process-inprogress-process.model";
 import type { OrderItemProcessModel, OrderItemProcessUpsertModel } from "../model/order-item-process.model";
+import type { FetchTableOpts } from "@root/core/table/table.types";
+import type { ListResult } from "@root/core/types/list-result";
 
 export async function processes(orderId: number, orderItemId: number): Promise<OrderItemProcessModel[]> {
   const { departmentApiPath } = useAuthStore.getState();
@@ -16,6 +18,13 @@ export async function processesForStaff(staffId: number): Promise<OrderItemProce
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/staff/${staffId}/order/processes`);
   const result = mapper.map<any[], OrderItemProcessModel[]>("OrderItemProcess", data, "dto_to_model");
+  return result;
+}
+
+export async function getInProgressesForStaff(staffId: number, tableOpts: FetchTableOpts): Promise<ListResult<OrderItemProcessInProgressProcessModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/staff/${staffId}/order/processes/in-progresses`, tableOpts);
+  const result = mapper.map<any[], ListResult<OrderItemProcessInProgressProcessModel>>("OrderItemProcessInProgressProcess", data, "dto_to_model");
   return result;
 }
 

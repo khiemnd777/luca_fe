@@ -1,8 +1,7 @@
 import { Box, Chip } from "@mui/material";
 import { registerSearchRenderer } from "@core/search";
 import SearchItem from "@root/core/search/search-item";
-import { Badge } from "@shared/components/ui/badge";
-import EmergencyIcon from '@mui/icons-material/Emergency';
+import InventoryIcon from '@mui/icons-material/Inventory';
 
 registerSearchRenderer("product", "Sản phẩm",
   (o, { highlight }) => (
@@ -18,9 +17,9 @@ registerSearchRenderer("product", "Sản phẩm",
           }
         </Box>
       }
-      right={<Badge badge={{ avatar: o.attributes?.["logo"] }} />}
+      // right={<Badge badge={{ avatar: o.attributes?.["logo"] }} />}
     />
   ),
-  <EmergencyIcon color="primary" />,
-  (_) => "/product",
+  <InventoryIcon color="primary" />,
+  (d) => `/product/${d.entityId}`,
 );

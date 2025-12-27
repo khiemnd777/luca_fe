@@ -8,15 +8,9 @@ import { ListItemRender } from "@shared/components/list/list-item-render.compone
 import { GenericItemList } from "@root/shared/components/list/list-item.component";
 
 export type OrderProductItemListProps = {
-  /** Controlled value from AutoForm (or any parent). */
   value?: OrderItemProductModel[] | null;
-
-  /** Name inside FormContext to auto-sync when onChange is not provided. */
   name?: string;
-
-  /** Access to AutoForm context */
   ctx?: FormContext | null;
-
   values?: Record<string, any>;
 
   onChange?: (items: OrderItemProductModel[]) => void;

@@ -51,45 +51,51 @@ function OrderDetailHistoricalGeneralWidget() {
           <Tab value="process" label="Quy trình gia công" />
         </Tabs>
 
-        <Box hidden={tab !== "info"}>
-          {loading ? (
-            <Section alignItems="center" py={2}>
-              <CircularProgress size={22} />
-            </Section>
-          ) : (
-            <SectionCard title={title ?? ""} extra={
-              <>
-                <IfPermission permissions={["order.update"]}>
-                  <SafeButton
-                    variant="contained"
-                    startIcon={<SaveOutlinedIcon />}
-                    onClick={() => frmOrderEditRef.current?.submit()}
-                  >
-                    Lưu
-                  </SafeButton>
-                </IfPermission>
-              </>
-            }>
-              <AutoForm
-                name="order-historical"
-                ref={frmOrderEditRef}
-                initial={detail ?? { id: orderId }}
-              />
+        {tab === "info" && (
+          <Box>
+            {loading ? (
+              <Section alignItems="center" py={2}>
+                <CircularProgress size={22} />
+              </Section>
+            ) : (
+              <SectionCard title={title ?? ""} extra={
+                <>
+                  <IfPermission permissions={["order.update"]}>
+                    <SafeButton
+                      variant="contained"
+                      startIcon={<SaveOutlinedIcon />}
+                      onClick={() => frmOrderEditRef.current?.submit()}
+                    >
+                      Lưu
+                    </SafeButton>
+                  </IfPermission>
+                </>
+              }>
+                <AutoForm
+                  name="order-historical"
+                  ref={frmOrderEditRef}
+                  initial={detail ?? { id: orderId }}
+                />
+              </SectionCard>
+            )}
+          </Box>
+        )}
+
+        {tab === "qr" && (
+          <Box>
+            <SectionCard title={title ?? ""}>
+              <AutoForm name="order-qr" initial={detail} />
             </SectionCard>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        <Box hidden={tab !== "qr"}>
-          <SectionCard title={title ?? ""}>
-            <AutoForm name="order-qr" initial={detail} />
-          </SectionCard>
-        </Box>
-
-        <Box hidden={tab !== "process"}>
-          <SectionCard title={title ?? ""}>
-            <OrderProcessesStatusBoard />
-          </SectionCard>
-        </Box>
+        {tab === "process" && (
+          <Box>
+            <SectionCard title={title ?? ""}>
+              <OrderProcessesStatusBoard />
+            </SectionCard>
+          </Box>
+        )}
       </Section>
     </>
   );

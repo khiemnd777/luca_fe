@@ -71,22 +71,26 @@ export function OrderDetailBodyWidget() {
             </Tabs>
 
             {/* general */}
-            <Box hidden={tab !== "general"}>
-              <AutoForm
-                name="order-edit-body"
-                ref={frmOrderEditGeneralRef}
-                initial={initialData}
-              />
-            </Box>
+            {tab === "general" && (
+              <Box>
+                <AutoForm
+                  name="order-edit-body"
+                  ref={frmOrderEditGeneralRef}
+                  initial={initialData}
+                />
+              </Box>
+            )}
 
             {/* products */}
-            <Box hidden={tab !== "product"}>
-              <AutoForm
-                name="order-edit-products"
-                ref={frmOrderEditProductRef}
-                initial={initialData}
-              />
-            </Box>
+            {tab === "product" && (
+              <Box>
+                <AutoForm
+                  name="order-edit-products"
+                  ref={frmOrderEditProductRef}
+                  initial={initialData}
+                />
+              </Box>
+            )}
           </>
         )}
       </SectionCard>

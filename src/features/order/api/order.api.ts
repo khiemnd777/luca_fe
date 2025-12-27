@@ -5,6 +5,8 @@ import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
+import type { OrderItemProductModel } from "../model/order-item-product.model";
+import type { OrderItemMaterialModel } from "../model/order-item-material.model";
 
 export async function table(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
   const { departmentApiPath } = useAuthStore.getState();
@@ -32,6 +34,20 @@ export async function getByOrderIdAndOrderItemId(orderId: number, orderItemId: n
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}`);
   const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
+export async function getAllOrderProducts(orderId: number): Promise<OrderItemProductModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/products`);
+  const result = mapper.map<any, OrderItemProductModel>("OrderItemProduct", data, "dto_to_model");
+  return result;
+}
+
+export async function getAllOrderMaterials(orderId: number): Promise<OrderItemMaterialModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/materials`);
+  const result = mapper.map<any, OrderItemMaterialModel>("OrderItemMaterial", data, "dto_to_model");
   return result;
 }
 

@@ -14,11 +14,11 @@ import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
-
+import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
-  const [tab, setTab] = React.useState<"info" | "qr" | "process" | "inprogress">("info");
+  const [tab, setTab] = React.useState<"info" | "qr" | "process" | "inprogress" | "all-products">("info");
 
   const { data: detail, loading } = useAsync<any>(() => {
     if (!orderId) return Promise.resolve(null);
@@ -48,51 +48,66 @@ function OrderDetailBodyWidget() {
           <Tab value="qr" label="Mã QR" />
           <Tab value="process" label="Trạng thái" />
           <Tab value="inprogress" label="Tiến trình" />
+          <Tab value="all-products" label="Tất cả Sản phẩm & Vật tư" />
         </Tabs>
 
-        <Box hidden={tab !== "info"}>
-          {loading ? (
-            <Section alignItems="center" py={2}>
-              <CircularProgress size={22} />
-            </Section>
-          ) : (
-            <SectionCard title={title ?? ""} extra={
-              <>
-                <IfPermission permissions={["order.update"]}>
-                  <SafeButton
-                    variant="contained"
-                    startIcon={<SaveOutlinedIcon />}
-                    onClick={() => frmOrderEditRef.current?.submit()}
-                  >
-                    Lưu
-                  </SafeButton>
-                </IfPermission>
-              </>
-            }>
-              <AutoForm
-                name="order-edit"
-                ref={frmOrderEditRef}
-                initial={detail ?? { id: orderId }}
-              />
+        {tab === "info" && (
+          <Box>
+            {loading ? (
+              <Section alignItems="center" py={2}>
+                <CircularProgress size={22} />
+              </Section>
+            ) : (
+              <SectionCard title={title ?? ""} extra={
+                <>
+                  <IfPermission permissions={["order.update"]}>
+                    <SafeButton
+                      variant="contained"
+                      startIcon={<SaveOutlinedIcon />}
+                      onClick={() => frmOrderEditRef.current?.submit()}
+                    >
+                      Lưu
+                    </SafeButton>
+                  </IfPermission>
+                </>
+              }>
+                <AutoForm
+                  name="order-edit"
+                  ref={frmOrderEditRef}
+                  initial={detail ?? { id: orderId }}
+                />
+              </SectionCard>
+            )}
+          </Box>
+        )}
+
+        {tab === "qr" && (
+          <Box>
+            <SectionCard title={title ?? ""}>
+              <AutoForm name="order-qr" initial={detail} />
             </SectionCard>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        <Box hidden={tab !== "qr"}>
-          <SectionCard title={title ?? ""}>
-            <AutoForm name="order-qr" initial={detail} />
-          </SectionCard>
-        </Box>
+        {tab === "process" && (
+          <Box>
+            <SectionCard title={title ?? ""}>
+              <OrderProcessesStatusBoard />
+            </SectionCard>
+          </Box>
+        )}
 
-        <Box hidden={tab !== "process"}>
-          <SectionCard title={title ?? ""}>
-            <OrderProcessesStatusBoard />
-          </SectionCard>
-        </Box>
+        {tab === "inprogress" && (
+          <Box>
+            <OrderInProgress />
+          </Box>
+        )}
 
-        <Box hidden={tab !== "inprogress"}>
-          <OrderInProgress />
-        </Box>
+        {tab === "all-products" && (
+          <Box>
+            <OrderAllProductsAndMaterials />
+          </Box>
+        )}
       </Section>
     </>
   );

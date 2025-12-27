@@ -17,6 +17,7 @@ type SearchBoxProps = {
   debounceMs?: number;
   onSelect?: (item: SearchModel, href: string) => void;
   fullWidth?: boolean;
+  entityType?: string;
 };
 
 export default function SearchBox({
@@ -26,6 +27,7 @@ export default function SearchBox({
   debounceMs = 300,
   onSelect,
   fullWidth = true,
+  entityType,
 }: SearchBoxProps) {
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<SearchModel[]>([]);
@@ -44,10 +46,11 @@ export default function SearchBox({
     const cur = ++reqCounter.current;
 
     setLoading(true);
-    search(debouncedQuery.trim())
+    search(debouncedQuery.trim(), entityType)
       .then((rs) => {
         if (!isActive || cur !== reqCounter.current) return;
-        setOptions(rs.items ?? []);
+        const items = rs.items ?? [];
+        setOptions(entityType ? items.filter((item) => item.entityType === entityType) : items);
       })
       .catch(() => {
         if (!isActive) return;
@@ -61,7 +64,7 @@ export default function SearchBox({
     return () => {
       isActive = false;
     };
-  }, [debouncedQuery, minChars]);
+  }, [debouncedQuery, minChars, entityType]);
 
   const highlight = useMemo(() => makeHighlighter(debouncedQuery), [debouncedQuery]);
 

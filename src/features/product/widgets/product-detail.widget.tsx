@@ -1,4 +1,4 @@
-import { Box, Button, CircularProgress, Tab, Tabs } from "@mui/material";
+import { Box, Button, CircularProgress } from "@mui/material";
 import { SectionCard } from "@root/shared/components/ui/section-card";
 import AddIcon from '@mui/icons-material/Add';
 import { openFormDialog } from "@core/form/form-dialog.service";
@@ -16,16 +16,12 @@ import { Section } from "@root/shared/components/ui/section";
 import { Spacer } from "@root/shared/components/ui/spacer";
 import { SafeButton } from "@root/shared/components/button/safe-button";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import { TabContainer } from "@root/shared/components/ui/tab-container";
 
 function ProductDetailWidget() {
   const frmProductRef = React.useRef<AutoFormRef>(null);
   const { id } = useParams();
   const productId = Number(id ?? 0);
-  const [tab, setTab] = React.useState<string>("product");
-
-  React.useEffect(() => {
-    setTab("product");
-  }, [id]);
 
   const { data: detail, loading } = useAsync<ProductModel | null>(
     () => {
@@ -44,79 +40,77 @@ function ProductDetailWidget() {
         </Section>
       ) : (
         <>
-          {/* Tab header */}
-          <Tabs
-            value={tab}
-            onChange={(_, v: string) => setTab(v)}
-            sx={{ mb: 2 }}
-          >
-            <Tab value="product" label="Sản phẩm" />
-            {detail?.isTemplate === true && (
-              <Tab value="variants" label="Biến thể" />
-            )}
-          </Tabs>
+          <TabContainer
+            key={`${productId}-${detail?.isTemplate ? "template" : "single"}`}
+            defaultValue="product"
+            tabSx={{ mb: 2, borderBottom: 0 }}
+            contentSx={{ mt: 0 }}
+            tabs={[
+              {
+                label: "Sản phẩm",
+                value: "product",
+                content: (
+                  <Box>
+                    {/* Detail product */}
+                    <SectionCard extra={
+                      <>
+                        <IfPermission permissions={["product.create"]}>
+                          <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => {
+                            frmProductRef.current?.submit();
+                          }}>
+                            Lưu
+                          </SafeButton>
+                        </IfPermission>
+                      </>
+                    }>
+                      {detail?.isTemplate ? (
+                        <AutoForm name="product" ref={frmProductRef} initial={detail} />
+                      ) : (
+                        <AutoForm name="product-variant" ref={frmProductRef} initial={detail} />
+                      )}
+                    </SectionCard>
+                  </Box>
+                ),
+              },
+              ...(detail?.isTemplate === true ? [{
+                label: "Biến thể",
+                value: "variants",
+                content: (
+                  <Box>
+                    {/* Attributes */}
+                    <SectionCard title="Thuộc tính biến thể" extra={
+                      <>
+                        <IfPermission permissions={["privilege.metadata"]}>
+                          <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
+                            openFormDialog("metadata-field", {
+                              initial: { collectionId: detail?.collectionId },
+                            });
+                          }} >New Field</Button>
+                        </IfPermission>
+                      </>
+                    }>
+                      <AutoTable name="metadata-fields" params={{ collectionId: detail?.collectionId }} />
+                    </SectionCard>
 
-          {/* Tab content */}
-          {tab === "product" && (
-            <Box>
-              {/* Detail product */}
-              <SectionCard extra={
-                <>
-                  <IfPermission permissions={["product.create"]}>
-                    <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => {
-                      frmProductRef.current?.submit();
-                    }}>
-                      Lưu
-                    </SafeButton>
-                  </IfPermission>
-                </>
-              }>
-                {detail?.isTemplate ? (
-                  <AutoForm name="product" ref={frmProductRef} initial={detail} />
-                ) : (
-                  <AutoForm name="product-variant" ref={frmProductRef} initial={detail} />
-                )}
-              </SectionCard>
-            </Box>
-          )}
+                    <Spacer />
 
-          {
-            detail?.isTemplate === true && (
-              tab === "variants" && (
-                <Box>
-                  {/* Attributes */}
-                  <SectionCard title="Thuộc tính biến thể" extra={
-                    <>
-                      <IfPermission permissions={["privilege.metadata"]}>
+                    {/* Variant table */}
+                    <SectionCard title="Danh sách biến thể" extra={
+                      <IfPermission permissions={["product.create"]}>
                         <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-                          openFormDialog("metadata-field", {
-                            initial: { collectionId: detail?.collectionId },
+                          openFormDialog("product-variant", {
+                            initial: { ...detail, id: undefined, templateId: detail?.id, isTemplate: false },
                           });
-                        }} >New Field</Button>
+                        }} >Thêm biến thể</Button>
                       </IfPermission>
-                    </>
-                  }>
-                    <AutoTable name="metadata-fields" params={{ collectionId: detail?.collectionId }} />
-                  </SectionCard>
-
-                  <Spacer />
-
-                  {/* Variant table */}
-                  <SectionCard title="Danh sách biến thể" extra={
-                    <IfPermission permissions={["product.create"]}>
-                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
-                        openFormDialog("product-variant", {
-                          initial: { ...detail, id: undefined, templateId: detail?.id, isTemplate: false },
-                        });
-                      }} >Thêm biến thể</Button>
-                    </IfPermission>
-                  }>
-                    <AutoTable name="product-variants" params={{ templateId: detail?.id }} />
-                  </SectionCard>
-                </Box>
-              )
-            )
-          }
+                    }>
+                      <AutoTable name="product-variants" params={{ templateId: detail?.id }} />
+                    </SectionCard>
+                  </Box>
+                ),
+              }] : []),
+            ]}
+          />
         </>
       )}
     </>

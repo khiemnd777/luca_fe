@@ -14,11 +14,13 @@ import type { OrderModel } from "../model/order.model";
 import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
+import { OrderInProgress } from "../components/order-inprogress.component";
+import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
 
 function OrderDetailHistoricalGeneralWidget() {
   const { orderId, orderItemId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
-  const [tab, setTab] = React.useState<"info" | "qr" | "process">("info");
+  const [tab, setTab] = React.useState<"info" | "qr" | "process" | "inprogress" | "all-products">("info");
 
   const { data: detail, loading } = useAsync<OrderModel | null>(
     () => {
@@ -48,7 +50,9 @@ function OrderDetailHistoricalGeneralWidget() {
         >
           <Tab value="info" label="Thông tin đơn hàng" />
           <Tab value="qr" label="Mã QR" />
-          <Tab value="process" label="Quy trình gia công" />
+          <Tab value="process" label="Trạng thái" />
+          <Tab value="inprogress" label="Tiến trình" />
+          <Tab value="all-products" label="Tất cả Sản phẩm & Vật tư" />
         </Tabs>
 
         {tab === "info" && (
@@ -94,6 +98,18 @@ function OrderDetailHistoricalGeneralWidget() {
             <SectionCard title={title ?? ""}>
               <OrderProcessesStatusBoard />
             </SectionCard>
+          </Box>
+        )}
+
+        {tab === "inprogress" && (
+          <Box>
+            <OrderInProgress />
+          </Box>
+        )}
+        
+        {tab === "all-products" && (
+          <Box>
+            <OrderAllProductsAndMaterials />
           </Box>
         )}
       </Section>

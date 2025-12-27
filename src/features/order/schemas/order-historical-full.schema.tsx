@@ -16,14 +16,12 @@ export function buildHistoricalOrderSchema(): FormSchema {
       kind: "text",
       name: "latestOrderItem.code",
       label: "Mã đơn hàng",
-      // disableIf: () => true,
       asText: true,
     },
     {
       kind: "text",
       name: "latestOrderItem.codeOriginal",
       label: "Mã gốc",
-      // disableIf: () => true,
       asText: true,
     },
     {
@@ -31,23 +29,25 @@ export function buildHistoricalOrderSchema(): FormSchema {
       name: "remakeCount",
       prop: "latestOrderItem",
       label: "Số lần làm lại",
-      // disableIf: () => true,
       asText: true,
       showIf: (v) => v["latestOrderItem.remakeCount"] > 0,
     },
     {
       kind: "text",
-      name: "customerName",
-      label: "Khách hàng",
-      // disableIf: () => true,
+      name: "clinicName",
+      label: "Nha sĩ",
       asText: true,
     },
     {
       kind: "text",
-      name: "productName",
-      label: "Sản phẩm",
-      group: "product",
-      // disableIf: () => true,
+      name: "dentistName",
+      label: "Nha sĩ",
+      asText: true,
+    },
+    {
+      kind: "text",
+      name: "patientName",
+      label: "Bệnh nhân",
       asText: true,
     },
     {
@@ -57,13 +57,13 @@ export function buildHistoricalOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
-        ignoreFields: ["customerId"],
+        ignoreFields: ["clinicId", "dentistId", "patientId"],
         def: [
-          {
-            name: "patientName",
-            // disableIf: () => true,
-            asText: true,
-          },
+          // {
+          //   name: "patientName",
+          //   // disableIf: () => true,
+          //   asText: true,
+          // },
           // {
           //   name: "customerId",
           //   showIf: () => false,

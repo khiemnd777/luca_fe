@@ -39,10 +39,10 @@ function MaterialWidget() {
           },
           {
             label: "Vật tư đang mượn",
-            value: "order-loaner-materials",
+            value: "order-loaner-materials-on-loan",
             content: (
               <SectionCard>
-                <AutoTable name="order-loaner-materials" />
+                <AutoTable name="order-loaner-materials-on-loan" />
               </SectionCard>
             ),
           },

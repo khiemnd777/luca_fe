@@ -15,6 +15,7 @@ import { OrderProcessesStatusBoard } from "../components/order-process-status-bo
 import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
 import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
+
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);

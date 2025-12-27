@@ -52,13 +52,6 @@ export function buildEditOrderSchema(): FormSchema {
       asText: true,
     },
     {
-      kind: "text",
-      name: "productName",
-      label: "Sản phẩm",
-      group: "product",
-      asText: true,
-    },
-    {
       name: "",
       label: "",
       kind: "metadata",

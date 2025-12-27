@@ -5,11 +5,16 @@ import { getOrderLoanerMaterials } from "@features/order/api/order-item-material
 import { materialStatusLabel } from "../../material/utils/material.utils";
 
 const columns: ColumnDef<OrderItemMaterialModel>[] = [
-  { key: "orderItemCode", header: "Mã đơn hàng"},
+  {
+    key: "orderItemCode",
+    header: "Mã đơn hàng",
+    type: "link",
+    url: (r) => `/order/${r.orderId}/historical/${r.orderItemId}`,
+  },
   { key: "materialName", header: "Tên vật tư", sortable: true },
-  { 
-    key: "quantity", 
-    header: "Số lượng", 
+  {
+    key: "quantity",
+    header: "Số lượng",
     accessor: (row) => `x${row.quantity}`,
   },
   {
@@ -19,7 +24,7 @@ const columns: ColumnDef<OrderItemMaterialModel>[] = [
   },
 ];
 
-registerTable("order-loaner-materials", () => {
+registerTable("order-loaner-materials-on-loan", () => {
   return createTableSchema<OrderItemMaterialModel>({
     columns,
     fetch: async (opts: FetchTableOpts) => await getOrderLoanerMaterials(opts),

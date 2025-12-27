@@ -10,7 +10,6 @@ export type FetchTableOpts = {
 };
 
 export type ImageShape = "square" | "circle";
-
 export type ColumnType = "text"
   | "number"
   | "currency"
@@ -18,6 +17,7 @@ export type ColumnType = "text"
   | "datetime"
   | "color"
   | "image"
+  | "link"
   | "chips"
   | "boolean"
   | "qr"
@@ -89,6 +89,9 @@ export type ColumnDef<T> = {
 
   // Image
   shape?: ImageShape;
+
+  // Link
+  url?: string | ((row: T) => string);
 
   // QR
   qr?: QROptions;

@@ -29,6 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getContrastText } from "@root/shared/utils/color.utils";
+import { navigate } from "@root/core/navigation/navigate";
 
 const formatColumnHeader = (label?: string) => label?.toUpperCase();
 
@@ -134,6 +135,31 @@ export function ImageCell(props: { src: string; shape?: ImageShape }) {
         }}
       />
     </Tooltip>
+  );
+}
+
+function LinkCell({ label, url }: { label: React.ReactNode; url?: string | null }) {
+  if (!url) return <>{label}</>;
+  return (
+    <Box
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(url)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(url);
+        }
+      }}
+      sx={{
+        color: "primary.main",
+        cursor: "pointer",
+        textDecoration: "underline",
+        textUnderlineOffset: "2px",
+      }}
+    >
+      {label}
+    </Box>
   );
 }
 
@@ -476,6 +502,12 @@ export function EditTable<T extends { id?: string | number }>({
       case "image": {
         const src = String(val ?? "");
         return <ImageCell src={src} shape={col.shape} />;
+      }
+
+      case "link": {
+        const url = typeof col.url === "function" ? col.url(row) : col.url;
+        const label = val == null || val === "" ? url ?? "" : val;
+        return <LinkCell label={label as React.ReactNode} url={url} />;
       }
 
       case "chips": {

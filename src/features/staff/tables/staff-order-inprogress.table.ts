@@ -10,7 +10,12 @@ const formatProcessLabel = (row: OrderItemProcessInProgressProcessModel) => {
 };
 
 const columns: ColumnDef<OrderItemProcessInProgressProcessModel>[] = [
-  { key: "orderItemCode", type: "custom", header: "Mã đơn hàng" },
+  { 
+    key: "orderItemCode", 
+    type: "link", 
+    header: "Mã đơn hàng", 
+    url: (r) => `/order/${r.orderId}/historical/${r.orderItemId}`
+  },
   {
     key: "processName",
     header: "Công đoạn",

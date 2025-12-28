@@ -31,6 +31,12 @@ export function buildNewOrderSchema(): FormSchema {
             const seq = result.latestOrderItem.remakeCount + 1;
             result.latestOrderItem.remakeCount = seq;
             result.latestOrderItem.code = `${alphabetSeq(seq)}${matched.code}`;
+
+            // reset products and materials
+            result.latestOrderItem.products.length = 0;
+            result.latestOrderItem.consumableMaterials.length = 0;
+            result.latestOrderItem.loanerMaterials.length = 0;
+
             ctx?.setInitial(result);
           }
         } else {

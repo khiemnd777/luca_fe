@@ -135,8 +135,8 @@ export async function getAvailableCollection(
   },
     {
       params: { withFields, tag, table, form },
-      cacheMode: "cache-first",
-      cacheTTL: 6.048e+8, // ~7d
+      cacheMode: "off",
+      cacheTTL: 300000, // ~5m
       cacheKey,
       cacheTags: [`metadata:collection:${idOrSlug}`],
       dedupKey: false,

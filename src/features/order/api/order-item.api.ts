@@ -50,3 +50,16 @@ export async function getOrderIdAndOrderItemIdByCode(code: string): Promise<[num
 
   return [data.orderId, data.orderItemId];
 }
+
+type LatestOrderItemIdResponseDto = { order_item_id: number };
+
+export async function getLatestOrderItemIdByOrderId(orderId: number): Promise<number> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<LatestOrderItemIdResponseDto>(`${departmentApiPath()}/order/${orderId}/latest-order-item-id`);
+  return data.order_item_id;
+}
+
+export async function unlink(orderId: number, orderItemId?: number): Promise<void> {
+  const { departmentApiPath } = useAuthStore.getState();
+  await apiClient.delete<any>(`${departmentApiPath()}/order/${orderId}/historical/${orderItemId}`);
+}

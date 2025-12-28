@@ -31,7 +31,6 @@ export function useAsync<T>(
   const [error, setError] = React.useState<any>(null);
   const [data, setData] = React.useState<T | null>(null);
 
-  // 🔑 force re-render key
   const [version, bump] = React.useReducer(v => v + 1, 0);
 
   const load = React.useCallback(async () => {
@@ -61,7 +60,7 @@ export function useAsync<T>(
     if (!eventName) return;
 
     const handler = () => {
-      bump(); // 🔥 invalidate → re-render chắc chắn
+      bump();
     };
 
     on(eventName, handler);

@@ -11,7 +11,7 @@ function OrderDetailActionsWidget() {
     <>
       <IfPermission permissions={["order.create"]}>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
-          openFormDialog("order-new", {
+          openFormDialog("order-remake", {
             initial: { id: orderId },
           });
         }} >Thêm đơn làm lại</Button>

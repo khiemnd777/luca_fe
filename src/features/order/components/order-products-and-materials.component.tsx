@@ -11,8 +11,8 @@ type OrderProductsAndMaterialsProps = {
 };
 
 type GroupedOrder = {
-  orderId: number | null;
-  orderCode: string | null;
+  orderItemId: number | null;
+  orderItemCode: string | null;
   products: OrderItemProductModel[];
   loanerMaterials: OrderItemMaterialModel[];
   consumableMaterials: OrderItemMaterialModel[];
@@ -63,13 +63,13 @@ export default function OrderProductsAndMaterials({
   const groups = React.useMemo(() => {
     const map = new Map<number | string, GroupedOrder>();
 
-    const ensureGroup = (orderId: number | null, orderCode: string | null) => {
-      const key = orderId ?? "unknown";
+    const ensureGroup = (orderItemId: number | null, orderItemCode: string | null) => {
+      const key = orderItemId ?? "unknown";
       const existing = map.get(key);
       if (existing) return existing;
       const group: GroupedOrder = {
-        orderId,
-        orderCode: orderCode,
+        orderItemId,
+        orderItemCode,
         products: [],
         loanerMaterials: [],
         consumableMaterials: [],
@@ -79,12 +79,12 @@ export default function OrderProductsAndMaterials({
     };
 
     for (const product of products ?? []) {
-      const group = ensureGroup(product.orderId ?? null, product.orderItemCode ?? null);
+      const group = ensureGroup(product.orderItemId ?? null, product.orderItemCode ?? null);
       group.products.push(product);
     }
 
     for (const material of materials ?? []) {
-      const group = ensureGroup(material.orderId ?? null, material.orderItemCode ?? null);
+      const group = ensureGroup(material.orderItemId ?? null, material.orderItemCode ?? null);
       const type = normalizeType(material.type);
       if (type === "loaner") {
         group.loanerMaterials.push(material);
@@ -175,7 +175,7 @@ export default function OrderProductsAndMaterials({
     <Stack spacing={2}>
       {groups.map((group) => (
         <Box
-          key={group.orderId ?? "unknown"}
+          key={group.orderItemId ?? "unknown"}
           sx={{
             border: "1px solid",
             borderColor: "divider",
@@ -184,7 +184,7 @@ export default function OrderProductsAndMaterials({
           }}
         >
           <Stack spacing={1}>
-            <Typography fontWeight={700}>{buildOrderLabel(group.orderCode)}</Typography>
+            <Typography fontWeight={700}>{buildOrderLabel(group.orderItemCode)}</Typography>
 
             {renderTable({
               title: "Sản phẩm",

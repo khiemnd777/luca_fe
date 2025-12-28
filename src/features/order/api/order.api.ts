@@ -51,9 +51,11 @@ export async function getAllOrderMaterials(orderId: number): Promise<OrderItemMa
   return result;
 }
 
-export async function create(model: OrderUpsertModel): Promise<void> {
+export async function create(model: OrderUpsertModel): Promise<OrderModel> {
   const { departmentApiPath } = useAuthStore.getState();
-  await apiClient.post<any>(`${departmentApiPath()}/order`, model);
+  const { data } = await apiClient.post<any>(`${departmentApiPath()}/order`, model);
+  const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
 }
 
 export async function update(model: OrderUpsertModel): Promise<void> {

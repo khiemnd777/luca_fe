@@ -4,17 +4,31 @@ import { reloadTable } from "@core/table/table-reload";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import type { OrderModel } from "@features/order/model/order.model";
 import { table, unlink } from "@features/order/api/order.api";
-import { priorityColor, priorityLabel, statusLabel } from "@root/shared/utils/order.utils";
+import { priorityColor, priorityLabel, statusColor, statusLabel } from "@root/shared/utils/order.utils";
 import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<OrderModel>[] = [
-  { key: "codeLatest", header: "Mã đơn hàng", sortable: true, stickyRight: true },
+  {
+    key: "statusLatest",
+    type: "color",
+    width: 110,
+    accessor: (row) => ({ text: statusLabel(row.statusLatest), color: statusColor(row.statusLatest) }),
+    sortable: true,
+  },
+  {
+    key: "priorityLatest",
+    type: "color",
+    width: 95,
+    accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
+    sortable: true,
+  },
+  { key: "codeLatest", header: "Mã đơn hàng", sortable: true, },
   { key: "code", header: "Mã gốc", sortable: true, },
-  { 
-    key: "remakeCount", 
-    header: "Làm lại", 
+  {
+    key: "remakeCount",
+    header: "Làm lại",
     accessor: (row) => row.remakeCount ? `${row.remakeCount} lần` : '',
-    sortable: true, 
+    sortable: true,
   },
   // {
   //   key: "",
@@ -27,19 +41,6 @@ const columns: ColumnDef<OrderModel>[] = [
   { key: "clinicName", header: "Nha khoa", sortable: true, },
   { key: "dentistName", header: "Nha sĩ", sortable: true, },
   { key: "patientName", header: "Bệnh nhân", sortable: true, },
-  {
-    key: "statusLatest",
-    header: "Trạng thái",
-    accessor: (row) => statusLabel(row.statusLatest),
-    sortable: true,
-  },
-  {
-    key: "priorityLatest",
-    type: "color",
-    header: "Ưu tiên",
-    accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
-    sortable: true,
-  },
   {
     key: "processNameLatest",
     header: "Công đoạn",
@@ -63,7 +64,7 @@ registerTable("orders", () => {
     initialSort: { by: "updated_at", dir: "desc" },
     allowUpdating: ["order.update"],
     allowDeleting: ["order.delete"],
-    onView: (row: OrderModel) => {navigate(`/order/${row.id}`)},
+    onView: (row: OrderModel) => { navigate(`/order/${row.id}`) },
     onEdit: (row: OrderModel) => openFormDialog("order-edit", { initial: { id: row.id } }),
     async onDelete(row) {
       await unlink(row.id);

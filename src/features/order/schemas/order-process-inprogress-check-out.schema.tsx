@@ -19,6 +19,7 @@ const buildRelationSearchSingleField = (
   orderBy?: string,
   extendWhere?: (ctx?: FormContext) => string[],
   asText?: boolean,
+  showIf?: ((values: Record<string, any>, ctx?: FormContext) => boolean) | undefined,
 ): FieldDef => ({
   name,
   label,
@@ -29,6 +30,7 @@ const buildRelationSearchSingleField = (
   pageLimit: 20,
   getInputLabel,
   getOptionLabel,
+  showIf,
   asText,
   async searchPage(keyword: string, page: number, limit: number, ctx?: FormContext) {
     const searched = await search(target, {
@@ -96,7 +98,7 @@ export function buildOrderProcessInProgressSchema(): FormSchema {
       (d: any) => d?.processName ?? "",
       (d: any) => `${d?.sectionName ? `${d?.sectionName} > ` : ""}${d?.processName ?? ""}`,
       "step_number",
-      (ctx) => [`order_item_id=${ctx?.values.orderItemId}`, `order_id=${ctx?.values.orderId}`]
+      (ctx) => [`order_item_id=${ctx?.values.orderItemId}`, `order_id=${ctx?.values.orderId}`],
     ),
     {
       name: "checkOutNote",

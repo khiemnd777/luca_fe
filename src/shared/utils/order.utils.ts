@@ -1,4 +1,13 @@
 
+const ORDER_STATUS_PALETTE = [
+  "#607d8b", // received - blue gray
+  "#1976d2", // in progress - blue
+  "#f9a825", // qc - amber
+  "#2e7d32", // completed - green
+  "#d32f2f", // issue - red
+  "#ef6c00", // rework - orange
+];
+
 // status
 const ORDER_STATUSES = [
   { value: "received", label: "Đã nhận đơn" },
@@ -8,6 +17,14 @@ const ORDER_STATUSES = [
   { value: "issue", label: "Sự cố" },
   { value: "rework", label: "Làm lại" },
 ] as const;
+
+const STATUS_COLOR_MAP = ORDER_STATUSES.reduce<Record<string, string>>(
+  (acc, cur, index) => {
+    acc[cur.value] = ORDER_STATUS_PALETTE[index] ?? "#9e9e9e";
+    return acc;
+  },
+  {}
+);
 
 const STATUS_LABEL_MAP = ORDER_STATUSES.reduce<Record<string, string>>(
   (acc, cur) => {
@@ -20,6 +37,11 @@ const STATUS_LABEL_MAP = ORDER_STATUSES.reduce<Record<string, string>>(
 export function statusLabel(value?: string | null): string {
   if (!value) return "";
   return STATUS_LABEL_MAP[value] ?? value;
+}
+
+export function statusColor(value?: string | null): string {
+  if (!value) return "#9e9e9e";
+  return STATUS_COLOR_MAP[value] ?? "#9e9e9e";
 }
 
 // priority label

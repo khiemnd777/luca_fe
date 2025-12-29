@@ -262,6 +262,12 @@ function defaultCompare(a: unknown, b: unknown) {
   return String(a ?? "").localeCompare(String(b ?? ""), undefined, { sensitivity: "base" });
 }
 
+const STICKY_Z_INDEX = {
+  dnd: 11,
+  actions: 10,
+  sticky: 5,
+  normal: 1,
+} as const;
 export function EditTable<T extends { id?: string | number }>({
   rows, columns, page, pageSize, total = null, loading = false,
   onPageChange,
@@ -652,10 +658,11 @@ export function EditTable<T extends { id?: string | number }>({
             {enableDnd && (
               <Box
                 role="columnheader"
+                data-sticky="true"
                 sx={{
                   position: "sticky",
                   left: 0,
-                  zIndex: 6,
+                  zIndex: STICKY_Z_INDEX.dnd,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -673,10 +680,11 @@ export function EditTable<T extends { id?: string | number }>({
             {hasActions && (
               <Box
                 role="columnheader"
+                data-sticky="true"
                 sx={{
                   position: "sticky",
                   left: enableDnd ? dndWidth : 0,
-                  zIndex: 5,
+                  zIndex: STICKY_Z_INDEX.actions,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -708,11 +716,12 @@ export function EditTable<T extends { id?: string | number }>({
                 <Box
                   key={k}
                   role="columnheader"
+                  data-sticky={c.stickyLeft || c.stickyRight ? "true" : undefined}
                   sx={{
                     position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
                     left,
                     right,
-                    zIndex: (c.stickyLeft || c.stickyRight) ? 4 : 3,
+                    zIndex: (c.stickyLeft || c.stickyRight) ? STICKY_Z_INDEX.sticky : STICKY_Z_INDEX.normal,
                     backgroundColor: "background.paper",
                     px: 1.5,
                     py: dense ? 0.75 : 1,
@@ -803,10 +812,10 @@ export function EditTable<T extends { id?: string | number }>({
                               display: "grid",
                               gridTemplateColumns,
                               alignItems: "stretch",
-                              "& > [role='cell']": {
+                              "& > [role='cell']:not([data-sticky='true'])": {
                                 backgroundColor: isDragging ? "action.hover" : undefined,
                               },
-                              "&:hover > [role='cell']": {
+                              "&:hover > [role='cell']:not([data-sticky='true'])": {
                                 backgroundColor: "action.hover",
                               },
                             }}
@@ -815,10 +824,11 @@ export function EditTable<T extends { id?: string | number }>({
                             {/* DnD handle */}
                             <Box
                               role="cell"
+                              data-sticky="true"
                               sx={{
                                 position: "sticky",
                                 left: 0,
-                                zIndex: 3,
+                                zIndex: STICKY_Z_INDEX.dnd,
                                 backgroundColor: "background.paper",
                                 width: dndWidth,
                                 minWidth: dndWidth,
@@ -847,10 +857,11 @@ export function EditTable<T extends { id?: string | number }>({
                             {hasActions && (
                               <Box
                                 role="cell"
+                                data-sticky="true"
                                 sx={{
                                   position: "sticky",
                                   left: enableDnd ? dndWidth : 0,
-                                  zIndex: 2,
+                                  zIndex: STICKY_Z_INDEX.actions,
                                   backgroundColor: "background.paper",
                                   whiteSpace: "nowrap",
                                   width: actionsWidth,
@@ -898,11 +909,12 @@ export function EditTable<T extends { id?: string | number }>({
                                 <Box
                                   key={String(c.key)}
                                   role="cell"
+                                  data-sticky={c.stickyLeft || c.stickyRight ? "true" : undefined}
                                   sx={{
                                     position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
                                     left,
                                     right,
-                                    zIndex: (c.stickyLeft || c.stickyRight) ? 2 : 1,
+                                    zIndex: (c.stickyLeft || c.stickyRight) ? STICKY_Z_INDEX.sticky : STICKY_Z_INDEX.normal,
                                     backgroundColor: (c.stickyLeft || c.stickyRight) ? "background.paper" : undefined,
                                     whiteSpace: "nowrap",
                                     px: 1.5,
@@ -933,7 +945,7 @@ export function EditTable<T extends { id?: string | number }>({
                     display: "grid",
                     gridTemplateColumns,
                     alignItems: "stretch",
-                    "&:hover > [role='cell']": {
+                    "&:hover > [role='cell']:not([data-sticky='true'])": {
                       backgroundColor: "action.hover",
                     },
                   }}
@@ -942,10 +954,11 @@ export function EditTable<T extends { id?: string | number }>({
                   {hasActions && (
                     <Box
                       role="cell"
+                      data-sticky="true"
                       sx={{
                         position: "sticky",
                         left: 0,
-                        zIndex: 2,
+                        zIndex: STICKY_Z_INDEX.actions,
                         backgroundColor: "background.paper",
                         whiteSpace: "nowrap",
                         width: actionsWidth,
@@ -990,17 +1003,18 @@ export function EditTable<T extends { id?: string | number }>({
                     const left = c.stickyLeft ? baseLeftOffset + (leftOffsets[colIdx] ?? 0) : undefined;
                     const right = c.stickyRight ? (rightOffsets[colIdx] ?? 0) : undefined;
                     return (
-                      <Box
-                        key={String(c.key)}
-                        role="cell"
-                        sx={{
-                          position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
-                          left,
-                          right,
-                          zIndex: (c.stickyLeft || c.stickyRight) ? 2 : 1,
-                          backgroundColor: (c.stickyLeft || c.stickyRight) ? "background.paper" : undefined,
-                          whiteSpace: "nowrap",
-                          px: 1.5,
+                    <Box
+                      key={String(c.key)}
+                      role="cell"
+                      data-sticky={c.stickyLeft || c.stickyRight ? "true" : undefined}
+                      sx={{
+                        position: (c.stickyLeft || c.stickyRight) ? "sticky" : "static",
+                        left,
+                        right,
+                        zIndex: (c.stickyLeft || c.stickyRight) ? STICKY_Z_INDEX.sticky : STICKY_Z_INDEX.normal,
+                        backgroundColor: (c.stickyLeft || c.stickyRight) ? "background.paper" : undefined,
+                        whiteSpace: "nowrap",
+                        px: 1.5,
                           py: dense ? 0.75 : 1,
                           borderBottom: "1px solid",
                           borderColor: "divider",

@@ -458,7 +458,7 @@ export function EditTable<T extends { id?: string | number }>({
     [enableDnd, rowIds, dndRows, onReorder, page, pageSize]
   );
 
-  // ==== renderers for types (UPDATED color + chips) ====
+  // ==== renderers for types ====
   const renderCell = (row: T, col: ColumnDef<T>) => {
     if (col.render) return col.render(row);
 
@@ -628,7 +628,6 @@ export function EditTable<T extends { id?: string | number }>({
     }
   };
 
-  // TODO: the header cols are not sync width with rows of content below, even crash the last col.
   return (
     <Paper variant="outlined">
       <Box

@@ -25,3 +25,6 @@ export function formatDate(value?: string | null): string {
 
   return `${dd}/${mm}/${yyyy}`;
 }
+
+export const fDatetime = "DD/MM/YYYY HH:mm:ss";
+export const fDate = "DD/MM/YYYY";

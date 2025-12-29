@@ -30,7 +30,7 @@ import { humanize } from "@root/shared/utils/string.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 import SearchSingleField from "./search-single-field";
 import { QRField } from "@root/core/form/qr-field";
-import { formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
+import { fDate, fDatetime, formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 
 
 // -----------------------------------------------------------
@@ -381,6 +381,7 @@ export function AutoFormFieldSingle({
       <DateTimePicker
         label={f.label}
         value={val}
+        format={fDatetime}
         onChange={(d) => setValue(f.name, d ? d.toISOString() : "")}
         slotProps={{
           textField: {
@@ -403,6 +404,7 @@ export function AutoFormFieldSingle({
       <DatePicker
         label={f.label}
         value={val}
+        format={fDate}
         onChange={(d) => {
           const out = d ? d.format("YYYY-MM-DD") : "";
           setValue(f.name, out);
@@ -968,7 +970,7 @@ export function AutoFormFieldSingle({
   );
 }
 
-
+// TODO: split AutoFormFieldsGrouped and AutoFormFieldSingle into separate files
 // -----------------------------------------------------------
 // GROUPED LAYOUT
 // -----------------------------------------------------------

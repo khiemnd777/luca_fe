@@ -142,7 +142,7 @@ function resolveRelationMirrors(fieldName: string) {
   return { root, cf };
 }
 
-export function AutoFormFieldSingle({
+export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
   field: f,
   values,
   setValue,
@@ -962,4 +962,22 @@ export function AutoFormFieldSingle({
       }}
     />
   );
-}
+}, (prev, next) => {
+  if (prev.field !== next.field) return false;
+  if (prev.error !== next.error) return false;
+  if (prev.setValue !== next.setValue) return false;
+  if (prev.ctx !== next.ctx) return false;
+
+  const f = prev.field;
+  if (typeof f.disableIf === "function") return false;
+  if (f.kind === "searchlist" || f.kind === "searchsingle" || f.kind === "custom") {
+    return false;
+  }
+
+  if (prev.values === next.values) return true;
+
+  if (prev.values[f.name] !== next.values[f.name]) return false;
+  if (f.altName && prev.values[f.altName] !== next.values[f.altName]) return false;
+
+  return true;
+});

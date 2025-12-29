@@ -11,6 +11,7 @@ import { OrderConsumableMaterialItemList } from "../components/order-material-co
 import { Typography } from "@mui/material";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 import { navigate } from "@root/core/navigation/navigate";
+import { prefixCurrency } from "@root/shared/utils/currency.utils";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -151,7 +152,7 @@ export function buildNewOrderSchema(): FormSchema {
         const total = Number(consumableMaterialPrice) + Number(productPrice);
         return (
           <Typography>
-            Thành tiền = Sản phẩm + Vật tư tiêu hao: ₫ {total.toLocaleString()}
+            Thành tiền = Sản phẩm + Vật tư tiêu hao: {prefixCurrency} {total.toLocaleString()}
           </Typography>
         );
       },

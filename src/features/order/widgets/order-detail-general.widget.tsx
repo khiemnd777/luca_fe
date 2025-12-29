@@ -1,6 +1,5 @@
 import React from "react";
 import { SectionCard } from "@shared/components/ui/section-card";
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { registerSlot } from "@core/module/registry";
 import { IfPermission } from "@core/auth/if-permission";
 import { useParams } from "react-router-dom";
@@ -14,8 +13,11 @@ import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
-import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
+import OrderTotalPrice from "../components/order-total-price.component";
+import { Spacer } from "@root/shared/components/ui/spacer";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
@@ -110,6 +112,8 @@ function OrderDetailBodyWidget() {
               value: "all-products",
               content: (
                 <Box>
+                  <OrderTotalPrice />
+                  <Spacer />
                   <OrderAllProductsAndMaterials />
                 </Box>
               ),

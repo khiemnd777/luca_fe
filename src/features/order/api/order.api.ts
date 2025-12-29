@@ -51,6 +51,16 @@ export async function getAllOrderMaterials(orderId: number): Promise<OrderItemMa
   return result;
 }
 
+type TotalPriceResponseDto = {
+  total_price: number;
+};
+
+export async function syncPrice(orderId: number): Promise<number> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<TotalPriceResponseDto>(`${departmentApiPath()}/order/${orderId}/sync-price`);
+  return data.total_price;
+}
+
 export async function create(model: OrderUpsertModel): Promise<OrderModel> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.post<any>(`${departmentApiPath()}/order`, model);

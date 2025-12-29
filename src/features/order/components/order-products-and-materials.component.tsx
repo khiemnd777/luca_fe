@@ -3,6 +3,7 @@ import { Box, Stack, Typography, TableContainer, Table, TableHead, TableRow, Tab
 import type { OrderItemProductModel } from "@features/order/model/order-item-product.model";
 import type { OrderItemMaterialModel } from "@features/order/model/order-item-material.model";
 import { SectionCard } from "@root/shared/components/ui/section-card";
+import { prefixCurrency } from "@root/shared/utils/currency.utils";
 
 type OrderProductsAndMaterialsProps = {
   products?: OrderItemProductModel[] | null;
@@ -159,8 +160,8 @@ export default function OrderProductsAndMaterials({
                   <TableRow key={(item as { id?: number | string }).id ?? index}>
                     <TableCell>{getLabel(item)}</TableCell>
                     <TableCell align="right">{formatNumber(quantity)}</TableCell>
-                    <TableCell align="right">₫ {formatNumber(price)}</TableCell>
-                    <TableCell align="right">₫ {formatNumber(total)}</TableCell>
+                    <TableCell align="right">{prefixCurrency} {formatNumber(price)}</TableCell>
+                    <TableCell align="right">{prefixCurrency} {formatNumber(total)}</TableCell>
                   </TableRow>
                 );
               })

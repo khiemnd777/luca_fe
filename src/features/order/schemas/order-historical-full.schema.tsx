@@ -9,6 +9,7 @@ import { Typography } from "@mui/material";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
+import { prefixCurrency } from "@root/shared/utils/currency.utils";
 
 export function buildHistoricalOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -257,7 +258,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
         const total = Number(consumableMaterialPrice) + Number(productPrice);
         return (
           <Typography>
-            Thành tiền = Sản phẩm + Vật tư tiêu hao: ₫ {total.toLocaleString()}
+            Thành tiền = Sản phẩm + Vật tư tiêu hao: {prefixCurrency} {total.toLocaleString()}
           </Typography>
         );
       },

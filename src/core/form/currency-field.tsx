@@ -1,4 +1,5 @@
 import { TextField, type TextFieldProps } from "@mui/material";
+import { prefixCurrency } from "@root/shared/utils/currency.utils";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 
 type Props = Omit<TextFieldProps, "onChange" | "value"> & {
@@ -16,7 +17,7 @@ export function CurrencyField({
   thousandSeparator = true,
   allowNegative = true,
   decimalScale = 0,
-  prefix = "₫",
+  prefix = prefixCurrency,
   ...rest
 }: Props) {
   return (

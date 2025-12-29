@@ -30,6 +30,7 @@ import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
 import SearchSingleField from "./search-single-field";
 import { QRField } from "@root/core/form/qr-field";
 import { fDate, fDatetime, formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
+import { prefixCurrency } from "@root/shared/utils/currency.utils";
 
 
 // -----------------------------------------------------------
@@ -100,7 +101,7 @@ function renderAsText(f: FieldDef, values: Record<string, any>) {
 
   // CURRENCY
   if (f.kind === "currency" || f.kind === "currency-equation") {
-    return <Typography>₫ {Number(v).toLocaleString()}</Typography>;
+    return <Typography>{prefixCurrency} {Number(v).toLocaleString()}</Typography>;
   }
 
   // SWITCH / CHECKBOX

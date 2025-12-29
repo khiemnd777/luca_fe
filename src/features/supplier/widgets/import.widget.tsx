@@ -14,7 +14,7 @@ function ImportWidget() {
 
 registerSlot({
   id: "import-supplier",
-  name: "supplier:actions",
+  name: "_supplier:actions",
   priority: 2,
   render: () => <ImportWidget />,
 });

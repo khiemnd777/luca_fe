@@ -14,7 +14,7 @@ function ExportWidget() {
 
 registerSlot({
   id: "export-supplier",
-  name: "supplier:actions",
+  name: "_supplier:actions",
   priority: 1,
   render: () => <ExportWidget />,
 });

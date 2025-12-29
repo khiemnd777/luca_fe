@@ -1,7 +1,4 @@
 import * as React from "react";
-import { Button, Stack } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
-import { openFormDialog } from "@core/form/form-dialog.service";
 import { registerSlot } from "@root/core/module/registry";
 import { IfPermission } from "@root/core/auth/if-permission";
 import { useParams } from "react-router-dom";
@@ -12,7 +9,7 @@ import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import toast from "react-hot-toast";
 import { navigate } from "@root/core/navigation/navigate";
 
-function OrderDetailActionsWidget() {
+function OrderDetailActionRemoveOrderWidget() {
   const { orderId, orderItemId } = useParams();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
@@ -46,26 +43,16 @@ function OrderDetailActionsWidget() {
 
   return (
     <>
-      <Stack direction="row" spacing={1}>
-        <IfPermission permissions={["order.create"]}>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
-            openFormDialog("order-remake", {
-              initial: { id: orderId },
-            });
-          }} >Thêm đơn làm lại</Button>
-        </IfPermission>
-
-        <IfPermission permissions={["order.delete"]}>
-          <SafeButton
-            variant="contained"
-            icon=<DeleteIcon />
-            color="error"
-            onClick={() => setConfirmOpen(true)}
-          >
-            Xoá đơn hàng
-          </SafeButton>
-        </IfPermission>
-      </Stack>
+      <IfPermission permissions={["order.delete"]}>
+        <SafeButton
+          variant="contained"
+          icon=<DeleteIcon />
+          color="error"
+          onClick={() => setConfirmOpen(true)}
+        >
+          Xoá đơn hàng
+        </SafeButton>
+      </IfPermission>
 
       <ConfirmDialog
         open={confirmOpen}
@@ -84,14 +71,14 @@ function OrderDetailActionsWidget() {
 }
 
 registerSlot({
-  id: "order-detail-actions",
+  id: "order-detail-action-remove-order",
   name: "order-detail:actions",
-  render: () => <OrderDetailActionsWidget />,
+  render: () => <OrderDetailActionRemoveOrderWidget />,
 });
 
 
 registerSlot({
-  id: "order-detail-actions",
+  id: "order-detail-action-remove-order",
   name: "order-detail-historical:actions",
-  render: () => <OrderDetailActionsWidget />,
+  render: () => <OrderDetailActionRemoveOrderWidget />,
 });

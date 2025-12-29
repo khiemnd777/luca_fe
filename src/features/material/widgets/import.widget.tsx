@@ -14,7 +14,7 @@ function ImportWidget() {
 
 registerSlot({
   id: "import-material",
-  name: "material:actions",
+  name: "_material:actions",
   priority: 2,
   render: () => <ImportWidget />,
 });

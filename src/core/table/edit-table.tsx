@@ -647,8 +647,6 @@ export function EditTable<T extends { id?: string | number }>({
               top: stickyHeader ? stickyTopOffset : undefined,
               zIndex: 4,
               backgroundColor: "background.paper",
-              borderBottom: "1px solid",
-              borderColor: "divider",
             }}
           >
             {enableDnd && (
@@ -664,6 +662,8 @@ export function EditTable<T extends { id?: string | number }>({
                   px: 1,
                   py: dense ? 0.75 : 1,
                   backgroundColor: "background.paper",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
                   width: dndWidth,
                   minWidth: dndWidth,
                 }}
@@ -683,6 +683,8 @@ export function EditTable<T extends { id?: string | number }>({
                   px: 1.5,
                   py: dense ? 0.75 : 1,
                   backgroundColor: "background.paper",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
                   whiteSpace: "nowrap",
                   width: actionsWidth,
                   minWidth: actionsWidth,
@@ -714,6 +716,8 @@ export function EditTable<T extends { id?: string | number }>({
                     backgroundColor: "background.paper",
                     px: 1.5,
                     py: dense ? 0.75 : 1,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -739,8 +743,6 @@ export function EditTable<T extends { id?: string | number }>({
               sx={{
                 display: "grid",
                 gridTemplateColumns,
-                borderBottom: "1px solid",
-                borderColor: "divider",
               }}
             >
               <Box
@@ -753,6 +755,8 @@ export function EditTable<T extends { id?: string | number }>({
                   height: "40px",
                   textAlign: "center",
                   px: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
                 }}
               >
                 Đang tải…
@@ -764,8 +768,6 @@ export function EditTable<T extends { id?: string | number }>({
               sx={{
                 display: "grid",
                 gridTemplateColumns,
-                borderBottom: "1px solid",
-                borderColor: "divider",
               }}
             >
               <Box
@@ -778,6 +780,8 @@ export function EditTable<T extends { id?: string | number }>({
                   height: "40px",
                   textAlign: "center",
                   px: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
                 }}
               >
                 Không có dữ liệu
@@ -798,11 +802,11 @@ export function EditTable<T extends { id?: string | number }>({
                             sx={{
                               display: "grid",
                               gridTemplateColumns,
-                              borderBottom: "1px solid",
-                              borderColor: "divider",
                               alignItems: "stretch",
-                              backgroundColor: isDragging ? "action.hover" : undefined,
-                              "&:hover": {
+                              "& > [role='cell']": {
+                                backgroundColor: isDragging ? "action.hover" : undefined,
+                              },
+                              "&:hover > [role='cell']": {
                                 backgroundColor: "action.hover",
                               },
                             }}
@@ -820,6 +824,8 @@ export function EditTable<T extends { id?: string | number }>({
                                 minWidth: dndWidth,
                                 px: 1,
                                 py: dense ? 0.75 : 1,
+                                borderBottom: "1px solid",
+                                borderColor: "divider",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -851,6 +857,8 @@ export function EditTable<T extends { id?: string | number }>({
                                   minWidth: actionsWidth,
                                   px: 1.5,
                                   py: dense ? 0.75 : 1,
+                                  borderBottom: "1px solid",
+                                  borderColor: "divider",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "flex-end",
@@ -899,6 +907,8 @@ export function EditTable<T extends { id?: string | number }>({
                                     whiteSpace: "nowrap",
                                     px: 1.5,
                                     py: dense ? 0.75 : 1,
+                                    borderBottom: "1px solid",
+                                    borderColor: "divider",
                                     display: "flex",
                                     alignItems: "center",
                                   }}
@@ -922,10 +932,8 @@ export function EditTable<T extends { id?: string | number }>({
                   sx={{
                     display: "grid",
                     gridTemplateColumns,
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
                     alignItems: "stretch",
-                    "&:hover": {
+                    "&:hover > [role='cell']": {
                       backgroundColor: "action.hover",
                     },
                   }}
@@ -944,6 +952,8 @@ export function EditTable<T extends { id?: string | number }>({
                         minWidth: actionsWidth,
                         px: 1.5,
                         py: dense ? 0.75 : 1,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "flex-end",
@@ -992,6 +1002,8 @@ export function EditTable<T extends { id?: string | number }>({
                           whiteSpace: "nowrap",
                           px: 1.5,
                           py: dense ? 0.75 : 1,
+                          borderBottom: "1px solid",
+                          borderColor: "divider",
                           display: "flex",
                           alignItems: "center",
                         }}

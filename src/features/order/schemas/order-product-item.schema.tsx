@@ -56,6 +56,11 @@ export function buildOrderProductItemSchema(): FormSchema {
         // const product = matched as ProductModel | null;
         // ctx?.setValue("productCode", product?.code ?? text ?? "");
         // ctx?.setValue("productId", product?.id ?? null);
+        
+        // TODO: Must set categoryId here because in edit form, user can change product but keep categoryId unchanged
+        // ctx?.setValue("categoryId", matched?.categoryId ?? null);
+
+        // TODO: fix ctx to ctxRef, because onBlur is called after form unmount
       },
     },
     {
@@ -78,6 +83,21 @@ export function buildOrderProductItemSchema(): FormSchema {
         min: 0,
       },
     },
+    {
+      name: "",
+      label: "",
+      kind: "metadata",
+      metadata: {
+        group: "category",
+        mode: "whole",
+        tag: "order",
+        groups: [
+          {
+            group: "category_fields",
+          }
+        ],
+      }
+    },
   ];
 
   return {
@@ -96,6 +116,10 @@ export function buildOrderProductItemSchema(): FormSchema {
         name: "general",
         col: 3,
       },
+      {
+        name: "category_fields",
+        col: 2,
+      }
     ],
   };
 }

@@ -1,4 +1,4 @@
-import type { FieldDef, FormContext } from "@core/form/types";
+import type { FieldDef } from "@core/form/types";
 
 export type HttpMethod = "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -109,8 +109,6 @@ export type AutoFormProps = {
   initial?: Record<string, any> | null;
   onSaved?: (result?: any) => void;
   notifier?: Notifier;
-  ctx?: FormContext;
-  path?: string;
 };
 
 export type AutoFormRef = {
@@ -123,3 +121,4 @@ export type AutoFormRef = {
   setValue: (name: string, v: any) => void;
   setAllValues: (obj: Record<string, any>) => void
 };
+

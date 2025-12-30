@@ -52,11 +52,18 @@ export function buildOrderProductItemSchema(): FormSchema {
         });
         return result.items?.[0] ?? null;
       },
-      onBlur: (_text: string, _matched: any, _ctx) => {
+      onBlur: (_text: string, matched: any, ctx) => {
         // const product = matched as ProductModel | null;
         // ctx?.setValue("productCode", product?.code ?? text ?? "");
         // ctx?.setValue("productId", product?.id ?? null);
-        
+        if (!matched) return;
+
+        ctx?.emit("item:patch", {
+          productId: matched.id ?? null,
+          productCode: matched.code ?? "",
+          categoryId: matched.categoryId ?? null,
+        });
+
         // TODO: Must set categoryId here because in edit form, user can change product but keep categoryId unchanged
         // ctx?.setValue("categoryId", matched?.categoryId ?? null);
 

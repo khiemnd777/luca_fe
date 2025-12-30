@@ -9,6 +9,7 @@ import {
 import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
 import type { AutoFormRef } from "@core/form/form.types";
 import { AutoForm } from "@core/form/auto-form";
+import type { FormContext } from "@root/core/form/types";
 
 export type ListItemRenderProps<T> = {
   item: T;
@@ -23,6 +24,7 @@ export type ListItemRenderProps<T> = {
   onBlurCommit?: () => void;
   formName: string;
   labelName: string;
+  ctx?: FormContext | null;
 };
 
 export function ListItemRender<T>({
@@ -36,22 +38,50 @@ export function ListItemRender<T>({
   onBlurCommit,
   formName,
   labelName,
+  ctx,
 }: ListItemRenderProps<T>) {
   const formRef = React.useRef<AutoFormRef | null>(null);
+  const lastItemIdRef = React.useRef<any>(null);
+  const mountInitialRef = React.useRef<Record<string, any>>({});
+
+  if (lastItemIdRef.current !== (item as any)?.id) {
+    lastItemIdRef.current = (item as any)?.id;
+    mountInitialRef.current = { ...(item as any) };
+  }
+
   const latestItemRef = React.useRef(item);
   const lastCommitSigRef = React.useRef<string>("");
 
   React.useEffect(() => {
     const prev = normalize(latestItemRef.current);
     const next = normalize(item);
+
     if (JSON.stringify(prev) === JSON.stringify(next)) return;
 
     latestItemRef.current = item;
     lastCommitSigRef.current = buildSignature(item as any);
-    formRef.current?.setAllValues({ ...(item as any) });
+
+    const frm = formRef.current;
+    if (!frm) return;
+
+    const prevVals = frm.values ?? {};
+    frm.setAllValues({
+      ...prevVals,
+      ...(item as any),
+    });
   }, [item, normalize, buildSignature]);
 
-  const initialValues = React.useMemo(() => ({ ...(item as any) }), []);
+  React.useEffect(() => {
+    if (!ctx) return;
+
+    const handler = (patch: Partial<T>) => {
+      if (!patch || typeof patch !== "object") return;
+      onChange(patch);
+    };
+
+    ctx.on("item:patch", handler);
+    return () => ctx.off("item:patch", handler);
+  }, [ctx, onChange]);
 
   const handleBlur = React.useCallback(() => {
     const frm = formRef.current;
@@ -59,9 +89,11 @@ export function ListItemRender<T>({
 
     const vals = frm.values ?? {};
     const sig = buildSignature(vals);
+
     if (sig === lastCommitSigRef.current) return;
 
     lastCommitSigRef.current = sig;
+
     onChange(extractPatch(vals));
     onBlurCommit?.();
   }, [extractPatch, buildSignature, onChange, onBlurCommit]);
@@ -81,7 +113,11 @@ export function ListItemRender<T>({
         }
       />
       <CardContent sx={{ pt: 0 }}>
-        <AutoForm ref={formRef} name={formName} initial={initialValues} />
+        <AutoForm
+          ref={formRef}
+          name={formName}
+          initial={mountInitialRef.current}
+        />
       </CardContent>
     </Card>
   );

@@ -68,7 +68,7 @@ function getReqMsg(r?: boolean | string) {
 
 type Errors = Record<string, string | null>;
 
-function normalizeErrors(obj: Record<string, string | null | undefined>): Errors {
+export function normalizeErrors(obj: Record<string, string | null | undefined>): Errors {
   const out: Errors = {};
   for (const [k, v] of Object.entries(obj)) out[k] = v ?? null;
   return out;
@@ -104,7 +104,7 @@ function checkPasswordRules(pw: string, pr?: PasswordRules, allValues?: Record<s
   return null;
 }
 
-function validateNewPasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
+export function validateNewPasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
   const pw = value?.password ?? "";
   const cf = value?.confirm ?? "";
 
@@ -119,7 +119,7 @@ function validateNewPasswordObject(value: any, def: FieldDef, allValues: Record<
   return null;
 }
 
-function validateChangePasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
+export function validateChangePasswordObject(value: any, def: FieldDef, allValues: Record<string, any>): string | null {
   const cur = value?.current ?? "";
   const pw = value?.password ?? "";
   const cf = value?.confirm ?? "";
@@ -137,7 +137,7 @@ function validateChangePasswordObject(value: any, def: FieldDef, allValues: Reco
   return null;
 }
 
-function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
+export function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
   if (!rules) return null;
 
   const reqMsg = getReqMsg(rules.required);

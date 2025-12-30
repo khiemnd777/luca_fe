@@ -3,7 +3,13 @@ import { Stack } from "@mui/material";
 import toast from "react-hot-toast";
 
 import { AutoFormFieldsGrouped } from "@core/form/auto-form-fields";
-import { useAutoForm } from "@core/form/use-auto-form";
+import {
+  normalizeErrors,
+  useAutoForm,
+  validateChangePasswordObject,
+  validateNewPasswordObject,
+  validateOneSync,
+} from "@core/form/use-auto-form";
 
 import type {
   AutoFormRef,
@@ -639,6 +645,196 @@ function flattenForInitial(obj: any): any {
   return out;
 }
 
+function resolveBasePath(path?: string): string {
+  return path ? path : "";
+}
+
+function joinPath(basePath: string, name: string) {
+  return basePath ? `${basePath}.${name}` : name;
+}
+
+function isPlainObject(value: any): value is Record<string, any> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function deepMerge(base: any, patch: any): any {
+  if (!isPlainObject(base) || !isPlainObject(patch)) return patch;
+  const out: Record<string, any> = { ...base };
+  for (const [k, v] of Object.entries(patch)) {
+    if (isPlainObject(v) && isPlainObject(base[k])) {
+      out[k] = deepMerge(base[k], v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function getValueAtPath(values: Record<string, any>, path: string): Record<string, any> {
+  if (!path) return values ?? {};
+  const parts = path.split(".").filter(Boolean);
+  let cur: any = values;
+  for (const part of parts) {
+    if (!cur || typeof cur !== "object") return {};
+    cur = cur[part];
+  }
+  if (isPlainObject(cur)) return cur;
+  if (Array.isArray(cur)) return cur as any;
+  return {};
+}
+
+function useCtxFormState(
+  schema: FormSchema,
+  baseFields: FieldDef[],
+  ctx?: FormContext | null,
+  path?: string,
+) {
+  const basePath = resolveBasePath(path);
+  const ctxValues = React.useMemo(
+    () => (ctx ? getValueAtPath(ctx.values ?? {}, basePath) : {}),
+    [ctx, ctx?.values, basePath]
+  );
+
+  const [errors, setErrors] = React.useState<Record<string, string | null>>({});
+  const hardErrorsRef = React.useRef<Record<string, string | null>>({});
+
+  const setFieldError = React.useCallback((name: string, msg: string | null) => {
+    if (msg) {
+      hardErrorsRef.current = {
+        ...hardErrorsRef.current,
+        [name]: msg,
+      };
+    } else if (name in hardErrorsRef.current) {
+      const copy = { ...hardErrorsRef.current };
+      delete copy[name];
+      hardErrorsRef.current = copy;
+    }
+
+    setErrors((e) => ({ ...e, [name]: msg ?? null }));
+    if (ctx) ctx.setFieldError(joinPath(basePath, name), msg ?? null);
+  }, [ctx, basePath]);
+
+  const setValue = React.useCallback((name: string, v: any) => {
+    if (!ctx) return;
+    ctx.setValue(joinPath(basePath, name), v);
+  }, [ctx, basePath]);
+
+  const setAllValues = React.useCallback((obj: Record<string, any>) => {
+    if (!ctx || !obj || typeof obj !== "object") return;
+
+    if (!basePath) {
+      const merged = deepMerge(ctx.values ?? {}, obj);
+      ctx.setAllValues(merged);
+      return;
+    }
+
+    const current = getValueAtPath(ctx.values ?? {}, basePath);
+    const merged = deepMerge(current, obj);
+    ctx.setValue(basePath, merged);
+  }, [ctx, basePath, ctx?.values]);
+
+  const validateSync = React.useCallback(() => {
+    const err: Record<string, string | null> = {};
+
+    for (const f of baseFields) {
+      let msg: string | null = null;
+      if (f.kind === "new-password") {
+        msg = validateNewPasswordObject(ctxValues[f.name], f, ctxValues);
+      } else if (f.kind === "change-password") {
+        msg = validateChangePasswordObject(ctxValues[f.name], f, ctxValues);
+      } else {
+        msg = validateOneSync(ctxValues[f.name], f.rules, f.label, f.kind);
+      }
+      err[f.name] = msg ?? null;
+    }
+
+    const merged = { ...err, ...hardErrorsRef.current };
+    setErrors(merged);
+
+    if (ctx) {
+      for (const [name, msg] of Object.entries(merged)) {
+        ctx.setFieldError(joinPath(basePath, name), msg ?? null);
+      }
+    }
+
+    return Object.values(merged).every((x) => !x);
+  }, [baseFields, ctxValues, ctx, basePath]);
+
+  const validateFieldAsync = React.useCallback(async (name: string) => {
+    const def = baseFields.find((x) => x.name === name);
+    if (!def) return true;
+
+    let syncMsg: string | null = null;
+    if (def.kind === "new-password") {
+      syncMsg = validateNewPasswordObject(ctxValues[name], def, ctxValues);
+    } else if (def.kind === "change-password") {
+      syncMsg = validateChangePasswordObject(ctxValues[name], def, ctxValues);
+    } else {
+      syncMsg = validateOneSync(ctxValues[name], def.rules, def.label, def.kind);
+    }
+
+    if (syncMsg) {
+      setFieldError(name, syncMsg);
+      return false;
+    }
+    if (!def.rules?.async) {
+      setFieldError(name, null);
+      return true;
+    }
+
+    try {
+      const msg = await def.rules.async(ctxValues[name], ctxValues);
+      setFieldError(name, msg ?? null);
+      return !msg;
+    } catch (e: any) {
+      setFieldError(name, e?.message ?? "Validation failed");
+      return false;
+    }
+  }, [baseFields, ctxValues, setFieldError]);
+
+  const validateAsyncGlobal = React.useCallback(async () => {
+    if (!schema.hooks?.asyncValidate) return true;
+    try {
+      const res = await schema.hooks.asyncValidate(ctxValues);
+      if (res && Object.keys(res).length > 0) {
+        const normalized = normalizeErrors(res);
+        setErrors((e) => ({ ...e, ...normalized }));
+        if (ctx) {
+          for (const [name, msg] of Object.entries(normalized)) {
+            ctx.setFieldError(joinPath(basePath, name), msg ?? null);
+          }
+        }
+        return Object.values(normalized).every((x) => x == null);
+      }
+      return true;
+    } catch (e: any) {
+      const msg = e?.message ?? "Server validation failed";
+      setErrors((er) => ({ ...er, _form: msg }));
+      if (ctx) ctx.setFieldError(joinPath(basePath, "_form"), msg);
+      return false;
+    }
+  }, [schema.hooks, ctxValues, ctx, basePath]);
+
+  const validateAll = React.useCallback(async () => {
+    if (!validateSync()) return false;
+
+    const asyncNames = baseFields.filter((f) => f.rules?.async).map((f) => f.name);
+    const results = await Promise.all(asyncNames.map((n) => validateFieldAsync(n)));
+    if (!results.every(Boolean)) return false;
+
+    return validateAsyncGlobal();
+  }, [baseFields, validateSync, validateFieldAsync, validateAsyncGlobal]);
+
+  return {
+    values: ctxValues,
+    setValue,
+    setAllValues,
+    errors,
+    setFieldError,
+    validateAll,
+  };
+}
+
 /* ========================================================================
    AUTOFORM FINAL
    ======================================================================== */
@@ -648,7 +844,7 @@ type Props = AutoFormProps & {
 };
 
 export const AutoForm = React.forwardRef<AutoFormRef, Props>(
-  ({ name, schema: schemaProp, initial, onSaved, notifier }, ref) => {
+  ({ name, schema: schemaProp, initial, onSaved, notifier, ctx, path }, ref) => {
     const toasts = notifier ?? toast;
 
     /* LOAD SCHEMA */
@@ -660,11 +856,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
     if (!schema) return <div>Schema {name} chưa đăng ký.</div>;
 
-    /* RESOLVE INITIAL */
+    // Standalone mode: AutoForm owns values. Ctx-bound mode: FormContext is the source of truth.
+    const isCtxMode = !!ctx;
+    const basePath = resolveBasePath(path);
+    const ctxValues = React.useMemo(
+      () => (ctx ? getValueAtPath(ctx.values ?? {}, basePath) : {}),
+      [ctx, ctx?.values, basePath]
+    );
+
+    /* RESOLVE INITIAL (standalone mode only) */
     const [resolvedInitial, setResolvedInitial] = React.useState(initial ?? {});
     const [resolvingInitial, setResolvingInitial] = React.useState(false);
 
     React.useEffect(() => {
+      if (isCtxMode) return;
       let cancelled = false;
 
       (async () => {
@@ -701,9 +906,9 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       })();
 
       return () => { cancelled = true; };
-    }, [initial, schema]);
+    }, [initial, schema, isCtxMode]);
 
-    const stableInitial = resolvedInitial ?? {};
+    const stableInitial = isCtxMode ? ctxValues : (resolvedInitial ?? {});
 
     // --------------------------------------
     // FLATTEN custom_fields vào stableInitial
@@ -722,8 +927,9 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     }, [stableInitial]);
 
     React.useEffect(() => {
+      if (isCtxMode) return;
       setAllValues(fixedInitial);
-    }, [fixedInitial]);
+    }, [fixedInitial, isCtxMode]);
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
@@ -805,17 +1011,20 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     );
 
     /* MAIN FORM STATE */
+    const autoFormState = useAutoForm(isCtxMode ? [] : baseFields, isCtxMode ? {} : fixedInitial, {
+      asyncValidate: schema.hooks?.asyncValidate,
+    });
+    const ctxFormState = useCtxFormState(schema, baseFields, ctx, basePath);
+
+    // Standalone mode uses internal state; ctx-bound mode proxies to parent FormContext.
     const {
       values,
       setValue,
       setAllValues,
       errors,
-      // setErrors,
       setFieldError,
       validateAll,
-    } = useAutoForm(baseFields, fixedInitial, {
-      asyncValidate: schema.hooks?.asyncValidate,
-    });
+    } = isCtxMode ? ctxFormState : autoFormState;
 
     const ctxRef = React.useRef<FormContext>(null);
 

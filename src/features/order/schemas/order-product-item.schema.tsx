@@ -53,21 +53,39 @@ export function buildOrderProductItemSchema(): FormSchema {
         return result.items?.[0] ?? null;
       },
       onBlur: (_text: string, matched: any, ctx) => {
-        // const product = matched as ProductModel | null;
-        // ctx?.setValue("productCode", product?.code ?? text ?? "");
-        // ctx?.setValue("productId", product?.id ?? null);
-        if (!matched) return;
+        if (!ctx) return;
+        const itemId = ctx.values?.id;
+
+        if (!matched) {
+          ctx?.emit("item:patch", {
+            __meta: {
+              listKey: "order-product",
+              itemId,
+            },
+            patch: {
+              productId: null,
+              productCode: "",
+              categoryId: null,
+              quantity: 1,
+              retailPrice: 0,
+            },
+          });
+          return;
+        }
 
         ctx?.emit("item:patch", {
-          productId: matched.id ?? null,
-          productCode: matched.code ?? "",
-          categoryId: matched.categoryId ?? null,
+          __meta: {
+            listKey: "order-product",
+            itemId,
+          },
+          patch: {
+            productId: matched.id ?? null,
+            productCode: matched.code ?? "",
+            categoryId: matched.categoryId ?? null,
+            quantity: 1,
+            retailPrice: 0,
+          },
         });
-
-        // TODO: Must set categoryId here because in edit form, user can change product but keep categoryId unchanged
-        // ctx?.setValue("categoryId", matched?.categoryId ?? null);
-
-        // TODO: fix ctx to ctxRef, because onBlur is called after form unmount
       },
     },
     {

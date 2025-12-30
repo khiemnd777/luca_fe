@@ -169,6 +169,8 @@ export function OrderConsumableMaterialItemList({
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}
           buildSignature={buildSignature}
+          ctx={ctx}
+          listKey="order-consumable-material"
         />
       )}
     />

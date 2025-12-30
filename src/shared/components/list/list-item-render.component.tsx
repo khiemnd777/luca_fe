@@ -24,6 +24,7 @@ export type ListItemRenderProps<T> = {
   onBlurCommit?: () => void;
   formName: string;
   labelName: string;
+  listKey: string;
   ctx?: FormContext | null;
 };
 
@@ -38,6 +39,7 @@ export function ListItemRender<T>({
   onBlurCommit,
   formName,
   labelName,
+  listKey,
   ctx,
 }: ListItemRenderProps<T>) {
   const formRef = React.useRef<AutoFormRef | null>(null);
@@ -74,14 +76,26 @@ export function ListItemRender<T>({
   React.useEffect(() => {
     if (!ctx) return;
 
-    const handler = (patch: Partial<T>) => {
-      if (!patch || typeof patch !== "object") return;
+    const handler = (payload: any) => {
+      const meta = payload?.__meta;
+      const patch = payload?.patch;
+
+      if (!meta || !patch) return;
+
+      if (meta.listKey !== listKey) return;
+
+      if (meta.itemId !== (item as any)?.id) return;
+
       onChange(patch);
     };
 
     ctx.on("item:patch", handler);
-    return () => ctx.off("item:patch", handler);
-  }, [ctx, onChange]);
+
+    return () => {
+      ctx.off("item:patch", handler);
+    };
+  }, [ctx, listKey, item, onChange]);
+
 
   const handleBlur = React.useCallback(() => {
     const frm = formRef.current;

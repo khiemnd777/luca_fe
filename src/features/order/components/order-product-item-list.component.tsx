@@ -163,6 +163,8 @@ export function OrderProductItemList({
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}
           buildSignature={buildSignature}
+          ctx={ctx}
+          listKey="order-product"
         />
       )}
     />

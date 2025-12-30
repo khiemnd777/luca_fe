@@ -52,10 +52,39 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
         });
         return result.items?.[0] ?? null;
       },
-      onBlur: (_text: string, _matched: any, _ctx) => {
-        // const material = matched as MaterialModel | null;
-        // ctx?.setValue("materialCode", material?.code ?? text ?? "");
-        // ctx?.setValue("materialId", material?.id ?? null);
+      onBlur: (_text: string, matched: any, ctx) => {
+        if (!ctx) return;
+        const itemId = ctx.values?.id;
+
+        if (!matched) {
+          ctx?.emit("item:patch", {
+            __meta: {
+              listKey: "order-consumable-material",
+              itemId,
+            },
+            patch: {
+              materialId: null,
+              materialCode: "",
+              quantity: 1,
+              retailPrice: 0,
+            },
+          });
+          return;
+        }
+        const material = matched as MaterialModel | null;
+
+        ctx?.emit("item:patch", {
+          __meta: {
+            listKey: "order-consumable-material",
+            itemId,
+          },
+          patch: {
+            materialId: material?.id ?? null,
+            materialCode: material?.code ?? null,
+            quantity: 1,
+            retailPrice: 0,
+          },
+        });
       },
     },
     {

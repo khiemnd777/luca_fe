@@ -36,6 +36,11 @@ export type FormContext = {
   reset: () => void;
   setInitial: (obj: Record<string, any>) => void;
   clear: () => void;
+
+  // Event Emitter
+  emit: (event: string, payload?: any) => void;
+  on: (event: string, handler: (payload: any) => void) => void;
+  off: (event: string, handler: (payload: any) => void) => void;
 }
 
 // Password rules

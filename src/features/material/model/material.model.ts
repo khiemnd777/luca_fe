@@ -7,6 +7,7 @@ export interface MaterialModel {
   supplierIds?: number[];
   supplierNames?: string;
   customFields?: Record<string, any> | null;
+  retailPrice?: number | null;
   createdAt: string;
   updatedAt: string;
 }

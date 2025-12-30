@@ -129,6 +129,8 @@ export function OrderLoanerMaterialItemList({
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}
           buildSignature={buildSignature}
+          ctx={ctx}
+          listKey="order-loaner-material"
         />
       )}
     />

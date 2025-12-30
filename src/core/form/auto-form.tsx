@@ -35,6 +35,7 @@ import { extractVars } from "@root/shared/utils/equation.utils";
 import { parseIntSafe } from "@root/shared/utils/number.utils";
 import { packageData } from "./auto-form-package";
 import { resolveSubmitButtons } from "./auto-form.helper";
+import { emit, off, on } from "../module/event-bus";
 
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
@@ -825,16 +826,34 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     const setValueUser = (name: string, v: any) => {
       setValue(name, v);  // original
       schema.onChange?.(name, v, ctxRef.current!, "user");
+      ctxRef.current?.emit("form:change", {
+        name,
+        value: v,
+        values: ctxRef.current?.values,
+        source: "user",
+      });
     };
 
     const setValueProg = (name: string, v: any) => {
       setValue(name, v);  // original
       schema.onChange?.(name, v, ctxRef.current!, "programmatic");
+
+      ctxRef.current?.emit("form:change", {
+        name,
+        value: v,
+        values: ctxRef.current?.values,
+        source: "programmatic",
+      });
     };
 
     const setAllValuesProg = (obj: Record<string, any>) => {
       setAllValues(obj);  // original setAllValues
       schema.onChange?.("*", obj, ctxRef.current!, "programmatic");
+
+      ctxRef.current?.emit("form:change:all", {
+        values: ctxRef.current?.values,
+        source: "programmatic",
+      });
     };
 
     // ----------------------------------------------------
@@ -852,7 +871,10 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       },
       clear: () => {
         setAllValuesProg({});
-      }
+      },
+      emit,
+      off,
+      on,
     };
 
     /* SHOW-IF HASH */

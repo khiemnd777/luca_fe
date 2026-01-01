@@ -295,14 +295,16 @@ export function buildNewOrderSchema(): FormSchema {
         type: "fn",
         run: async (dto) => {
           console.log(dto);
-          const result = await create(dto as OrderUpsertModel);
-          return result;
+          return dto;
+          // const result = await create(dto as OrderUpsertModel);
+          // return result;
         },
       },
       update: {
         type: "fn",
         run: async (dto) => {
-          await update(dto as OrderUpsertModel);
+          // await update(dto as OrderUpsertModel);
+          console.log(dto);
           return dto;
         },
       },
@@ -328,15 +330,15 @@ export function buildNewOrderSchema(): FormSchema {
           result.latestOrderItem.code = `${alphabetSeq(seq)}${result.code}`;
 
           // reset products and materials
-          if (result.latestOrderItem.products) {
-            result.latestOrderItem.products.length = 0;
-          }
-          if (result.latestOrderItem.consumableMaterials) {
-            result.latestOrderItem.consumableMaterials.length = 0;
-          }
-          if (result.latestOrderItem.loanerMaterials) {
-            result.latestOrderItem.loanerMaterials.length = 0;
-          }
+          // if (result.latestOrderItem.products) {
+          //   result.latestOrderItem.products.length = 0;
+          // }
+          // if (result.latestOrderItem.consumableMaterials) {
+          //   result.latestOrderItem.consumableMaterials.length = 0;
+          // }
+          // if (result.latestOrderItem.loanerMaterials) {
+          //   result.latestOrderItem.loanerMaterials.length = 0;
+          // }
         }
         return result;
       }
@@ -344,7 +346,7 @@ export function buildNewOrderSchema(): FormSchema {
     },
 
     async afterSaved(result, _ctx) {
-      navigate(`/order/${result.latestOrderItem.orderId}/historical/${result.latestOrderItem.id}`);
+      // navigate(`/order/${result.latestOrderItem.orderId}/historical/${result.latestOrderItem.id}`);
     },
 
     hooks: {

@@ -22,6 +22,7 @@ export function buildOrderProductItemSchema(): FormSchema {
       fullWidth: true,
       size: "small",
       pageLimit: 50,
+      group: "line1",
       rules: {
         required: "Vui lòng chọn sản phẩm",
       },
@@ -94,6 +95,7 @@ export function buildOrderProductItemSchema(): FormSchema {
       kind: "number",
       size: "small",
       defaultValue: 1,
+      group: "line2",
       rules: {
         required: "Vui lòng nhập số lượng",
         min: 1,
@@ -104,6 +106,7 @@ export function buildOrderProductItemSchema(): FormSchema {
       label: "Giá bán lẻ",
       kind: "currency",
       size: "small",
+      group: "line2",
       rules: {
         min: 0,
       },
@@ -118,7 +121,7 @@ export function buildOrderProductItemSchema(): FormSchema {
         tag: "order",
         groups: [
           {
-            group: "category_fields",
+            group: "line3",
           }
         ],
       }
@@ -138,11 +141,15 @@ export function buildOrderProductItemSchema(): FormSchema {
     },
     groups: [
       {
-        name: "general",
-        col: 3,
+        name: "line1",
+        col: 1,
       },
       {
-        name: "category_fields",
+        name: "line2",
+        col: 2,
+      },
+      {
+        name: "line3",
         col: 2,
       }
     ],

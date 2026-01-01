@@ -112,6 +112,13 @@ export function ListItemRender<T>({
     onBlurCommit?.();
   }, [extractPatch, buildSignature, onChange, onBlurCommit]);
 
+  // TODO: enhance: expose edit mode / view mode:
+  //    IF originalOrderItemId === orderItemId:
+  //      edit button: to enable form
+  //      remove button: hidden
+  //    ELSE:
+  //      edit button: hidden
+  //      remove button: to remove item
   return (
     <Card variant="outlined" sx={{ mb: 1 }} onBlurCapture={handleBlur}>
       <CardHeader

@@ -12,6 +12,7 @@ mapper.register<OrderItemProductModel>({
     productId: null,
     orderItemId: null,
     orderItemCode: null,
+    originalOrderItemId: null,
     orderId: null,
     quantity: 0,
     retailPrice: null,

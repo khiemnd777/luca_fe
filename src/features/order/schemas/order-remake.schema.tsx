@@ -3,7 +3,7 @@ import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
-import { create, id, prepareForRemakeByOrderID, update } from "@features/order/api/order.api";
+import { create, prepareForRemakeByOrderID, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";

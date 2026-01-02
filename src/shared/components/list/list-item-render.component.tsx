@@ -4,9 +4,12 @@ import {
   CardContent,
   CardHeader,
   IconButton,
+  Stack,
   Typography,
 } from "@mui/material";
 import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import type { AutoFormRef } from "@core/form/form.types";
 import { AutoForm } from "@core/form/auto-form";
 import type { FormContext } from "@root/core/form/types";
@@ -26,6 +29,12 @@ export type ListItemRenderProps<T> = {
   labelName: string;
   listKey: string;
   ctx?: FormContext | null;
+
+  isEditable?: boolean;
+  isRemovable?: boolean;
+  renderActions?: (item: T, index: number) => React.ReactNode;
+  allowEditToggle?: boolean;
+  onEditToggle?: (editing: boolean) => void;
 };
 
 export function ListItemRender<T>({
@@ -41,6 +50,11 @@ export function ListItemRender<T>({
   labelName,
   listKey,
   ctx,
+  isEditable,
+  isRemovable,
+  renderActions,
+  allowEditToggle,
+  onEditToggle,
 }: ListItemRenderProps<T>) {
   const formRef = React.useRef<AutoFormRef | null>(null);
   const lastItemIdRef = React.useRef<any>(null);
@@ -97,6 +111,29 @@ export function ListItemRender<T>({
   }, [ctx, listKey, item, onChange]);
 
 
+  const canEdit = isEditable ?? true;
+  const canRemove = isRemovable ?? true;
+  const [isEditing, setIsEditing] = React.useState<boolean>(canEdit);
+
+  React.useEffect(() => {
+    if (!canEdit) {
+      setIsEditing(false);
+      return;
+    }
+    if (!allowEditToggle) {
+      setIsEditing(true);
+    }
+  }, [allowEditToggle, canEdit]);
+
+  const handleToggleEdit = React.useCallback(() => {
+    if (!allowEditToggle || !canEdit) return;
+    setIsEditing((prev) => {
+      const next = !prev;
+      onEditToggle?.(next);
+      return next;
+    });
+  }, [allowEditToggle, canEdit, onEditToggle]);
+
   const handleBlur = React.useCallback(() => {
     const frm = formRef.current;
     if (!frm) return;
@@ -112,13 +149,8 @@ export function ListItemRender<T>({
     onBlurCommit?.();
   }, [extractPatch, buildSignature, onChange, onBlurCommit]);
 
-  // TODO: enhance: expose edit mode / view mode:
-  //    IF originalOrderItemId === orderItemId:
-  //      edit button: to enable form
-  //      remove button: hidden
-  //    ELSE:
-  //      edit button: hidden
-  //      remove button: to remove item
+  const isReadOnly = !canEdit || (allowEditToggle && !isEditing);
+
   return (
     <Card variant="outlined" sx={{ mb: 1 }} onBlurCapture={handleBlur}>
       <CardHeader
@@ -128,12 +160,34 @@ export function ListItemRender<T>({
           </Typography>
         }
         action={
-          <IconButton color="error" size="small" onClick={onRemove}>
-            <DeleteOutlineRounded fontSize="small" />
-          </IconButton>
+          renderActions ? (
+            renderActions(item, index)
+          ) : (
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              {allowEditToggle && canEdit && (
+                <IconButton
+                  size="small"
+                  onClick={handleToggleEdit}
+                  aria-label={isEditing ? "View" : "Edit"}
+                  title={isEditing ? "View" : "Edit"}
+                >
+                  {isEditing ? (
+                    <VisibilityRoundedIcon fontSize="small" />
+                  ) : (
+                    <EditRoundedIcon fontSize="small" />
+                  )}
+                </IconButton>
+              )}
+              {canRemove && (
+                <IconButton color="error" size="small" onClick={onRemove} aria-label="Remove" title="Remove">
+                  <DeleteOutlineRounded fontSize="small" />
+                </IconButton>
+              )}
+            </Stack>
+          )
         }
       />
-      <CardContent sx={{ pt: 0 }}>
+      <CardContent sx={{ pt: 0, pointerEvents: isReadOnly ? "none" : "auto", opacity: isReadOnly ? 0.8 : 1 }}>
         <AutoForm
           ref={formRef}
           name={formName}

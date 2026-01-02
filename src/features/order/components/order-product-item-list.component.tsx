@@ -152,21 +152,48 @@ export function OrderProductItemList({
       onChange={propagate}
       onAdd={(item, list) => onAdd?.(item, list, ctx)}
       onRemove={(item, list) => onRemove?.(item, list, ctx)}
-      renderItem={({ item, index, onChange, onRemove }) => (
-        <ListItemRender<OrderItemProductModel>
-          item={item}
-          labelName="Sản phẩm"
-          index={index}
-          onChange={onChange}
-          onRemove={onRemove}
-          formName="order-product-item"
-          normalize={normalizeItem}
-          extractPatch={(vals) => normalizeItem(vals as any)}
-          buildSignature={buildSignature}
-          ctx={ctx}
-          listKey="order-product"
-        />
-      )}
+      renderItem={({ item, index, onChange, onRemove }) => {
+        const ui = resolveItemUI(item);
+        return (
+          <ListItemRender<OrderItemProductModel>
+            item={item}
+            labelName="Sản phẩm"
+            index={index}
+            isEditable={ui.isEditable}
+            allowEditToggle={ui.allowEditToggle}
+            isRemovable={ui.isRemovable}
+            onChange={onChange}
+            onRemove={onRemove}
+            formName="order-product-item"
+            normalize={normalizeItem}
+            extractPatch={(vals) => normalizeItem(vals as any)}
+            buildSignature={buildSignature}
+            ctx={ctx}
+            listKey="order-product"
+          />
+        );
+      }}
     />
   );
+}
+
+function resolveItemUI(item: OrderItemProductModel) {
+  const isSame =
+    item.originalOrderItemId === item.orderItemId;
+
+  // original === current
+  if (isSame) {
+    return {
+      isEditable: true,
+      allowEditToggle: false,
+      isRemovable: true,
+    };
+  }
+
+  // original !== current
+  return {
+    isEditable: true,
+    allowEditToggle: true,
+    isRemovable: false,
+  };
 }

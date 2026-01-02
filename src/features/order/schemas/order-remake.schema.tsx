@@ -3,7 +3,7 @@ import type { FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
-import { create, id, update } from "@features/order/api/order.api";
+import { create, id, prepareForRemakeByOrderID, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
@@ -295,15 +295,15 @@ export function buildNewOrderSchema(): FormSchema {
         type: "fn",
         run: async (dto) => {
           console.log(dto);
-          return dto;
-          // const result = await create(dto as OrderUpsertModel);
-          // return result;
+          // return dto;
+          const result = await create(dto as OrderUpsertModel);
+          return result;
         },
       },
       update: {
         type: "fn",
         run: async (dto) => {
-          // await update(dto as OrderUpsertModel);
+          await update(dto as OrderUpsertModel);
           console.log(dto);
           return dto;
         },
@@ -323,7 +323,7 @@ export function buildNewOrderSchema(): FormSchema {
 
     async initialResolver(data: any) {
       if (data) {
-        const result = await id(data.id);
+        const result = await prepareForRemakeByOrderID(data.id);
         if (result.latestOrderItem) {
           const seq = result.latestOrderItem.remakeCount + 1;
           result.latestOrderItem.remakeCount = seq;
@@ -346,7 +346,7 @@ export function buildNewOrderSchema(): FormSchema {
     },
 
     async afterSaved(result, _ctx) {
-      // navigate(`/order/${result.latestOrderItem.orderId}/historical/${result.latestOrderItem.id}`);
+      navigate(`/order/${result.latestOrderItem.orderId}/historical/${result.latestOrderItem.id}`);
     },
 
     hooks: {

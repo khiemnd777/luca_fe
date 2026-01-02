@@ -704,27 +704,12 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       return () => { cancelled = true; };
     }, [initial, schema]);
 
-    const stableInitial = resolvedInitial ?? {};
-
-    // --------------------------------------
-    // FLATTEN custom_fields vào stableInitial
-    // --------------------------------------
-    const fixedInitial = React.useMemo(() => {
-      const init = { ...stableInitial };
-      const out: any = { ...init };
-
-      for (const [k, v] of Object.entries(init)) {
-        if (typeof v === "object" && v !== null) {
-          flattenInitialRecursive(v, k, out);
-        }
-      }
-
-      return out;
-    }, [stableInitial]);
+    const initialValues = resolvedInitial ?? {};
 
     React.useEffect(() => {
-      setAllValues(fixedInitial);
-    }, [fixedInitial]);
+      if (resolvingInitial) return;
+      setAllValues(initialValues);
+    }, [resolvingInitial, initialValues]);
 
     /* METADATA BLOCKS – PERSISTENT */
     const metadataBlocksRef = React.useRef<
@@ -814,7 +799,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       // setErrors,
       setFieldError,
       validateAll,
-    } = useAutoForm(baseFields, fixedInitial, {
+    } = useAutoForm(baseFields, initialValues, {
       asyncValidate: schema.hooks?.asyncValidate,
     });
 
@@ -864,7 +849,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       setValue: setValueProg,
       setAllValues: setAllValuesProg,
       setFieldError,
-      reset: () => setAllValuesProg(fixedInitial),
+      reset: () => setAllValuesProg(initialValues),
       setInitial: (obj: Record<string, any>) => {
         const flat = flattenForInitial(obj);
         setAllValuesProg(flat);
@@ -895,8 +880,9 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
       let cancelled = false;
 
       (async () => {
+        const runtimeValues = ctxRef.current!.values;
         const results = await Promise.all(
-          metadataBlocks.map((b) => expandMetadataBlock(b.meta, values, [], ctxRef.current))
+          metadataBlocks.map((b) => expandMetadataBlock(b.meta, runtimeValues, [], ctxRef.current))
         );
 
         if (cancelled) return;
@@ -942,9 +928,10 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
             b.deps.some((d) => initialChanged.includes(d))
           );
 
+        const runtimeValues = ctxRef.current!.values;
         const results = await Promise.all(
           reloadList.map(({ b }) =>
-            expandMetadataBlock(b.meta, values, initialChanged, ctxRef.current)
+            expandMetadataBlock(b.meta, runtimeValues, initialChanged, ctxRef.current)
           )
         );
 
@@ -1023,8 +1010,13 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // EQUATION ENGINE
     // ==========================================
     React.useEffect(() => {
-      const eqFields = finalFields.filter(f => f.kind === "currency-equation" && f.currencyEquation);
+      const eqFields = finalFields.filter(
+        (f) => f.kind === "currency-equation" && f.currencyEquation
+      );
       if (eqFields.length === 0) return;
+
+      const runtime = ctxRef.current?.values;
+      if (!runtime) return;
 
       for (const f of eqFields) {
         const expr = f.currencyEquation!;
@@ -1037,10 +1029,8 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
               path = `${f.prop}.${path}`;
             }
 
-            const rVal = values[path];
-            if (rVal !== undefined) return rVal;
-
-            if (name in values) return values[name];
+            if (path in runtime) return runtime[path];
+            if (name in runtime) return runtime[name];
 
             return undefined;
           });
@@ -1050,15 +1040,19 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
           if (!Number.isFinite(result)) result = 0;
 
-          if (values[f.name] !== result) {
-            setValue(f.name, result);
+          if (runtime[f.name] !== result) {
+            setValueProg(f.name, result);
           }
 
         } catch (e) {
           console.error("EQ ERROR:", e);
         }
       }
-    }, [values, finalFields]);
+    }, [
+      finalFields,
+      // values
+    ]);
+
 
     /* SUBMIT */
     const [, setSaving] = React.useState(false);
@@ -1069,7 +1063,8 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
       setSaving(true);
 
-      const packaged = packageData(metadataBlocks, values);
+      const latestValues = ctxRef.current!.values;
+      const packaged = packageData(metadataBlocks, latestValues);
       const dto = schema!.hooks?.mapToDto ? schema!.hooks.mapToDto(packaged) : packaged;
 
       const ctx = {
@@ -1116,19 +1111,19 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* REF OUTPUT */
     React.useImperativeHandle(ref, () => ({
       submit: () => {
-        const mode = resolveMode(schema, stableInitial);
+        const mode = resolveMode(schema, initialValues);
         const buttons = resolveSubmitButtons(schema, mode);
         const primary = buttons[0];
         return handleSubmitButton(primary, mode);
       },
       runSubmitButton: handleSubmitButton,
       getSubmitButtons: () => {
-        const mode = resolveMode(schema, stableInitial);
+        const mode = resolveMode(schema, initialValues);
         return resolveSubmitButtons(schema, mode);
       },
       schema,
       values,
-      reset: () => setAllValuesProg(fixedInitial),
+      reset: () => setAllValuesProg(initialValues),
       setValue: setValueProg,
       setAllValues: setAllValuesProg,
     }));

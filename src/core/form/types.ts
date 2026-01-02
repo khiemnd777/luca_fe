@@ -162,6 +162,7 @@ export type FieldDef = {
   loadOptions?: (keyword: string) => Promise<Option[]>;                     // async loader cho autocomplete
   freeSolo?: boolean;                                                       // autocomplete free text
   multiple?: boolean;                                                       // multiselect flag
+  debounceMs?: number;                                                      // debounce for async option loading
 
   // fileupload | imageupload
   accept?: string;                                                          // ví dụ: "image/*,.pdf"

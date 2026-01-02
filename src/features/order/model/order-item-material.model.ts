@@ -10,4 +10,5 @@ export interface OrderItemMaterialModel {
   retailPrice?: number | null;
   type?: string | null;
   status?: string | null;
+  isCloneable?: boolean | null;
 }

@@ -17,5 +17,6 @@ mapper.register<OrderItemMaterialModel>({
     retailPrice: null,
     type: null,
     status: null,
+    isCloneable: null,
   }),
 });

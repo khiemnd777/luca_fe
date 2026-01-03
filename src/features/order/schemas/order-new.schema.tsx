@@ -4,7 +4,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, search, update } from "@features/order/api/order.api";
+import { create, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
@@ -27,22 +27,11 @@ export function buildNewOrderSchema(): FormSchema {
         ctx?.setValue("code", text);
         if (matched) {
           const vid = matched.id;
-          const result = await id(vid);
+          const result = await prepareForRemakeByOrderID(vid);
           if (result.latestOrderItem) {
             const seq = result.latestOrderItem.remakeCount + 1;
             result.latestOrderItem.remakeCount = seq;
             result.latestOrderItem.code = `${alphabetSeq(seq)}${matched.code}`;
-
-            // reset products and materials
-            if (result.latestOrderItem.products) {
-              result.latestOrderItem.products.length = 0;
-            }
-            if (result.latestOrderItem.consumableMaterials) {
-              result.latestOrderItem.consumableMaterials.length = 0;
-            }
-            if (result.latestOrderItem.loanerMaterials) {
-              result.latestOrderItem.loanerMaterials.length = 0;
-            }
 
             ctx?.setInitial(result);
           }

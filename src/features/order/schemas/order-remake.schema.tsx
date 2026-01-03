@@ -303,8 +303,8 @@ export function buildNewOrderSchema(): FormSchema {
       update: {
         type: "fn",
         run: async (dto) => {
-          await update(dto as OrderUpsertModel);
           console.log(dto);
+          await update(dto as OrderUpsertModel);
           return dto;
         },
       },
@@ -328,17 +328,6 @@ export function buildNewOrderSchema(): FormSchema {
           const seq = result.latestOrderItem.remakeCount + 1;
           result.latestOrderItem.remakeCount = seq;
           result.latestOrderItem.code = `${alphabetSeq(seq)}${result.code}`;
-
-          // reset products and materials
-          // if (result.latestOrderItem.products) {
-          //   result.latestOrderItem.products.length = 0;
-          // }
-          // if (result.latestOrderItem.consumableMaterials) {
-          //   result.latestOrderItem.consumableMaterials.length = 0;
-          // }
-          // if (result.latestOrderItem.loanerMaterials) {
-          //   result.latestOrderItem.loanerMaterials.length = 0;
-          // }
         }
         return result;
       }

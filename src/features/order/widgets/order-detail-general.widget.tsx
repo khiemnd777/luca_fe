@@ -15,9 +15,6 @@ import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
-import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
-import OrderTotalPrice from "../components/order-total-price.component";
-import { Spacer } from "@root/shared/components/ui/spacer";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
@@ -107,17 +104,17 @@ function OrderDetailBodyWidget() {
                 </Box>
               ),
             },
-            {
-              label: "Tất cả Sản phẩm & Vật tư",
-              value: "all-products",
-              content: (
-                <Box>
-                  <OrderTotalPrice />
-                  <Spacer />
-                  <OrderAllProductsAndMaterials />
-                </Box>
-              ),
-            },
+            // {
+            //   label: "Tất cả Sản phẩm & Vật tư",
+            //   value: "all-products",
+            //   content: (
+            //     <Box>
+            //       <OrderTotalPrice />
+            //       <Spacer />
+            //       <OrderAllProductsAndMaterials />
+            //     </Box>
+            //   ),
+            // },
           ] satisfies TabItem[]}
         />
       </Section>

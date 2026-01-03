@@ -113,7 +113,7 @@ export function ListItemRender<T>({
 
   const canEdit = isEditable ?? true;
   const canRemove = isRemovable ?? true;
-  const [isEditing, setIsEditing] = React.useState<boolean>(canEdit);
+  const [isEditing, setIsEditing] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (!canEdit) {

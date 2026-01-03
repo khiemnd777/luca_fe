@@ -153,15 +153,15 @@ export function OrderProductItemList({
       onAdd={(item, list) => onAdd?.(item, list, ctx)}
       onRemove={(item, list) => onRemove?.(item, list, ctx)}
       renderItem={({ item, index, onChange, onRemove }) => {
-        const ui = resolveItemUI(item);
+        console.log("Rendering order product item", { item, index });
         return (
           <ListItemRender<OrderItemProductModel>
             item={item}
             labelName="Sản phẩm"
             index={index}
-            isEditable={ui.isEditable}
-            allowEditToggle={ui.allowEditToggle}
-            isRemovable={ui.isRemovable}
+            isEditable={true}
+            allowEditToggle={!!item.isCloneable}
+            isRemovable={!item.isCloneable}
             onChange={onChange}
             onRemove={onRemove}
             formName="order-product-item"
@@ -175,25 +175,4 @@ export function OrderProductItemList({
       }}
     />
   );
-}
-
-function resolveItemUI(item: OrderItemProductModel) {
-  const isSame =
-    item.originalOrderItemId === item.orderItemId;
-
-  // original === current
-  if (isSame) {
-    return {
-      isEditable: true,
-      allowEditToggle: false,
-      isRemovable: true,
-    };
-  }
-
-  // original !== current
-  return {
-    isEditable: true,
-    allowEditToggle: true,
-    isRemovable: false,
-  };
 }

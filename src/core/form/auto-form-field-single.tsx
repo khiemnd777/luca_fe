@@ -31,6 +31,7 @@ import SearchSingleField from "./search-single-field";
 import { QRField } from "@root/core/form/qr-field";
 import { fDate, fDatetime, formatDate, formatDateTime } from "@root/shared/utils/datetime.utils";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
+import { useDebounce } from "@root/core/hooks/use-debounce";
 
 
 // -----------------------------------------------------------
@@ -160,10 +161,43 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
   const altNameValue = f.altName ? values[f.altName] : null;
   const [searchSingleLabel, setSearchSingleLabel] = React.useState<string | null>(null);
   const valuesRef = React.useRef(values);
+  const [textInputValue, setTextInputValue] = React.useState<string>(() => {
+    const v = values[f.name];
+    return v === null || v === undefined ? "" : String(v);
+  });
+  const [numberInputValue, setNumberInputValue] = React.useState<string>(() => {
+    const v = values[f.name];
+    return v === null || v === undefined ? "" : String(v);
+  });
+  const debouncedTextChange = useDebounce((nextVal: string) => {
+    setValue(f.name, nextVal);
+  }, 300);
+  const debouncedNumberChange = useDebounce((nextVal: string) => {
+    if (nextVal === "" || nextVal === null) {
+      setValue(f.name, null);
+      return;
+    }
+    const n = Number(nextVal);
+    setValue(f.name, Number.isFinite(n) ? n : null);
+  }, 300);
 
   React.useEffect(() => {
     valuesRef.current = values;
   }, [values]);
+
+  React.useEffect(() => {
+    if (f.kind !== "text") return;
+    const next = values[f.name];
+    const nextValue = next === null || next === undefined ? "" : String(next);
+    setTextInputValue((prev) => (prev === nextValue ? prev : nextValue));
+  }, [f.kind, values, f.name]);
+
+  React.useEffect(() => {
+    if (f.kind !== "number") return;
+    const next = values[f.name];
+    const nextValue = next === null || next === undefined ? "" : String(next);
+    setNumberInputValue((prev) => (prev === nextValue ? prev : nextValue));
+  }, [f.kind, values, f.name]);
 
   React.useEffect(() => {
     if (!f.asText || f.kind !== "searchsingle") return;
@@ -478,7 +512,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
 
   // NUMBER
   if (f.kind === "number") {
-    const raw = values[f.name] ?? "";
+    const raw = numberInputValue;
 
     const hasValue =
       raw !== undefined &&
@@ -492,13 +526,9 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
         type="number"
         value={raw}
         onChange={(e) => {
-          const v = e.target.value;
-          if (v === "" || v === null) {
-            setValue(f.name, null);
-            return;
-          }
-          const n = Number(v);
-          setValue(f.name, Number.isFinite(n) ? n : null);
+          const nextVal = e.target.value;
+          setNumberInputValue(nextVal);
+          debouncedNumberChange(nextVal);
         }}
         InputLabelProps={{
           shrink: hasValue,
@@ -634,20 +664,34 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     const [loading, setLoading] = React.useState(false);
     const [opts, setOpts] = React.useState<Option[]>(f.options ?? []);
     const optMap = toMap(opts);
+    const requestIdRef = React.useRef(0);
+    const mountedRef = React.useRef(true);
+
+    React.useEffect(() => {
+      return () => {
+        mountedRef.current = false;
+      };
+    }, []);
 
     const value = values[f.name];
     const selectedOption = optMap.get(value) ?? null;
 
-    const handleInputChange = async (_: any, keyword: string) => {
+    const loadOptions = React.useCallback(async (keyword: string) => {
       if (!f.loadOptions) return;
+      const requestId = ++requestIdRef.current;
       setLoading(true);
       try {
         const data = await f.loadOptions(keyword);
+        if (!mountedRef.current || requestId !== requestIdRef.current) return;
         setOpts(data || []);
       } finally {
-        setLoading(false);
+        if (mountedRef.current && requestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
-    };
+    }, [f.loadOptions]);
+
+    const debouncedLoadOptions = useDebounce(loadOptions, f.debounceMs ?? 300);
 
     return (
       <Autocomplete
@@ -659,7 +703,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
           if (f.freeSolo && (reason === "input" || reason === "clear")) {
             setValue(f.name, v);
           }
-          if (f.loadOptions) handleInputChange(_e, v);
+          if (f.loadOptions) debouncedLoadOptions(v);
         }}
         onChange={(_e, newVal) => {
           if (f.freeSolo) {
@@ -951,8 +995,12 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
   return (
     <TextField
       {...common}
-      value={values[f.name] ?? ""}
-      onChange={(e) => setValue(f.name, e.target.value)}
+      value={textInputValue}
+      onChange={(e) => {
+        const nextVal = e.target.value;
+        setTextInputValue(nextVal);
+        debouncedTextChange(nextVal);
+      }}
       InputProps={{
         endAdornment:
           f.rules?.maxLength != null ? (

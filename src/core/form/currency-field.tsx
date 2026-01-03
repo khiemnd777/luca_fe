@@ -1,6 +1,7 @@
 import { TextField, type TextFieldProps } from "@mui/material";
+import { useDebounce } from "@root/core/hooks/use-debounce";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
-import { NumericFormat, type NumericFormatProps } from "react-number-format";
+import { NumericFormat, type NumericFormatProps, type NumberFormatValues } from "react-number-format";
 
 type Props = Omit<TextFieldProps, "onChange" | "value"> & {
   value: number | null | undefined;
@@ -20,6 +21,10 @@ export function CurrencyField({
   prefix = prefixCurrency,
   ...rest
 }: Props) {
+  const handleValueChange = useDebounce((values: NumberFormatValues) => {
+    onChange(values.floatValue);
+  }, 300);
+
   return (
     <NumericFormat
       value={value}
@@ -28,7 +33,7 @@ export function CurrencyField({
       decimalScale={decimalScale}
       customInput={TextField as any}
       prefix={prefix ? `${prefix} ` : undefined}
-      onValueChange={(v) => onChange(v.floatValue)}
+      onValueChange={handleValueChange}
       {...(rest as NumericFormatProps)}
     />
   );

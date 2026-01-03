@@ -15,7 +15,6 @@ import { useAsync } from "@root/core/hooks/use-async";
 import { OrderProcessesStatusBoard } from "../components/order-process-status-board.component";
 import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
-import OrderAllProductsAndMaterials from "../components/order-all-products-and-materials.component";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
 
 function OrderDetailHistoricalGeneralWidget() {
@@ -108,15 +107,15 @@ function OrderDetailHistoricalGeneralWidget() {
                 </Box>
               ),
             },
-            {
-              label: "Tất cả Sản phẩm & Vật tư",
-              value: "all-products",
-              content: (
-                <Box>
-                  <OrderAllProductsAndMaterials />
-                </Box>
-              ),
-            },
+            // {
+            //   label: "Tất cả Sản phẩm & Vật tư",
+            //   value: "all-products",
+            //   content: (
+            //     <Box>
+            //       <OrderAllProductsAndMaterials />
+            //     </Box>
+            //   ),
+            // },
           ] satisfies TabItem[]}
         />
       </Section>

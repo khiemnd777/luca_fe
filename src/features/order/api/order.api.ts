@@ -8,6 +8,13 @@ import type { SearchOpts, SearchResult } from "@core/types/search.types";
 import type { OrderItemProductModel } from "../model/order-item-product.model";
 import type { OrderItemMaterialModel } from "../model/order-item-material.model";
 
+export async function prepareForRemakeByOrderID(orderId: number): Promise<OrderModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/remake/prepare`);
+  const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
 export async function table(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/list`, tableOpts);

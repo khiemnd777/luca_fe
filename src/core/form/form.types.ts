@@ -97,6 +97,10 @@ export type FormSchema = {
     setValue: (name: string, v: any) => void;
     setAllValues: (obj: Record<string, any>) => void;
     reset: () => void;
+    // Event Emitter
+    emit: (event: string, payload?: any) => void;
+    on: (event: string, handler: (payload: any) => void) => void;
+    off: (event: string, handler: (payload: any) => void) => void;
   }, source: "user" | "programmatic") => void;
 
 

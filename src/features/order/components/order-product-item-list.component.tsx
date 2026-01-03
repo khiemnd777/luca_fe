@@ -152,21 +152,27 @@ export function OrderProductItemList({
       onChange={propagate}
       onAdd={(item, list) => onAdd?.(item, list, ctx)}
       onRemove={(item, list) => onRemove?.(item, list, ctx)}
-      renderItem={({ item, index, onChange, onRemove }) => (
-        <ListItemRender<OrderItemProductModel>
-          item={item}
-          labelName="Sản phẩm"
-          index={index}
-          onChange={onChange}
-          onRemove={onRemove}
-          formName="order-product-item"
-          normalize={normalizeItem}
-          extractPatch={(vals) => normalizeItem(vals as any)}
-          buildSignature={buildSignature}
-          ctx={ctx}
-          listKey="order-product"
-        />
-      )}
+      renderItem={({ item, index, onChange, onRemove }) => {
+        console.log("Rendering order product item", { item, index });
+        return (
+          <ListItemRender<OrderItemProductModel>
+            item={item}
+            labelName="Sản phẩm"
+            index={index}
+            isEditable={true}
+            allowEditToggle={!!item.isCloneable}
+            isRemovable={!item.isCloneable}
+            onChange={onChange}
+            onRemove={onRemove}
+            formName="order-product-item"
+            normalize={normalizeItem}
+            extractPatch={(vals) => normalizeItem(vals as any)}
+            buildSignature={buildSignature}
+            ctx={ctx}
+            listKey="order-product"
+          />
+        );
+      }}
     />
   );
 }

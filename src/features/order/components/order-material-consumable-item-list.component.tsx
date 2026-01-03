@@ -165,6 +165,9 @@ export function OrderConsumableMaterialItemList({
           index={index}
           onChange={onChange}
           onRemove={onRemove}
+          isEditable={true}
+          allowEditToggle={!!item.isCloneable}
+          isRemovable={!item.isCloneable}
           formName="order-consumable-material-item"
           normalize={normalizeItem}
           extractPatch={(vals) => normalizeItem(vals as any)}

@@ -21,6 +21,7 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
       placeholder: "Nhập mã hoặc tên vật tư tiêu hao",
       fullWidth: true,
       size: "small",
+      group: "line1",
       pageLimit: 50,
       rules: {
         required: "Vui lòng chọn vật tư tiêu hao",
@@ -67,6 +68,7 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
               materialCode: "",
               quantity: 1,
               retailPrice: 0,
+              note: "",
             },
           });
           return;
@@ -83,6 +85,7 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
             materialCode: material?.code ?? null,
             quantity: 1,
             retailPrice: 0,
+            note: "",
           },
         });
       },
@@ -92,6 +95,7 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
       label: "Số lượng",
       kind: "number",
       size: "small",
+      group: "line2",
       defaultValue: 1,
       rules: {
         required: "Vui lòng nhập số lượng",
@@ -103,9 +107,16 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
       label: "Giá bán lẻ",
       kind: "currency",
       size: "small",
+      group: "line2",
       rules: {
         min: 0,
       },
+    },
+    {
+      name: "note",
+      label: "Ghi chú",
+      kind: "textarea",
+      group: "line3",
     },
   ];
 
@@ -122,8 +133,16 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
     },
     groups: [
       {
-        name: "general",
-        col: 3,
+        name: "line1",
+        col: 1,
+      },
+      {
+        name: "line2",
+        col: 2,
+      },
+      {
+        name: "line3",
+        col: 1,
       },
     ],
   };

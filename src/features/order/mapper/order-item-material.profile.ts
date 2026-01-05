@@ -18,5 +18,6 @@ mapper.register<OrderItemMaterialModel>({
     type: null,
     status: null,
     isCloneable: null,
+    note: null,
   }),
 });

@@ -69,6 +69,7 @@ export function buildOrderProductItemSchema(): FormSchema {
               categoryId: null,
               quantity: 1,
               retailPrice: 0,
+              note: "",
             },
           });
           return;
@@ -85,6 +86,7 @@ export function buildOrderProductItemSchema(): FormSchema {
             categoryId: matched.categoryId ?? null,
             quantity: 1,
             retailPrice: 0,
+            note: "",
           },
         });
       },
@@ -126,6 +128,12 @@ export function buildOrderProductItemSchema(): FormSchema {
         ],
       }
     },
+    {
+      name: "note",
+      label: "Ghi chú",
+      kind: "textarea",
+      group: "line4",
+    },
   ];
 
   return {
@@ -151,6 +159,10 @@ export function buildOrderProductItemSchema(): FormSchema {
       {
         name: "line3",
         col: 2,
+      },
+      {
+        name: "line4",
+        col: 1,
       }
     ],
   };

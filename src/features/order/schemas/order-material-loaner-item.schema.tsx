@@ -21,6 +21,7 @@ function buildOrderLoanerMaterialItemSchema(): FormSchema {
       placeholder: "Nhập mã hoặc tên vật tư cho mượn",
       fullWidth: true,
       size: "small",
+      group: "line1",
       pageLimit: 50,
       rules: {
         required: "Vui lòng chọn vật tư cho mượn",
@@ -92,10 +93,17 @@ function buildOrderLoanerMaterialItemSchema(): FormSchema {
       kind: "number",
       size: "small",
       defaultValue: 1,
+      group: "line2",
       rules: {
         required: "Vui lòng nhập số lượng",
         min: 1,
       },
+    },
+    {
+      name: "note",
+      label: "Ghi chú",
+      kind: "textarea",
+      group: "line3",
     },
   ];
 
@@ -112,8 +120,16 @@ function buildOrderLoanerMaterialItemSchema(): FormSchema {
     },
     groups: [
       {
-        name: "general",
-        col: 2,
+        name: "line1",
+        col: 1,
+      },
+      {
+        name: "line2",
+        col: 1,
+      },
+      {
+        name: "line3",
+        col: 1,
       },
     ],
   };

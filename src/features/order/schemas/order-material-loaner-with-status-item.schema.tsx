@@ -22,6 +22,7 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
       placeholder: "Nhập mã hoặc tên vật tư cho mượn",
       fullWidth: true,
       size: "small",
+      group: "line1",
       pageLimit: 50,
       rules: {
         required: "Vui lòng chọn vật tư cho mượn",
@@ -53,10 +54,38 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
         });
         return result.items?.[0] ?? null;
       },
-      onBlur: (text: string, matched: any, ctx) => {
+      onBlur: (_text: string, matched: any, ctx) => {
+        if (!ctx) return;
+        const itemId = ctx.values?.id;
+
+        if (!matched) {
+          ctx?.emit("item:patch", {
+            __meta: {
+              listKey: "order-loaner-material",
+              itemId,
+            },
+            patch: {
+              materialId: null,
+              materialCode: "",
+              quantity: 1,
+            },
+          });
+          return;
+        }
+
         const material = matched as MaterialModel | null;
-        ctx?.setValue("materialCode", material?.code ?? text ?? "");
-        ctx?.setValue("materialId", material?.id ?? null);
+
+        ctx?.emit("item:patch", {
+          __meta: {
+            listKey: "order-loaner-material",
+            itemId,
+          },
+          patch: {
+            materialId: material?.id ?? null,
+            materialCode: material?.code ?? null,
+            quantity: 1,
+          },
+        });
       },
     },
     {
@@ -64,6 +93,7 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
       label: "Số lượng",
       kind: "number",
       size: "small",
+      group: "line2",
       defaultValue: 1,
       rules: {
         required: "Vui lòng nhập số lượng",
@@ -75,7 +105,14 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
       label: "Trang thái",
       kind: "select",
       size: "small",
+      group: "line2",
       options: [...MATERIAL_STATUSES],
+    },
+    {
+      name: "note",
+      label: "Ghi chú",
+      kind: "textarea",
+      group: "line3",
     },
   ];
 
@@ -92,8 +129,16 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
     },
     groups: [
       {
-        name: "general",
-        col: 3,
+        name: "line1",
+        col: 1,
+      },
+      {
+        name: "line2",
+        col: 2,
+      },
+      {
+        name: "line3",
+        col: 1,
       },
     ],
   };

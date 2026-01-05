@@ -47,11 +47,12 @@ function normalizeItem(item: OrderItemProductModel) {
     productCode: item.productCode ?? "",
     quantity: Number(item.quantity) || 0,
     retailPrice: item.retailPrice == null ? null : Number(item.retailPrice) || 0,
+    note: item.note ?? "",
   };
 }
 
 function buildSignature(vals: Record<string, any>) {
-  return `${vals.productId ?? "null"}|${vals.productCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}`;
+  return `${vals.productId ?? "null"}|${vals.productCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}|${vals.note ?? ""}`;
 }
 
 export function OrderProductItemList({

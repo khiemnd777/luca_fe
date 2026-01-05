@@ -10,4 +10,5 @@ export interface OrderItemProductModel {
   quantity: number;
   retailPrice?: number | null;
   isCloneable?: boolean | null;
+  note?: string | null;
 }

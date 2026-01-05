@@ -11,4 +11,5 @@ export interface OrderItemMaterialModel {
   type?: string | null;
   status?: string | null;
   isCloneable?: boolean | null;
+  note?: string | null;
 }

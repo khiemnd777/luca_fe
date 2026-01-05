@@ -4,7 +4,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { clearReservedOrderCode, create, getOrReserveOrderCode, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
+import { create, getOrReserveOrderCode, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";

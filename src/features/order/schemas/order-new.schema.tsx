@@ -392,9 +392,8 @@ export function buildNewOrderSchema(): FormSchema {
       return {};
     },
 
-    async afterSaved(_, ctx) {
+    async afterSaved(_, _ctx) {
       reloadTable("orders");
-      clearReservedOrderCode(ctx.formSessionId);
     },
 
     hooks: {

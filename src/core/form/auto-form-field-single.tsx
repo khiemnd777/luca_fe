@@ -169,17 +169,17 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     const v = values[f.name];
     return v === null || v === undefined ? "" : String(v);
   });
-  const debouncedTextChange = useDebounce((nextVal: string) => {
-    setValue(f.name, nextVal);
-  }, 300);
-  const debouncedNumberChange = useDebounce((nextVal: string) => {
-    if (nextVal === "" || nextVal === null) {
-      setValue(f.name, null);
-      return;
-    }
-    const n = Number(nextVal);
-    setValue(f.name, Number.isFinite(n) ? n : null);
-  }, 300);
+  // const debouncedTextChange = useDebounce((nextVal: string) => {
+  //   setValue(f.name, nextVal);
+  // }, 300);
+  // const debouncedNumberChange = useDebounce((nextVal: string) => {
+  //   if (nextVal === "" || nextVal === null) {
+  //     setValue(f.name, null);
+  //     return;
+  //   }
+  //   const n = Number(nextVal);
+  //   setValue(f.name, Number.isFinite(n) ? n : null);
+  // }, 300);
 
   React.useEffect(() => {
     valuesRef.current = values;
@@ -526,10 +526,19 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
         type="number"
         value={raw}
         onChange={(e) => {
-          const nextVal = e.target.value;
-          setNumberInputValue(nextVal);
-          debouncedNumberChange(nextVal);
+          const v = e.target.value;
+          if (v === "" || v === null) {
+            setValue(f.name, null);
+            return;
+          }
+          const n = Number(v);
+          setValue(f.name, Number.isFinite(n) ? n : null);
         }}
+        // onChange={(e) => {
+        //   const nextVal = e.target.value;
+        //   setNumberInputValue(nextVal);
+        //   debouncedNumberChange(nextVal);
+        // }}
         InputLabelProps={{
           shrink: hasValue,
         }}
@@ -998,11 +1007,12 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     <TextField
       {...common}
       value={textInputValue}
-      onChange={(e) => {
-        const nextVal = e.target.value;
-        setTextInputValue(nextVal);
-        debouncedTextChange(nextVal);
-      }}
+      onChange={(e) => setValue(f.name, e.target.value)}
+      // onChange={(e) => {
+      //   const nextVal = e.target.value;
+      //   setTextInputValue(nextVal);
+      //   debouncedTextChange(nextVal);
+      // }}
       InputProps={{
         endAdornment:
           f.rules?.maxLength != null ? (

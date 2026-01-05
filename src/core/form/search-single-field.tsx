@@ -139,7 +139,6 @@ function SearchSingleFieldInner<T>(
 
   const debounce = useDebounce();
   const defaultInputRef = React.useRef<string | null>(null);
-  const defaultResolvedRef = React.useRef(false);
   const lastInputReasonRef = React.useRef<string | null>(null);
   const userInteractedRef = React.useRef(false);
   const inputValueRef = React.useRef(inputValue);

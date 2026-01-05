@@ -28,6 +28,7 @@ export function buildNewOrderSchema(): FormSchema {
           return null;
         }
         const result = await getOrReserveOrderCode(ctx.formSessionId);
+        ctx.setValue("code", result.orderCode);
         return {
           inputValue: result.orderCode,
           value: null,

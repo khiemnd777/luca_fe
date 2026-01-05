@@ -132,6 +132,23 @@ export function ExampleDialog({ open, onClose, onSubmit }: any) {
 }
 ```
 
+- SearchSingle default input (example for a `code` field):
+
+```ts
+{
+  name: "code",
+  label: "Code",
+  kind: "searchsingle",
+  resolveDefaultInput: async () => {
+    const code = await reserveOrderCode();
+    return { inputValue: code, value: null };
+  },
+  search: async (kw) => fetch(`/api/codes?q=${encodeURIComponent(kw)}`).then(r => r.json()),
+  getOptionLabel: (item) => item.label,
+  getOptionValue: (item) => item.id,
+}
+```
+
 - `validateFieldAsync` ở `onBlur`:
 
 ```tsx

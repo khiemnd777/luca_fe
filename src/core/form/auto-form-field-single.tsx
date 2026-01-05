@@ -794,6 +794,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
 
     return (
       <SearchSingleField
+        key={`searchsingle:${f.name}`}
         name={f.name}
         label={f.label}
         values={values}
@@ -828,6 +829,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
           }
         }}
         search={f.search!}
+        resolveDefaultInput={f.resolveDefaultInput}
         searchPage={f.searchPage}
         onSelect={f.onSelect}
         onBlur={f.onBlur}

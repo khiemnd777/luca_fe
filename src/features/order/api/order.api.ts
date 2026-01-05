@@ -7,6 +7,89 @@ import { mapper } from "@core/mapper/auto-mapper";
 import type { SearchOpts, SearchResult } from "@core/types/search.types";
 import type { OrderItemProductModel } from "../model/order-item-product.model";
 import type { OrderItemMaterialModel } from "../model/order-item-material.model";
+import { serverTimeToClientDate } from "@root/shared/utils/datetime.utils";
+
+type ReserveCacheEntry = {
+  promise: Promise<{ orderCode: string; expiresAt: string }>;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+};
+
+const reserveCache = new Map<string, ReserveCacheEntry>();
+
+export async function getOrReserveOrderCode(
+  formSessionId: string
+): Promise<{ orderCode: string; expiresAt: string }> {
+
+  const cached = reserveCache.get(formSessionId);
+  if (cached) {
+    return cached.promise;
+  }
+
+  let resolveFn!: (v: { orderCode: string; expiresAt: string }) => void;
+  let rejectFn!: (e: any) => void;
+
+  const promise = new Promise<{ orderCode: string; expiresAt: string }>(
+    (resolve, reject) => {
+      resolveFn = resolve;
+      rejectFn = reject;
+    }
+  );
+
+  reserveCache.set(formSessionId, {
+    promise,
+    timeoutId: null,
+  });
+
+  try {
+    const result = await reserveOrderCode();
+
+    const expiresDate = serverTimeToClientDate(result.expiresAt);
+    if (!expiresDate) {
+      reserveCache.delete(formSessionId);
+      resolveFn(result);
+      return result;
+    }
+
+    const ttlMs = expiresDate.getTime() - Date.now();
+    if (ttlMs <= 0) {
+      reserveCache.delete(formSessionId);
+      resolveFn(result);
+      return result;
+    }
+
+    const timeoutId = setTimeout(() => {
+      reserveCache.delete(formSessionId);
+    }, ttlMs);
+
+    reserveCache.set(formSessionId, {
+      promise,
+      timeoutId,
+    });
+
+    resolveFn(result);
+    return result;
+
+  } catch (err) {
+    reserveCache.delete(formSessionId);
+    rejectFn(err);
+    throw err;
+  }
+}
+
+export function clearReservedOrderCode(formSessionId: string) {
+  const entry = reserveCache.get(formSessionId);
+  if (entry?.timeoutId) {
+    clearTimeout(entry.timeoutId);
+  }
+  reserveCache.delete(formSessionId);
+}
+
+export async function reserveOrderCode(): Promise<{ orderCode: string; expiresAt: string }> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.post<{ reserved_code: string }>(`${departmentApiPath()}/order/code/reserve`);
+  const result = mapper.map<any, { orderCode: string; expiresAt: string }>("Common", data, "dto_to_model");
+  return result;
+}
 
 export async function prepareForRemakeByOrderID(orderId: number): Promise<OrderModel> {
   const { departmentApiPath } = useAuthStore.getState();

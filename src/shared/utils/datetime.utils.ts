@@ -28,3 +28,34 @@ export function formatDate(value?: string | null): string {
 
 export const fDatetime = "DD/MM/YYYY HH:mm:ss";
 export const fDate = "DD/MM/YYYY";
+
+export function serverTimeToClientDate(isoTime: string): Date | null {
+  const d = new Date(isoTime);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
+
+export function serverTimeToClient(
+  isoTime: string,
+  opts?: {
+    withSeconds?: boolean;
+    locale?: string;
+  }
+) {
+  const date = serverTimeToClientDate(isoTime);
+  if (!date) return "";
+
+  return date.toLocaleString(
+    opts?.locale ?? undefined, // undefined = locale của browser
+    {
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: opts?.withSeconds ? "2-digit" : undefined,
+    }
+  );
+}

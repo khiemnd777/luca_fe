@@ -665,6 +665,12 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     const [resolvedInitial, setResolvedInitial] = React.useState(initial ?? {});
     const [resolvingInitial, setResolvingInitial] = React.useState(false);
 
+    const formSessionIdRef = React.useRef<string | null>(null);
+
+    if (formSessionIdRef.current === null) {
+      formSessionIdRef.current = crypto.randomUUID();
+    }
+
     React.useEffect(() => {
       let cancelled = false;
 
@@ -845,6 +851,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // CTX FOR onChange
     // ----------------------------------------------------
     ctxRef.current = {
+      formSessionId: formSessionIdRef.current,
       values,
       setValue: setValueProg,
       setAllValues: setAllValuesProg,

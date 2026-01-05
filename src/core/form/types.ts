@@ -29,6 +29,7 @@ export type FieldKind =
 export type DeriveMode = "always" | "whenEmpty" | "untilManual";
 
 export type FormContext = {
+  formSessionId: string | null;
   values: Record<string, any>;
   setValue: (name: string, v: any) => void;
   setAllValues: (obj: Record<string, any>) => void;
@@ -200,6 +201,10 @@ export type FieldDef = {
   searchPage?: SearchListSearchPageFn;                           // searchPage(kw, page, limit): T[]
   fetchList?: SearchListFetchListFn;                             // hydrate list hiện có theo ngữ cảnh (values): T[]
   hydrateByIds?: SearchListHydrateFn;                            // map IDs -> T[] khi field đã có sẵn IDs
+  resolveDefaultInput?: (
+    values: Record<string, any>,
+    ctx?: FormContext
+  ) => Promise<{ inputValue?: string; value?: any | null } | null>;
   onSelect?: (item: any) => void;
   onBlur?: (text: string, matched: any, ctx?: FormContext | null) => void;
   onAdd?: (item: any) => Promise<void> | void;                   // khi add item từ search

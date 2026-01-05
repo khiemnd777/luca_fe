@@ -12,6 +12,7 @@ import {
 import AddCircleOutlineRounded from "@mui/icons-material/AddCircleOutlineRounded";
 import type { FormContext } from "./types";
 
+
 type Size = "small" | "medium";
 
 export type SearchSingleFieldProps<T> = {
@@ -34,6 +35,10 @@ export type SearchSingleFieldProps<T> = {
   onSelect?: (item: T | null) => void;
   onBlur?: (input: string, matched: T | null, ctx?: FormContext | null) => void;
   onInputChange?: (text: string) => void;
+  resolveDefaultInput?: (
+    values: Record<string, any>,
+    ctx?: FormContext
+  ) => Promise<{ inputValue?: string; value?: T | null } | null>;
 
   /** Data fetchers */
   search: (keyword: string, ctx?: FormContext) => Promise<T[]>;
@@ -59,6 +64,10 @@ export type SearchSingleFieldProps<T> = {
   ctx?: FormContext;
 };
 
+export type SearchSingleFieldHandle = {
+  resetToDefault: () => void;
+};
+
 /* ============================================================
    HELPERS
 ============================================================ */
@@ -73,7 +82,10 @@ const useDebounce = () => {
 /* ============================================================
    MAIN COMPONENT
 ============================================================ */
-export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
+function SearchSingleFieldInner<T>(
+  props: SearchSingleFieldProps<T>,
+  ref: React.ForwardedRef<SearchSingleFieldHandle>
+) {
   const {
     label,
     placeholder,
@@ -89,6 +101,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     onSelect,
     onBlur,
     onInputChange,
+    resolveDefaultInput,
 
     search,
     searchPage,
@@ -116,6 +129,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   const [options, setOptions] = React.useState<T[]>([]);
   const [inputValue, setInputValue] = React.useState("");
   const [keyword, setKeyword] = React.useState("");
+  const [defaultInput, setDefaultInput] = React.useState<string | null>(null);
 
   const [loading, setLoading] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
@@ -124,6 +138,12 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   const [cachedOptions, setCachedOptions] = React.useState<T[]>([]);
 
   const debounce = useDebounce();
+  const defaultInputRef = React.useRef<string | null>(null);
+  const defaultResolvedRef = React.useRef(false);
+  const lastInputReasonRef = React.useRef<string | null>(null);
+  const userInteractedRef = React.useRef(false);
+  const inputValueRef = React.useRef(inputValue);
+  const valueRef = React.useRef(value);
 
   /* ======================================================
      Controlled mode → hydrateById
@@ -132,6 +152,59 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   React.useEffect(() => {
     valuesRef.current = values;
   }, [values]);
+
+  React.useEffect(() => {
+    inputValueRef.current = inputValue;
+  }, [inputValue]);
+
+  React.useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  /* ======================================================
+     Resolve default input (initial)
+  ====================================================== */
+  const resolvingRef = React.useRef<Promise<any> | null>(null);
+
+  React.useEffect(() => {
+    if (!resolveDefaultInput) return;
+
+    // ⛔ chặn tuyệt đối
+    if (resolvingRef.current) return;
+
+    resolvingRef.current = (async () => {
+      const resolved = await resolveDefaultInput(valuesRef.current, ctx);
+      if (!resolved) return;
+
+      if (
+        resolved.inputValue !== undefined &&
+        defaultInputRef.current === null
+      ) {
+        defaultInputRef.current = resolved.inputValue;
+        setDefaultInput(resolved.inputValue);
+      }
+
+      if (!userInteractedRef.current && inputValueRef.current === "") {
+        if (resolved.inputValue !== undefined) {
+          setInputValue(resolved.inputValue);
+          setKeyword(resolved.inputValue);
+        } else if (resolved.value) {
+          const label = getOptionLabel(resolved.value);
+          setInputValue(label);
+          setKeyword(label);
+        }
+      }
+
+      if (
+        !userInteractedRef.current &&
+        valueRef.current == null &&
+        resolved.value !== undefined
+      ) {
+        setValue(resolved.value ?? null);
+      }
+    })();
+  }, [resolveDefaultInput, ctx]);
+
 
   React.useEffect(() => {
     if (selectedId == null) {
@@ -245,6 +318,31 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
   }, [refreshKey]);
 
   /* ======================================================
+     Fallback to default input on empty
+  ====================================================== */
+  React.useEffect(() => {
+    if (inputValue !== "") return;
+    if (lastInputReasonRef.current === "input") return;
+    const fallback = defaultInput ?? defaultInputRef.current;
+    if (fallback == null || fallback === "") return;
+    setInputValue(fallback);
+    setKeyword(fallback);
+  }, [inputValue, defaultInput]);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      resetToDefault: () => {
+        const fallback = defaultInput ?? defaultInputRef.current;
+        if (fallback == null) return;
+        setInputValue(fallback);
+        setKeyword(fallback);
+      },
+    }),
+    []
+  );
+
+  /* ======================================================
      Input change
   ====================================================== */
   const handleInput = (_: any, text: string, reason: string) => {
@@ -253,6 +351,10 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
       (reason === "blur" || reason === "reset")
     ) {
       return;
+    }
+    lastInputReasonRef.current = reason;
+    if (reason === "input" || reason === "clear") {
+      userInteractedRef.current = true;
     }
     const v = text;
     setInputValue(v);
@@ -293,7 +395,7 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
 
   const getRawLabel = React.useCallback(
     (o: T) => (props.getInputLabel ? props.getInputLabel(o) : getOptionLabel(o, options)),
-    [props.getInputLabel, getOptionLabel]
+    [props.getInputLabel, getOptionLabel, options]
   );
 
   return (
@@ -382,3 +484,11 @@ export default function SearchSingleField<T>(props: SearchSingleFieldProps<T>) {
     </FormControl>
   );
 }
+
+const SearchSingleField = React.forwardRef(SearchSingleFieldInner) as (<T>(
+  props: SearchSingleFieldProps<T> & React.RefAttributes<SearchSingleFieldHandle>
+) => React.ReactElement | null) & { displayName?: string };
+
+SearchSingleField.displayName = "SearchSingleField";
+
+export default SearchSingleField;

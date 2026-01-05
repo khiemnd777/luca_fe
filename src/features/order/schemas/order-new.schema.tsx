@@ -4,7 +4,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
+import { clearReservedOrderCode, create, getOrReserveOrderCode, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
@@ -23,6 +23,16 @@ export function buildNewOrderSchema(): FormSchema {
       placeholder: "Nhập mã đơn hàng",
       fullWidth: true,
       pageLimit: 20,
+      resolveDefaultInput: async (_values, ctx) => {
+        if (!ctx?.formSessionId) {
+          return null;
+        }
+        const result = await getOrReserveOrderCode(ctx.formSessionId);
+        return {
+          inputValue: result.orderCode,
+          value: null,
+        };
+      },
       onBlur: async (text, matched, ctx) => {
         ctx?.setValue("code", text);
         if (matched) {
@@ -381,8 +391,9 @@ export function buildNewOrderSchema(): FormSchema {
       return {};
     },
 
-    async afterSaved() {
+    async afterSaved(_, ctx) {
       reloadTable("orders");
+      clearReservedOrderCode(ctx.formSessionId);
     },
 
     hooks: {

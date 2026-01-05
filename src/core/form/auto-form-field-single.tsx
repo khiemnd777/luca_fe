@@ -169,6 +169,9 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     const v = values[f.name];
     return v === null || v === undefined ? "" : String(v);
   });
+  const isAsText = typeof f.asTextFn === "function"
+    ? f.asTextFn(values, ctx)
+    : Boolean(f.asText);
   // const debouncedTextChange = useDebounce((nextVal: string) => {
   //   setValue(f.name, nextVal);
   // }, 300);
@@ -200,7 +203,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
   }, [f.kind, values, f.name]);
 
   React.useEffect(() => {
-    if (!f.asText || f.kind !== "searchsingle") return;
+    if (!isAsText || f.kind !== "searchsingle") return;
 
     if (altNameValue !== null && altNameValue !== undefined && altNameValue !== "") {
       setSearchSingleLabel(String(altNameValue));
@@ -233,7 +236,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
       active = false;
     };
   }, [
-    f.asText,
+    isAsText,
     f.kind,
     f.hydrateById,
     f.getOptionLabel,
@@ -253,7 +256,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     );
   }
 
-  if (f.asText) {
+  if (isAsText) {
     if (f.kind === "searchsingle") {
       return (
         <Stack spacing={0.5}>

@@ -156,6 +156,7 @@ export type FieldDef = {
   step?: number;                                                            // for number
   showIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   disableIf?: (values: Record<string, any>, ctx?: FormContext) => boolean;
+  asTextFn?: (values: Record<string, any>, ctx?: FormContext) => boolean;
   asText?: boolean;                                                         // readonly text mode
 
   // select / multiselect / autocomplete

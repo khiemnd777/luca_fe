@@ -154,7 +154,6 @@ export function OrderProductItemList({
       onAdd={(item, list) => onAdd?.(item, list, ctx)}
       onRemove={(item, list) => onRemove?.(item, list, ctx)}
       renderItem={({ item, index, onChange, onRemove }) => {
-        console.log("Rendering order product item", { item, index });
         return (
           <ListItemRender<OrderItemProductModel>
             item={item}

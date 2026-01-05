@@ -21,6 +21,9 @@ export function buildOrderProductItemSchema(): FormSchema {
       placeholder: "Nhập mã hoặc tên sản phẩm",
       fullWidth: true,
       size: "small",
+      asTextFn(values, _ctx) {
+        return values.isCloneable;
+      },
       pageLimit: 50,
       group: "line1",
       rules: {

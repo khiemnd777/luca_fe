@@ -24,6 +24,9 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
       size: "small",
       group: "line1",
       pageLimit: 50,
+      asTextFn(values, _ctx) {
+        return values.isCloneable;
+      },
       rules: {
         required: "Vui lòng chọn vật tư cho mượn",
       },

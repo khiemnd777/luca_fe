@@ -22,6 +22,9 @@ function buildOrderConsumableMaterialItemSchema(): FormSchema {
       fullWidth: true,
       size: "small",
       group: "line1",
+      asTextFn(values, _ctx) {
+        return values.isCloneable;
+      },
       pageLimit: 50,
       rules: {
         required: "Vui lòng chọn vật tư tiêu hao",

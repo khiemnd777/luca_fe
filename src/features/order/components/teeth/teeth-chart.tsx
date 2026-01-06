@@ -30,6 +30,7 @@ export function TeethChart({
   const [selected, setSelected] = useState<Set<ToothCode>>(new Set());
   const [dragRect, setDragRect] = useState<DOMRect | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
+  const dragSelectedRef = useRef<Set<ToothCode>>(new Set());
 
   const isDragging = useRef(false);
   const mouseDownTarget = useRef<EventTarget | null>(null);
@@ -55,6 +56,7 @@ export function TeethChart({
 
     startPoint.current = { x: e.clientX, y: e.clientY };
     setDragRect(null);
+    dragSelectedRef.current = new Set();
   };
 
   const onDrag = (e: React.MouseEvent) => {
@@ -86,7 +88,7 @@ export function TeethChart({
     });
 
     setSelected(next);
-    onChange?.([...next]);
+    dragSelectedRef.current = next;
   };
 
   const cleanupDrag = () => {
@@ -98,6 +100,11 @@ export function TeethChart({
   const endDrag = (e: React.MouseEvent) => {
     // ---- CASE 1: drag multi-select ----
     if (isDragging.current) {
+      const final = dragSelectedRef.current;
+
+      setSelected(new Set(final));
+      onChange?.([...final]);
+
       cleanupDrag();
       return;
     }

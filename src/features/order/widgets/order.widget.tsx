@@ -21,7 +21,7 @@ function OrderWidget() {
       }>
         <AutoTable name="orders" />
       </SectionCard>
-      <TeethLayout />
+      <TeethLayout onChange={(t) => console.log(t)} />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Button } from "@mui/material";
 import TeethLayout from "../components/teeth";
-import { SectionCard } from "@shared/components/ui/section-card";
 import { ConfirmDialog } from "@shared/components/dialog/confirm-dialog";
 import { TOOTH_SPRITES } from "../components/teeth/tooth-sprite-map";
 import type { ToothCode } from "../components/teeth/tooth-sprite-map";
@@ -72,7 +71,6 @@ function formatToothPositions(nums: number[]) {
 
 export default function OrderTeeth({
   value,
-  title,
   onChange,
 }: OrderTeethProps) {
   const [openDialog, setOpenDialog] = React.useState(false);

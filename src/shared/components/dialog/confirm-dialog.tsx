@@ -8,6 +8,7 @@ type ConfirmDialogProps = {
   confirmText?: string;
   cancelText?: string;
   confirming?: boolean;
+  width?: "xs" | "sm" | "md" | "lg" | "xl" | false;
   onClose: () => void;
   onConfirm: () => void;
 };
@@ -19,11 +20,12 @@ export function ConfirmDialog({
   confirmText = "Confirm",
   cancelText = "Cancel",
   confirming = false,
+  width = "xs",
   onClose,
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onClose={confirming ? undefined : onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={confirming ? undefined : onClose} maxWidth={width} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         {typeof content === "string" ? (

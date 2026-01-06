@@ -10,5 +10,6 @@ export interface OrderItemProductModel {
   quantity: number;
   retailPrice?: number | null;
   isCloneable?: boolean | null;
+  teethPosition?: string | null;
   note?: string | null;
 }

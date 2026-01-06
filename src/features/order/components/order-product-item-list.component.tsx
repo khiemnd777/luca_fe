@@ -38,6 +38,8 @@ function defaultFactory(values: Record<string, any>): OrderItemProductModel {
     orderId: values.orderId ?? null,
     quantity: 1,
     retailPrice: 0,
+    note: null,
+    teethPosition: null,
   };
 }
 
@@ -47,6 +49,7 @@ function normalizeItem(item: OrderItemProductModel) {
     productCode: item.productCode ?? "",
     quantity: Number(item.quantity) || 0,
     retailPrice: item.retailPrice == null ? null : Number(item.retailPrice) || 0,
+    teethPosition: item.teethPosition,
     note: item.note ?? "",
   };
 }

@@ -3,6 +3,7 @@ import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { id as fetchProductById, search as searchProduct } from "@features/product/api/product.api";
 import type { ProductModel } from "@features/product/model/product.model";
+import OrderTeeth from "../components/order-teeth.component";
 
 const productLabel = (p?: ProductModel | null) => {
   if (!p) return "";
@@ -72,6 +73,7 @@ export function buildOrderProductItemSchema(): FormSchema {
               categoryId: null,
               quantity: 1,
               retailPrice: 0,
+              teethPosition: null,
               note: "",
             },
           });
@@ -89,6 +91,7 @@ export function buildOrderProductItemSchema(): FormSchema {
             categoryId: matched.categoryId ?? null,
             quantity: 1,
             retailPrice: 0,
+            teethPosition: null,
             note: "",
           },
         });
@@ -132,10 +135,38 @@ export function buildOrderProductItemSchema(): FormSchema {
       }
     },
     {
+      name: "teethPosition",
+      label: "Vị trí răng",
+      kind: "custom",
+      group: "line4",
+      render({ values, ctx }) {
+        return (
+          <>
+            <OrderTeeth
+              onChange={(v) => {
+                const itemId = ctx?.values?.id;
+                ctx?.emit("item:patch", {
+                  __meta: {
+                    listKey: "order-product",
+                    itemId,
+                  },
+                  patch: {
+                    teethPosition: v,
+                  },
+                });
+                ctx?.setValue("teethPosition", v);
+              }}
+              value={values.teethPosition}
+            />
+          </>
+        );
+      },
+    },
+    {
       name: "note",
       label: "Ghi chú",
       kind: "textarea",
-      group: "line4",
+      group: "line5",
     },
   ];
 
@@ -165,6 +196,10 @@ export function buildOrderProductItemSchema(): FormSchema {
       },
       {
         name: "line4",
+        col: 1,
+      },
+      {
+        name: "line5",
         col: 1,
       }
     ],

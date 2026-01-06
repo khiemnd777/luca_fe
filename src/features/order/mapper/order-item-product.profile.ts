@@ -17,6 +17,7 @@ mapper.register<OrderItemProductModel>({
     quantity: 0,
     retailPrice: null,
     isCloneable: null,
+    teethPosition: null,
     note: null,
   }),
 });

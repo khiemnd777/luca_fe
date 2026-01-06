@@ -6,10 +6,12 @@ export default function TeethLayout({
   spriteUrl,
   scale,
   onChange,
+  value,
 }: {
   spriteUrl?: string;
   scale?: number;
   onChange?: (selected: ToothCode[]) => void;
+  value?: ToothCode[];
 }) {
   spriteUrl = spriteUrl || SpriteUrl;
   scale = scale || 0.35;
@@ -19,6 +21,7 @@ export default function TeethLayout({
       spriteUrl={spriteUrl}
       scale={scale}
       onChange={onChange}
+      value={value}
     />
   );
 }

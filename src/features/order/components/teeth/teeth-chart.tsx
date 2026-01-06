@@ -19,11 +19,13 @@ export function TeethChart({
   scale = 1,
   showLabels = true,
   onChange,
+  value,
 }: {
   spriteUrl: string;
   scale?: number;
   showLabels?: boolean;
   onChange?: (selected: ToothCode[]) => void;
+  value?: ToothCode[];
 }) {
   const toothRefs = useRef<Map<ToothCode, HTMLDivElement>>(new Map());
 
@@ -31,6 +33,8 @@ export function TeethChart({
   const [dragRect, setDragRect] = useState<DOMRect | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
   const dragSelectedRef = useRef<Set<ToothCode>>(new Set());
+  const valueKeyRef = useRef<string | null>(null);
+  const hasMouseDown = useRef(false);
 
   const isDragging = useRef(false);
   const mouseDownTarget = useRef<EventTarget | null>(null);
@@ -48,9 +52,19 @@ export function TeethChart({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onChange]);
 
+  useEffect(() => {
+    if (!value) return;
+    const next = new Set<ToothCode>(value);
+    const key = [...next].sort((a, b) => a - b).join(",");
+    if (key === valueKeyRef.current) return;
+    valueKeyRef.current = key;
+    setSelected(next);
+  }, [value]);
+
   const beginDrag = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
 
+    hasMouseDown.current = true;
     mouseDownTarget.current = e.target;
     isDragging.current = false;
 
@@ -95,9 +109,15 @@ export function TeethChart({
     startPoint.current = null;
     setDragRect(null);
     isDragging.current = false;
+    hasMouseDown.current = false;
   };
 
   const endDrag = (e: React.MouseEvent) => {
+    if (!hasMouseDown.current) {
+      cleanupDrag();
+      return;
+    }
+
     // ---- CASE 1: drag multi-select ----
     if (isDragging.current) {
       const final = dragSelectedRef.current;
@@ -201,7 +221,11 @@ export function TeethChart({
       onMouseDown={beginDrag}
       onMouseMove={onDrag}
       onMouseUp={endDrag}
-      onMouseLeave={endDrag}
+      onMouseLeave={() => {
+        if (isDragging.current) {
+          cleanupDrag();
+        }
+      }}
       style={{
         userSelect: "none",
         padding: scaleFn(24),

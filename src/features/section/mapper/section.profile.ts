@@ -7,6 +7,8 @@ mapper.register<SectionModel>({
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
+    leaderId: null,
+    leaderName: null,
     name: "",
     code: "",
     color: "",

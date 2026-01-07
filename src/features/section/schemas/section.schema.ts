@@ -1,10 +1,11 @@
-import type { FieldDef } from "@core/form/types";
+import type { FieldDef, FormContext } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/section/api/section.api";
 import type { SectionModel } from "@features/section/model/section.model";
+import { search } from "@root/core/relation/relation.api";
 
 export function buildSectionSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -26,9 +27,9 @@ export function buildSectionSchema(): FormSchema {
       },
     },
     {
-      name: "color", 
-      label: "Màu chủ đề", 
-      kind: "color", 
+      name: "color",
+      label: "Màu chủ đề",
+      kind: "color",
       defaultValue: "#6d3ad3ff",
     },
     {
@@ -39,6 +40,19 @@ export function buildSectionSchema(): FormSchema {
         collection: "section",
         mode: "whole",
         def: [
+          {
+            name: "leaderId",
+            async searchPage(keyword: string, page: number, limit: number, ctx?: FormContext) {
+              const searched = await search("section_leader", {
+                keyword,
+                page,
+                limit,
+                orderBy: "name",
+                extendWhere:  [`r.role_name=staff`, `ss.section_id=${ctx?.values.id}`],
+              });
+              return searched.items;
+            },
+          },
           {
             name: "processIds",
             hydrateOrderField: "display_order",

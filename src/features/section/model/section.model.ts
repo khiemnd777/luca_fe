@@ -1,5 +1,7 @@
 export interface SectionModel {
   id: number;
+  leaderId?: number | null;
+  leaderName?: string | null;
   name: string;
   code?: string;
   color?: string;

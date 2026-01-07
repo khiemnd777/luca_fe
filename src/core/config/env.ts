@@ -1,4 +1,3 @@
-// Không hardcode — đọc từ VITE_*
 const baseAddress = import.meta.env.VITE_BASE_ADDRESS ?? "127.0.0.1:7999";
 const httpProto = import.meta.env.VITE_HTTP_PROTOCOL ?? "http";
 const wsProto = import.meta.env.VITE_WS_PROTOCOL ?? "ws";

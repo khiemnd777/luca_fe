@@ -13,12 +13,14 @@ export function useWebSocket<T = any>() {
     return () => {
       off();
       clearInterval(iv);
-      // Comment for WS global
-      // wsClient.close();
     };
   }, []);
 
-  return { status, lastMessage, send: (data: any) => wsClient.send(data) };
+  return {
+    status,
+    lastMessage,
+    send: wsClient.send.bind(wsClient),
+  };
 }
 
 /*

@@ -1,5 +1,6 @@
 import { env } from "@core/config/env";
-import { getAccessToken } from "@core/network/token-utils";
+import { getAccessToken, getRefreshToken } from "@core/network/token-utils";
+import { refreshAccessToken } from "./auth-api";
 
 type Message = unknown;
 type Listener = (data: Message) => void;
@@ -7,7 +8,6 @@ type Listener = (data: Message) => void;
 export type WSStatus = "idle" | "connecting" | "open" | "closed";
 
 export class WSClient {
-  private url: string;
   private ws: WebSocket | null = null;
   private status: WSStatus = "idle";
   private listeners = new Set<Listener>();
@@ -15,21 +15,25 @@ export class WSClient {
   private heartbeatTimer: any = null;
   private lastPongAt = 0;
 
-  constructor() {
-    const token = getAccessToken();
-    const qs = new URLSearchParams();
-    if (token) qs.set("token", token);
+  private refreshing = false;
 
-    // Tạo URL socket đầy đủ: ws://127.0.0.1:7999/api/ws?token=...
-    this.url = `${env.wsBaseUrl}${qs.toString() ? `?${qs}` : ""
-      }`;
+  private buildUrl(): string | null {
+    const token = getAccessToken();
+    if (!token) return null;
+
+    const qs = new URLSearchParams({ token });
+    return `${env.wsBaseUrl}?${qs}`;
   }
 
   connect() {
     if (this.status === "connecting" || this.status === "open") return;
-    this.status = "connecting";
 
-    this.ws = new WebSocket(this.url);
+    const url = this.buildUrl();
+    if (!url) return;
+
+    this.status = "connecting";
+    this.ws = new WebSocket(url);
+
     this.ws.onopen = () => {
       this.status = "open";
       this.reconnectAttempts = 0;
@@ -37,25 +41,51 @@ export class WSClient {
     };
 
     this.ws.onmessage = (ev) => {
-      // Nếu server reply 'pong' cho heartbeat
       if (typeof ev.data === "string" && ev.data === "pong") {
         this.lastPongAt = Date.now();
         return;
       }
+
       let payload: Message = ev.data;
-      try { payload = JSON.parse(ev.data as string); } catch { }
+      try {
+        payload = JSON.parse(ev.data as string);
+      } catch { }
+
       this.emit(payload);
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = async (ev) => {
       this.status = "closed";
       this.stopHeartbeat();
+
+      // auth close
+      if (ev.reason === "token_expired") {
+        await this.handleTokenExpired();
+        return;
+      }
+
+      // network / gateway / unknown
       this.scheduleReconnect();
     };
 
     this.ws.onerror = () => {
-      // Close sẽ kích hoạt sau onerror => không reconnect ở đây
+      // onclose will handle
     };
+  }
+
+  private async handleTokenExpired() {
+    if (this.refreshing) return;
+    this.refreshing = true;
+
+    try {
+      const refreshToken = getRefreshToken();
+      await refreshAccessToken(refreshToken);
+      this.refreshing = false;
+      this.connect(); // reconnect with new token
+    } catch {
+      this.refreshing = false;
+      this.close();
+    }
   }
 
   private scheduleReconnect() {
@@ -68,9 +98,7 @@ export class WSClient {
     this.lastPongAt = Date.now();
     this.heartbeatTimer = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // gửi 'ping', server nên trả 'pong'
         this.ws.send("ping");
-        // nếu >30s không pong → đóng để reconnect
         if (Date.now() - this.lastPongAt > 30000) {
           this.ws.close();
         }
@@ -83,13 +111,21 @@ export class WSClient {
     this.heartbeatTimer = null;
   }
 
-  send(obj: any) {
-    const data = typeof obj === "string" ? obj : JSON.stringify(obj);
-    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(data);
+  send(data: any) {
+    const msg = typeof data === "string" ? data : JSON.stringify(data);
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(msg);
+    }
   }
 
-  on(fn: Listener) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
-  private emit(data: Message) { this.listeners.forEach((fn) => fn(data)); }
+  on(fn: Listener) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  private emit(data: Message) {
+    this.listeners.forEach((fn) => fn(data));
+  }
 
   close() {
     this.stopHeartbeat();
@@ -98,8 +134,9 @@ export class WSClient {
     this.status = "closed";
   }
 
-  getStatus(): WSStatus { return this.status; }
+  getStatus(): WSStatus {
+    return this.status;
+  }
 }
 
-// Singleton nếu muốn dùng chung
 export const wsClient = new WSClient();

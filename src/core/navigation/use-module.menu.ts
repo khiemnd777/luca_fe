@@ -42,7 +42,7 @@ export function useModuleMenu(opts?: Options): SidebarItem[] {
 
       const node: SidebarItem = {
         key: parent ? `${parent.key}:${it.key}` : it.key,
-        label,
+        label: label ?? "",
         icon: it.icon,
         href: it.to,
         onClick:

@@ -93,7 +93,6 @@ export function BasePage({ children }: { children: React.ReactNode }) {
       let changed = false;
       const next = new Set(prev);
 
-      // Đảm bảo tất cả keys của đường active đều mở
       for (const k of keys) {
         if (!next.has(k)) {
           next.add(k);
@@ -101,7 +100,6 @@ export function BasePage({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // (Tuỳ chọn) nếu muốn chỉ giữ các nhánh liên quan tới current path:
       // for (const k of Array.from(next)) {
       //   if (!keys.includes(k)) {
       //     next.delete(k);
@@ -135,7 +133,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
         bgcolor: "background.default",
         color: "text.primary",
         display: "flex",
-        overflow: "hidden", // chặn body scroll
+        overflow: "hidden",
       }}
     >
       {/* Left column (fixed width, no scroll) */}

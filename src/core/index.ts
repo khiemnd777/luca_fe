@@ -1,5 +1,6 @@
 import "@root/mapper/index";
 import "@core/search/index";
+import "@core/notification";
 
 // Auto-load modules
 import.meta.glob("@features/**/index.tsx", { eager: true });

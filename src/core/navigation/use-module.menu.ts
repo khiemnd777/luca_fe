@@ -8,6 +8,7 @@ export type SidebarItem = {
   key: string;
   label: string;
   icon?: ReactNode;
+  chip?: ReactNode;
   href?: string;
   onClick?: () => void;
   subItems?: SidebarItem[];
@@ -44,6 +45,7 @@ export function useModuleMenu(opts?: Options): SidebarItem[] {
         key: parent ? `${parent.key}:${it.key}` : it.key,
         label: label ?? "",
         icon: it.icon,
+        chip: it.chip,
         href: it.to,
         onClick:
           typeof it.extra?.onClick === "function"

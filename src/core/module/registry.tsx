@@ -156,6 +156,7 @@ function toMenu(nodes: RouteNode[]): MenuItem[] {
       label: n.label,
       to: n.path,
       icon: n.icon,
+      chip: n.chip,
       priority: n.priority ?? 0,
       roles: n.roles,
       requireAll: n.requireAll,

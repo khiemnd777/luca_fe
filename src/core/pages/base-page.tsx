@@ -29,6 +29,10 @@ import MyAccountBadge from "@root/shared/components/ui/account-badge";
 const SIDEBAR_W = 280;
 const SIDEBAR_COLLAPSED_W = 76;
 
+interface CollapsibleChipProps {
+  collapsed?: boolean;
+}
+
 export function BasePage({ children }: { children: React.ReactNode }) {
   const { department } = useAuth();
   const theme = useTheme();
@@ -39,6 +43,55 @@ export function BasePage({ children }: { children: React.ReactNode }) {
 
   const { pathname } = useLocation();
   const menu = useModuleMenu({ flattenChildren: false });
+
+  const renderChip = React.useCallback(
+    (chip?: React.ReactNode) => {
+      if (!chip) return null;
+      if (React.isValidElement<CollapsibleChipProps>(chip)) {
+        return React.cloneElement(chip, { collapsed });
+      }
+      return chip;
+    },
+    [collapsed]
+  );
+
+  const renderTopLabel = React.useCallback((label?: string, chip?: React.ReactNode) => {
+    if (!chip) return label ?? "";
+    return (
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+        <Typography variant="body1" noWrap sx={{ minWidth: 0, flex: 1 }}>
+          {label ?? ""}
+        </Typography>
+        {chip}
+      </Stack>
+    );
+  }, []);
+
+  const renderSubLabel = React.useCallback(
+    (label?: string, active?: boolean, chip?: React.ReactNode) => {
+      if (!chip) {
+        return (
+          <Typography variant="body2" fontWeight={active ? 600 : 400}>
+            {label ?? ""}
+          </Typography>
+        );
+      }
+      return (
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            fontWeight={active ? 600 : 400}
+            noWrap
+            sx={{ minWidth: 0, flex: 1 }}
+          >
+            {label ?? ""}
+          </Typography>
+          {chip}
+        </Stack>
+      );
+    },
+    []
+  );
 
   // --- Helpers: xác định active
   const isHrefActive = React.useCallback(
@@ -236,11 +289,44 @@ export function BasePage({ children }: { children: React.ReactNode }) {
                       minWidth: 0,
                       mr: collapsed ? 0 : 1.5,
                       justifyContent: "center",
+                      alignItems: "center", // 👈 quan trọng
+                      display: "flex",
                     }}
                   >
-                    {m.icon}
+                    {collapsed && m.chip ? (
+                      <Box
+                        sx={{
+                          position: "relative",
+                          width: 24,
+                          height: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {m.icon}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: -8,
+                            right: -8,
+                            pointerEvents: "none",
+                          }}
+                        >
+                          {renderChip(m.chip)}
+                        </Box>
+                      </Box>
+                    ) : (
+                      m.icon
+                    )}
                   </ListItemIcon>
-                  {!collapsed && <ListItemText primary={m.label} />}
+
+                  {!collapsed && (
+                    <ListItemText
+                      primary={renderTopLabel(m.label, renderChip(m.chip))}
+                      disableTypography={!!m.chip}
+                    />
+                  )}
 
                   {/* Caret toggle chỉ hiện khi có children & không collapsed */}
                   {!collapsed && hasChildren && (
@@ -295,14 +381,8 @@ export function BasePage({ children }: { children: React.ReactNode }) {
                               }}
                             >
                               <ListItemText
-                                primary={
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight={sActive ? 600 : 400}
-                                  >
-                                    {s.label}
-                                  </Typography>
-                                }
+                                disableTypography
+                                primary={renderSubLabel(s.label, sActive, renderChip(s.chip))}
                               />
                             </ListItemButton>
                           );

@@ -18,6 +18,7 @@ export type RouteNode = {
   path: string;                   // dùng cho router + menu
   element?: ReactNode | LazyExoticComponent<() => JSX.Element> | undefined; // nếu bỏ trống → GeneralPage
   icon?: ReactNode;
+  chip?: ReactNode;
   priority?: number;
   roles?: string[];
   requireAll?: boolean;
@@ -38,6 +39,7 @@ export type MenuItem = {
   label?: string;
   to: string;
   icon?: ReactNode;
+  chip?: ReactNode;
   priority?: number;
   roles?: string[];
   requireAll?: boolean;

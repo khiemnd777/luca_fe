@@ -1,6 +1,7 @@
 import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { NotificationChip } from "./components/notification-chip.component";
 
 const mod: ModuleDescriptor = {
   id: "notification",
@@ -11,6 +12,7 @@ const mod: ModuleDescriptor = {
       title: "Thông báo",
       path: "/notification",
       icon: <NotificationsIcon />,
+      chip: <NotificationChip />,
       priority: 9998,
     },
   ],

@@ -4,6 +4,7 @@ import { mapper } from "@core/mapper/auto-mapper";
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
 import type { NotificationModel } from "./notification.model";
+import { invalidate } from "../hooks/use-async";
 
 export async function countUnread(): Promise<number> {
   const { data } = await apiClient.get<any>(`${env.apiBasePath}/notification/unread/count`);
@@ -12,6 +13,7 @@ export async function countUnread(): Promise<number> {
   if (typeof data?.unreadCount === "number") return data.unreadCount;
   const result = mapper.map<any, { count?: number; unreadCount?: number }>("Common", data, "dto_to_model");
   return result.count ?? result.unreadCount ?? 0;
+  // return 100;
 }
 
 export async function shortList(): Promise<NotificationModel[]> {
@@ -39,16 +41,19 @@ export async function getByMessage(message: string): Promise<NotificationModel |
 export async function markAsRead(id: number): Promise<NotificationModel | null> {
   const { data } = await apiClient.put<any>(`${env.apiBasePath}/notification/${id}/read`);
   if (!data) return null;
+  invalidate("notification-unread-count");
   const result = mapper.map<any, NotificationModel>("Common", data, "dto_to_model");
   return result;
 }
 
 export async function deleteNotification(id: number): Promise<void> {
   await apiClient.delete<void>(`${env.apiBasePath}/notification/${id}`);
+  invalidate("notification-unread-count");
 }
 
 export async function deleteAllNotifications(): Promise<void> {
   await apiClient.delete<void>(`${env.apiBasePath}/notification`);
+  invalidate("notification-unread-count");
 }
 
 export async function listPaginated(tableOpts: FetchTableOpts): Promise<ListResult<NotificationModel>> {

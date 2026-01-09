@@ -7,8 +7,7 @@ function NotificationWSWidget() {
   const { lastMessage } = useWebSocket();
 
   useEffect(() => {
-    if (!lastMessage) return;
-    if (lastMessage.type === "order:checkout") {
+    if (lastMessage?.type === "order:checkout") {
       invalidate("notification-unread-count");
       invalidate("notification-list");
       invalidate("notification-list-for-clear-all");

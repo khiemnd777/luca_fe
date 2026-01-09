@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { useWebSocket } from "@core/network/use-web-socket";
+import { useWebSocket } from "@root/core/network/websocket/use-web-socket";
 import { invalidate } from "@core/hooks/use-async";
-import { registerWS } from "@core/network/ws-widgets";
+import { registerWS } from "@root/core/network/websocket/ws-widgets";
 
 function NotificationWSWidget() {
   const { lastMessage } = useWebSocket();

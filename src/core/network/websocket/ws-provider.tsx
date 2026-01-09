@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { wsClient } from "@core/network/ws-client";
-import { getAccessToken } from "./token-utils";
+import { wsClient } from "@root/core/network/websocket/ws-client";
+import { getAccessToken } from "../token-utils";
 
 
 type Props = {

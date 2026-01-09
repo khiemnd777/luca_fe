@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { wsClient } from "@core/network/ws-client";
+import { wsClient } from "@root/core/network/websocket/ws-client";
 
 export function useWebSocket<T = any>() {
   const [status, setStatus] = useState(wsClient.getStatus());

@@ -1,6 +1,6 @@
 import { env } from "@core/config/env";
 import { getAccessToken, getRefreshToken } from "@core/network/token-utils";
-import { refreshAccessToken } from "./auth-api";
+import { refreshAccessToken } from "../auth-api";
 
 type Message = unknown;
 type Listener = (data: Message) => void;

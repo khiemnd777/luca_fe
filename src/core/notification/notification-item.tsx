@@ -22,12 +22,19 @@ function NotificationItem({
     body || timeAgo ? (
       <Stack spacing={0.25}>
         {timeAgo ? (
-          <>
-            <Spacer />
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            {unread ? (<Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                bgcolor: "warning.main",
+              }}
+            />) : null}
             <Typography variant="caption" color="text.secondary">
               {timeAgo}
             </Typography>
-          </>
+          </Stack>
         ) : null}
         {body ? <Box>{body}</Box> : null}
       </Stack>

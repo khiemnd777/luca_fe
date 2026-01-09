@@ -3,7 +3,7 @@ import { useWebSocket } from "@core/network/use-web-socket";
 import { invalidate } from "@core/hooks/use-async";
 import { registerWS } from "@core/network/ws-widgets";
 
-function NotificationWebSocketWidget() {
+function NotificationWSWidget() {
   const { lastMessage } = useWebSocket();
 
   useEffect(() => {
@@ -18,4 +18,4 @@ function NotificationWebSocketWidget() {
   return null;
 }
 
-registerWS(<NotificationWebSocketWidget />);
+registerWS(<NotificationWSWidget />);

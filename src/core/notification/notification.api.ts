@@ -49,11 +49,14 @@ export async function markAsRead(id: number): Promise<NotificationModel | null> 
 export async function deleteNotification(id: number): Promise<void> {
   await apiClient.delete<void>(`${env.apiBasePath}/notification/${id}`);
   invalidate("notification-unread-count");
+  invalidate("notification-list-for-clear-all");
 }
 
 export async function deleteAllNotifications(): Promise<void> {
   await apiClient.delete<void>(`${env.apiBasePath}/notification`);
   invalidate("notification-unread-count");
+  invalidate("notification-list");
+  invalidate("notification-list-for-clear-all");
 }
 
 export async function listPaginated(tableOpts: FetchTableOpts): Promise<ListResult<NotificationModel>> {

@@ -4,6 +4,8 @@ import type { NotificationModel } from "./notification.model";
 export type NotificationRenderCtx = {
   markAsRead?: () => void;
   onAction?: (action: string) => void;
+  onClick?: () => void;
+  icon?: React.ReactNode;
 };
 
 export type NotificationRenderer<T = any> = (

@@ -1,50 +1,76 @@
-import type { MouseEvent } from "react";
 import ChecklistIcon from "@mui/icons-material/Checklist";
-import { Button } from "@mui/material";
+import { Box } from "@mui/material";
 import NotificationItem from "@core/notification/notification-item";
-import { registerNotificationRenderer, type NotificationRenderer } from "@core/notification/notification-renderer";
+import {
+  registerNotificationRenderer,
+  type NotificationRenderer,
+} from "@core/notification/notification-renderer";
 
-type OrderCreatedNotificationData = {
-  orderId?: number | string;
-  orderCode?: string;
-  code?: string;
+type OrderCheckoutNotificationData = {
+  leaderId?: number | string;
+  leaderName?: string;
+  orderItemId?: number | string;
+  orderItemCode?: string;
+  sectionName?: string;
+  processName?: string;
   href?: string;
 };
 
-const OrderCreatedNotificationRenderer: NotificationRenderer<OrderCreatedNotificationData> = (
-  notification,
-  ctx
-) => {
+const OrderCheckoutNotificationRenderer: NotificationRenderer<
+  OrderCheckoutNotificationData
+> = (notification, ctx) => {
   const data = notification.data;
-  const orderCode = data?.orderCode ?? data?.code;
-  const title = notification.title ?? "Đơn hàng mới";
-  const body = orderCode ? `Mã đơn: ${orderCode}` : notification.body ?? "";
-  const href = data?.href ?? (data?.orderId ? `/order/${data.orderId}` : "");
 
-  const handleAction = (event: MouseEvent) => {
-    event.stopPropagation();
-    if (!href) return;
-    ctx.onAction?.(href);
+  const title = `Đơn hàng #${data?.orderItemCode} đang chờ xử lý`;
+
+  const bodyLines: string[] = [];
+
+  if (data?.orderItemCode) {
+    bodyLines.push(`Mã: ${data.orderItemCode}`);
+  }
+
+  if (data?.processName) {
+    bodyLines.push(`Công đoạn: ${data.processName}`);
+  }
+
+  if (data?.sectionName) {
+    bodyLines.push(`Phòng ban: ${data.sectionName}`);
+  }
+
+  const body =
+    bodyLines.length > 0 ? (
+      <Box>
+        {bodyLines.map((line, index) => (
+          <div key={`${line}-${index}`}>{line}</div>
+        ))}
+      </Box>
+    ) : (
+      notification.body || ""
+    );
+
+  const href = "/check-code";
+
+  const handleClick = () => {
+    if (href) ctx.onAction?.(href);
+    ctx.onClick?.();
   };
 
   return (
     <NotificationItem
       title={title}
       body={body}
-      unread={notification.readAt === null}
-      right={
-        <Button size="small" onClick={handleAction} disabled={!href}>
-          Xem đơn
-        </Button>
-      }
+      createdAt={notification.createdAt}
+      unread={!notification.read}
+      onClick={handleClick}
+      icon={ctx.icon}
     />
   );
 };
 
 registerNotificationRenderer(
   "order:checkout",
-  OrderCreatedNotificationRenderer,
+  OrderCheckoutNotificationRenderer,
   <ChecklistIcon color="primary" />
 );
 
-export default OrderCreatedNotificationRenderer;
+export default OrderCheckoutNotificationRenderer;

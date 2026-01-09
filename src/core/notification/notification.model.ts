@@ -8,7 +8,6 @@ export interface NotificationModel<T = any> {
   type?: string;
   read?: boolean;
   readAt?: string | null;
-  title?: string;
   body?: string;
   data?: T;
   notifier?: UserModel | null;

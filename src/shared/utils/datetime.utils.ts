@@ -59,3 +59,17 @@ export function serverTimeToClient(
     }
   );
 }
+
+export function formatTimeAgo(createdAt?: string | number | Date) {
+  if (!createdAt) return null;
+  const createdMs = new Date(createdAt).getTime();
+  if (Number.isNaN(createdMs)) return null;
+  const diffMinutes = Math.max(1, Math.floor((Date.now() - createdMs) / 60000));
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} giờ trước`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays} ngày trước`;
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} tháng trước`;
+}

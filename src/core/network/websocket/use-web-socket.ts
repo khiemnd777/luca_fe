@@ -6,9 +6,7 @@ export function useWebSocket<T = any>() {
   const [lastMessage, setLastMessage] = useState<T | null>(null);
 
   useEffect(() => {
-    wsClient.connect();
     const off = wsClient.on((msg) => setLastMessage(msg as T));
-
     const iv = setInterval(() => setStatus(wsClient.getStatus()), 500);
     return () => {
       off();

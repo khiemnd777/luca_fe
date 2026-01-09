@@ -177,7 +177,11 @@ export default function NotificationList({ onSelect }: NotificationListProps) {
           `${notification.type ?? "notification"}:${notification.createdAt ?? ""}:${index}`;
 
         return (
-          <ListItem key={key} disablePadding>
+          <ListItem
+            key={key}
+            disablePadding
+            sx={{ mb: index === notifications.length - 1 ? 0 : 1 }}
+          >
             <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%" }}>
               <Box sx={{ flex: 1, minWidth: 0 }} onClick={() => handleClick(notification)}>
                 {content}

@@ -31,6 +31,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { getContrastText } from "@root/shared/utils/color.utils";
 import { navigate } from "@root/core/navigation/navigate";
 
+
 const formatColumnHeader = (label?: string) => label?.toUpperCase();
 
 export type EditTableProps<T> = {
@@ -313,15 +314,16 @@ export function EditTable<T extends { id?: string | number }>({
 
   // ==== actions column as first (sticky-left) ====
   const hasActions = Boolean(onView || onEdit || onDelete);
-  const actionsWidth = 120;
   const enableDnd = typeof onReorder === "function";
   const dndWidth = 48;
-  const baseLeftOffset = (enableDnd ? dndWidth : 0) + (hasActions ? actionsWidth : 0);
+  const [actionsMeasuredWidth, setActionsMeasuredWidth] = React.useState(0);
+  const actionsHeaderRef = React.useRef<HTMLDivElement | null>(null);
+  const baseLeftOffset = (enableDnd ? dndWidth : 0) + (hasActions ? actionsMeasuredWidth : 0);
 
   const baseGridTemplateColumns = React.useMemo(() => {
     const parts: string[] = [];
     if (enableDnd) parts.push(`${dndWidth}px`);
-    if (hasActions) parts.push(`${actionsWidth}px`);
+    if (hasActions) parts.push("max-content");
     columns.forEach((c) => {
       if (typeof c.width === "number") {
         parts.push(`${c.width}px`);
@@ -373,6 +375,28 @@ export function EditTable<T extends { id?: string | number }>({
       return () => observer.disconnect();
     }
   }, [columns, enableDnd, hasActions]);
+
+  React.useLayoutEffect(() => {
+    if (!hasActions) {
+      setActionsMeasuredWidth(0);
+      return;
+    }
+    const headerEl = actionsHeaderRef.current;
+    if (!headerEl) return;
+
+    const measure = () => {
+      const next = Math.round(headerEl.getBoundingClientRect().width);
+      if (!next) return;
+      setActionsMeasuredWidth((prev) => (prev === next ? prev : next));
+    };
+
+    measure();
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => measure());
+      observer.observe(headerEl);
+      return () => observer.disconnect();
+    }
+  }, [hasActions, onView, onEdit, onDelete]);
 
   const resolveColWidth = React.useCallback(
     (col: ColumnDef<T>, idx: number) => {
@@ -681,6 +705,7 @@ export function EditTable<T extends { id?: string | number }>({
               <Box
                 role="columnheader"
                 data-sticky="true"
+                ref={actionsHeaderRef}
                 sx={{
                   position: "sticky",
                   left: enableDnd ? dndWidth : 0,
@@ -694,11 +719,31 @@ export function EditTable<T extends { id?: string | number }>({
                   borderBottom: "1px solid",
                   borderColor: "divider",
                   whiteSpace: "nowrap",
-                  width: actionsWidth,
-                  minWidth: actionsWidth,
                 }}
               >
-                <span></span>
+                <Stack
+                  aria-hidden="true"
+                  direction="row"
+                  spacing={0.5}
+                  justifyContent="flex-end"
+                  sx={{ visibility: "hidden", pointerEvents: "none" }}
+                >
+                  {onView && (
+                    <IconButton size="small" tabIndex={-1}>
+                      <VisibilityRoundedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                  {onEdit && (
+                    <IconButton size="small" tabIndex={-1}>
+                      <EditRoundedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                  {onDelete && (
+                    <IconButton size="small" tabIndex={-1}>
+                      <DeleteRoundedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Stack>
               </Box>
             )}
 
@@ -864,8 +909,6 @@ export function EditTable<T extends { id?: string | number }>({
                                   zIndex: STICKY_Z_INDEX.actions,
                                   backgroundColor: "background.paper",
                                   whiteSpace: "nowrap",
-                                  width: actionsWidth,
-                                  minWidth: actionsWidth,
                                   px: 1.5,
                                   py: dense ? 0.75 : 1,
                                   borderBottom: "1px solid",
@@ -961,8 +1004,6 @@ export function EditTable<T extends { id?: string | number }>({
                         zIndex: STICKY_Z_INDEX.actions,
                         backgroundColor: "background.paper",
                         whiteSpace: "nowrap",
-                        width: actionsWidth,
-                        minWidth: actionsWidth,
                         px: 1.5,
                         py: dense ? 0.75 : 1,
                         borderBottom: "1px solid",

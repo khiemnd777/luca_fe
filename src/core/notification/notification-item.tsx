@@ -1,5 +1,4 @@
 import { Box, ListItemText, Stack, Typography } from "@mui/material";
-import { Spacer } from "@root/shared/components/ui/spacer";
 import { formatTimeAgo } from "@root/shared/utils/datetime.utils";
 
 function NotificationItem({

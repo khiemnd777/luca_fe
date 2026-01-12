@@ -10,6 +10,7 @@ mapper.register<InProgressOrderModel>({
     code: null,
     codeLatest: null,
     deliveryDate: null,
+    now: null,
     totalPrice: null,
     statusLatest: null,
     priorityLatest: null,

@@ -73,3 +73,50 @@ export function formatTimeAgo(createdAt?: string | number | Date) {
   const diffMonths = Math.floor(diffDays / 30);
   return `${diffMonths} tháng trước`;
 }
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_MONTH = MS_PER_DAY * 30;
+const MS_PER_YEAR = MS_PER_DAY * 365;
+
+const toMs = (value?: string | number | Date | null): number | null => {
+  if (value == null) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? null : ms;
+};
+
+export function relTime(
+  targetOrDiff?: string | number | Date | null,
+  base?: string | number | Date | null
+): { text: string; color: string } {
+  const diffMs = base === undefined
+    ? toMs(targetOrDiff)
+    : (() => {
+      const targetMs = toMs(targetOrDiff);
+      const baseMs = toMs(base);
+      if (targetMs == null || baseMs == null) return null;
+      return targetMs - baseMs;
+    })();
+
+  if (diffMs == null) return { text: "", color: "" };
+
+  const absMs = Math.abs(diffMs);
+  let value = Math.ceil(absMs / MS_PER_DAY);
+  let unit = "ngày";
+
+  if (absMs >= MS_PER_YEAR) {
+    value = Math.ceil(absMs / MS_PER_YEAR);
+    unit = "năm";
+  } else if (absMs >= MS_PER_MONTH) {
+    value = Math.ceil(absMs / MS_PER_MONTH);
+    unit = "tháng";
+  }
+
+  if (value <= 0) value = 0;
+
+  const isLate = diffMs < 0;
+  return {
+    text: `${isLate ? "Chậm" : "Còn"} ${value} ${unit}`,
+    color: isLate ? "#d32f2f" : "#2e7d32",
+  };
+}

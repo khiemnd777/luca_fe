@@ -8,6 +8,7 @@ import { useWebSocket } from "@root/core/network/websocket/use-web-socket";
 import { useEffect } from "react";
 import { invalidate } from "@root/core/hooks/use-async";
 import { registerWS } from "@root/core/network/websocket/ws-widgets";
+import { relTime } from "@root/shared/utils/datetime.utils";
 
 const columns: ColumnDef<InProgressOrderModel>[] = [
   // {
@@ -21,6 +22,12 @@ const columns: ColumnDef<InProgressOrderModel>[] = [
     type: "color",
     width: 95,
     accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
+  },
+  {
+    key: "progress",
+    type: "color",
+    header: "Tiến độ",
+    accessor: (row) => relTime(row.deliveryDate, row.now),
   },
   { key: "codeLatest", header: "Mã đơn hàng", labelField: true },
   // { key: "code", header: "Mã gốc" },

@@ -6,8 +6,10 @@ import { AutoTable } from "@core/table/auto-table";
 import { registerSlot } from "@root/core/module/registry";
 import { IfPermission } from "@root/core/auth/if-permission";
 
-function OrderWidget() {
-  return (
+registerSlot({
+  id: "order",
+  name: "order:left",
+  render: () => (
     <>
       <SectionCard title="Tất cả" extra={
         <>
@@ -21,13 +23,7 @@ function OrderWidget() {
         <AutoTable name="orders" />
       </SectionCard>
     </>
-  );
-}
-
-registerSlot({
-  id: "order",
-  name: "order:left",
-  render: () => <OrderWidget />,
+  ),
 });
 
 registerSlot({
@@ -40,7 +36,7 @@ registerSlot({
       </SectionCard>
     </>
   ),
-  priority: 1,
+  priority: 2,
 });
 
 registerSlot({
@@ -53,5 +49,5 @@ registerSlot({
       </SectionCard>
     </>
   ),
-  priority: 2,
+  priority: 1,
 });

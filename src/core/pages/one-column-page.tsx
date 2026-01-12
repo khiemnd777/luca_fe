@@ -24,6 +24,7 @@ export default function OneColumnPage() {
         <ResponsiveGrid>
           <SlotHost name={`${key}:top`} />
         </ResponsiveGrid>
+        <Spacer />
         <AutoGrid>
           <Section>
             <SlotHost name={`${key}:left`} />

@@ -9,6 +9,7 @@ import { getAvailableCollection, listCollectionsByGroup } from "@core/metadata/d
 import { snakeToCamel } from "@root/shared/utils/string.utils";
 import { isJSON, parseJSON } from "@root/shared/utils/json.utils";
 import { mapIdFieldToNameField } from "@root/shared/utils/relation.utils";
+import { useAsync } from "@core/hooks/use-async";
 
 const metadataGroupCache = new Map<string, Promise<string[]>>();
 
@@ -198,15 +199,13 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
 
   const [rows, setRows] = React.useState<T[]>([]);
   const [total, setTotal] = React.useState<number>(0);
-  const [loading, setLoading] = React.useState(false);
 
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
   const [targetRow, setTargetRow] = React.useState<T | null>(null);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    try {
+  const { loading, reload } = useAsync(
+    async () => {
       const res = await schema.fetch({
         limit: pageSize,
         page: page,
@@ -223,23 +222,22 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         direction: sortDir,
         total: res.total ?? 0,
       }));
-    } finally {
-      setLoading(false);
-    }
-  }, [schema, page, pageSize, sortBy, sortDir]);
-
-  React.useEffect(() => { load(); }, [load]);
+      return res;
+    },
+    [schema, page, pageSize, sortBy, sortDir],
+    { key: schemaName }
+  );
 
   React.useEffect(() => {
     if (!schemaName) return;
     const unsub = subscribeTableReload(schemaName, () => {
-      void load();
+      void reload();
     });
     return unsub;
-  }, [schemaName, load]);
+  }, [schemaName, reload]);
 
   React.useImperativeHandle(ref, () => ({
-    reload: () => load(),
+    reload: () => reload(),
   }));
 
   const askDelete = React.useCallback((row: T) => {
@@ -255,11 +253,11 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
       await Promise.resolve(schema.onDelete(targetRow));
       setConfirmOpen(false);
       setTargetRow(null);
-      await load();
+      await reload();
     } finally {
       setConfirming(false);
     }
-  }, [schema.onDelete, targetRow, load]);
+  }, [schema.onDelete, targetRow, reload]);
 
   const label = React.useMemo(
     () => (targetRow ? resolveRowLabel(schema.columns, targetRow) : ""),

@@ -22,12 +22,12 @@ const columns: ColumnDef<OrderModel>[] = [
     accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
     sortable: true,
   },
-  { key: "codeLatest", header: "Mã đơn hàng", sortable: true, labelField: true },
-  { key: "code", header: "Mã gốc", sortable: true, },
+  { key: "codeLatest", header: "Mã đơn", sortable: true, labelField: true },
+  // { key: "code", header: "Mã gốc", sortable: true, },
   {
     key: "remakeCount",
     header: "Làm lại",
-    accessor: (row) => row.remakeCount ? `${row.remakeCount} lần` : '',
+    accessor: (row) => row.remakeCount ? `${row.remakeCount} lần` : '––',
     sortable: true,
   },
   // {

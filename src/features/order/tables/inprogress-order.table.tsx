@@ -29,7 +29,11 @@ const columns: ColumnDef<InProgressOrderModel>[] = [
     header: "Tiến độ",
     accessor: (row) => relTime(row.deliveryDate, row.now),
   },
-  { key: "codeLatest", header: "Mã đơn hàng", labelField: true },
+  { key: "codeLatest", header: "Mã đơn", labelField: true },
+  {
+    key: "processNameLatest",
+    header: "Công đoạn",
+  },
   // { key: "code", header: "Mã gốc" },
   { key: "deliveryDate", header: "Ngày giao", type: "datetime" },
 ];
@@ -38,7 +42,7 @@ registerTable("order-inprogress", () => {
   return createTableSchema<InProgressOrderModel>({
     columns,
     fetch: async (opts: FetchTableOpts) => await inProgressList(opts),
-    initialPageSize: 10,
+    initialPageSize: 5,
     initialSort: { by: "delivery_date", dir: "asc" },
     onView: (row: InProgressOrderModel) => { navigate(`/order/${row.id}`) },
   });

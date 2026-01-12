@@ -5,6 +5,7 @@ export interface InProgressOrderModel {
   deliveryDate?: string | null;
   now?: string | null;
   totalPrice?: number | null;
+  processNameLatest?: string | null;
   statusLatest?: string | null;
   priorityLatest?: string | null;
 }

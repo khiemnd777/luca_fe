@@ -22,7 +22,7 @@ const columns: ColumnDef<NewestOrderModel>[] = [
     width: 95,
     accessor: (row) => ({ text: priorityLabel(row.priorityLatest), color: priorityColor(row.priorityLatest) }),
   },
-  { key: "codeLatest", header: "Mã đơn hàng", labelField: true },
+  { key: "codeLatest", header: "Mã đơn", labelField: true },
   // { key: "code", header: "Mã gốc" },
   { key: "createdAt", header: "Ngày tạo đơn", type: "datetime" },
 ];
@@ -31,7 +31,7 @@ registerTable("order-newest", () => {
   return createTableSchema<NewestOrderModel>({
     columns,
     fetch: async (opts: FetchTableOpts) => await newestList(opts),
-    initialPageSize: 10,
+    initialPageSize: 5,
     initialSort: { by: "created_at", dir: "desc" },
     onView: (row: NewestOrderModel) => { navigate(`/order/${row.id}`) },
   });

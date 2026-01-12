@@ -27,6 +27,19 @@ registerSlot({
 });
 
 registerSlot({
+  id: "order-newest",
+  name: "order:top",
+  render: () => (
+    <>
+      <SectionCard title="Đơn mới">
+        <AutoTable name="order-newest" />
+      </SectionCard>
+    </>
+  ),
+  priority: 3,
+});
+
+registerSlot({
   id: "order-inprogress",
   name: "order:top",
   render: () => (
@@ -39,15 +52,15 @@ registerSlot({
   priority: 2,
 });
 
-registerSlot({
-  id: "order-newest",
-  name: "order:top",
-  render: () => (
-    <>
-      <SectionCard title="Đơn mới">
-        <AutoTable name="order-newest" />
-      </SectionCard>
-    </>
-  ),
-  priority: 1,
-});
+// registerSlot({
+//   id: "order-completed",
+//   name: "order:top",
+//   render: () => (
+//     <>
+//       <SectionCard title="Hoàn thành">
+//         <AutoTable name="order-completed" />
+//       </SectionCard>
+//     </>
+//   ),
+//   priority: 1,
+// });

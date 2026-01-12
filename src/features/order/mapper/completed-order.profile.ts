@@ -1,18 +1,15 @@
 import { mapper } from "@root/core/mapper/auto-mapper";
-import type { InProgressOrderModel } from "../model/inprogress-order.model";
+import type { CompletedOrderModel } from "../model/completed-order.model";
 
-mapper.register<InProgressOrderModel>({
-  name: "InProgressOrder",
+mapper.register<CompletedOrderModel>({
+  name: "CompletedOrder",
   dtoToModelNaming: "snake_to_camel",
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
     code: null,
     codeLatest: null,
-    deliveryDate: null,
-    now: null,
-    totalPrice: null,
-    processNameLatest: null,
+    createdAt: null,
     statusLatest: null,
     priorityLatest: null,
   }),

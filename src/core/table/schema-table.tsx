@@ -191,7 +191,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
 ) {
   const { schema, schemaName, params } = props;
 
-  const [page, setPage] = React.useState(0);
+  const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(schema.initialPageSize ?? 20);
   const [sortBy, setSortBy] = React.useState<string | null>(schema.initialSort?.by ?? null);
   const [sortDir, setSortDir] = React.useState<SortDir>(schema.initialSort?.dir ?? "asc");
@@ -291,10 +291,10 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         total={total}
         loading={loading}
         onPageChange={(p) => setPage(p)}
-        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
 
         // sort (server-side)
-        onSortChange={(by, dir) => { setSortBy(by); setSortDir(dir); setPage(0); }}
+        onSortChange={(by, dir) => { setSortBy(by); setSortDir(dir); setPage(1); }}
         sortBy={sortBy}
         sortDirection={sortDir}
 

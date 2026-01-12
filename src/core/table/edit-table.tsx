@@ -458,7 +458,7 @@ export function EditTable<T extends { id?: string | number }>({
       if (oldIndex === -1 || newIndex === -1) return;
       const newRows = arrayMove(dndRows, oldIndex, newIndex);
       setDndRows(newRows);
-      const offset = page * pageSize;
+      const offset = (page - 1) * pageSize;
       onReorder?.(newRows, oldIndex + offset, newIndex + offset);
     },
     [enableDnd, rowIds, dndRows, onReorder, page, pageSize]
@@ -1037,10 +1037,12 @@ export function EditTable<T extends { id?: string | number }>({
         <TablePagination
           component="div"
           count={total ?? -1}
-          page={page}
-          onPageChange={(_, p) => onPageChange(p)}
+          page={page - 1}
+          onPageChange={(_, p) => onPageChange(p + 1)}
           rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
+          onRowsPerPageChange={(e) => 
+            onPageSizeChange?.(parseInt(e.target.value, 10))
+          }
           rowsPerPageOptions={[10, 20, 50, 100]}
         />
       </Box>

@@ -2,7 +2,7 @@ import { registerTable } from "@core/table/table-registry";
 import { createTableSchema, type ColumnDef, type FetchTableOpts } from "@core/table/table.types";
 import { reloadTable } from "@core/table/table-reload";
 import type { OrderModel } from "@features/order/model/order.model";
-import { table } from "@features/order/api/order.api";
+import { list } from "@features/order/api/order.api";
 import { priorityColor, priorityLabel, statusColor, statusLabel } from "@root/shared/utils/order.utils";
 import { navigate } from "@root/core/navigation/navigate";
 import { getLatestOrderItemIdByOrderId, unlink } from "../api/order-item.api";
@@ -59,7 +59,7 @@ const columns: ColumnDef<OrderModel>[] = [
 registerTable("orders", () => {
   return createTableSchema<OrderModel>({
     columns,
-    fetch: async (opts: FetchTableOpts) => await table(opts),
+    fetch: async (opts: FetchTableOpts) => await list(opts),
     initialPageSize: 10,
     initialSort: { by: "updated_at", dir: "desc" },
     // allowUpdating: ["order.update"],

@@ -98,7 +98,7 @@ export async function prepareForRemakeByOrderID(orderId: number): Promise<OrderM
   return result;
 }
 
-export async function table(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
+export async function list(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/list`, tableOpts);
   const result = mapper.map<any[], ListResult<OrderModel>>("Order", data, "dto_to_model");

@@ -89,16 +89,31 @@ export function relTime(
   targetOrDiff?: string | number | Date | null,
   base?: string | number | Date | null
 ): { text: string; color: string } {
+  let targetMs: number | null = null;
+  let baseMs: number | null = null;
   const diffMs = base === undefined
     ? toMs(targetOrDiff)
     : (() => {
-      const targetMs = toMs(targetOrDiff);
-      const baseMs = toMs(base);
+      targetMs = toMs(targetOrDiff);
+      baseMs = toMs(base);
       if (targetMs == null || baseMs == null) return null;
       return targetMs - baseMs;
     })();
 
   if (diffMs == null) return { text: "", color: "" };
+
+  if (base !== undefined && targetMs != null && baseMs != null) {
+    const targetDate = new Date(targetMs);
+    const baseDate = new Date(baseMs);
+    if (
+      targetDate.getFullYear() === baseDate.getFullYear() &&
+      targetDate.getMonth() === baseDate.getMonth() &&
+      targetDate.getDate() === baseDate.getDate()
+    ) {
+      const isLate = diffMs < 0;
+      return { text: "Hôm nay", color: isLate ? "#d32f2f" : "#2e7d32" };
+    }
+  }
 
   const absMs = Math.abs(diffMs);
   let value: number;

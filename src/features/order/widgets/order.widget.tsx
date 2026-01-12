@@ -9,7 +9,7 @@ import { IfPermission } from "@root/core/auth/if-permission";
 function OrderWidget() {
   return (
     <>
-      <SectionCard extra={
+      <SectionCard title="Tất cả" extra={
         <>
           <IfPermission permissions={["order.create"]}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
@@ -28,4 +28,30 @@ registerSlot({
   id: "order",
   name: "order:left",
   render: () => <OrderWidget />,
-})
+});
+
+registerSlot({
+  id: "order-inprogress",
+  name: "order:top",
+  render: () => (
+    <>
+      <SectionCard title="Đang gia công">
+        <AutoTable name="order-inprogress" />
+      </SectionCard>
+    </>
+  ),
+  priority: 1,
+});
+
+registerSlot({
+  id: "order-newest",
+  name: "order:top",
+  render: () => (
+    <>
+      <SectionCard title="Đơn mới">
+        <AutoTable name="order-newest" />
+      </SectionCard>
+    </>
+  ),
+  priority: 2,
+});

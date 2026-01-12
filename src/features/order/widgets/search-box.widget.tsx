@@ -30,7 +30,7 @@ function SearchBoxWidget() {
 
 registerSlot({
   id: "search-order",
-  name: "order:left",
+  name: "order:header",
   render: () => <SearchBoxWidget />,
   priority: 99,
 })

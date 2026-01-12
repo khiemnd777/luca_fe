@@ -1,6 +1,8 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
 import type { OrderModel, OrderUpsertModel } from "@features/order/model/order.model";
+import type { InProgressOrderModel } from "@features/order/model/inprogress-order.model";
+import type { NewestOrderModel } from "@features/order/model/newest-order.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
@@ -95,6 +97,20 @@ export async function prepareForRemakeByOrderID(orderId: number): Promise<OrderM
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.get<any>(`${departmentApiPath()}/order/${orderId}/remake/prepare`);
   const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
+export async function newestList(tableOpts: FetchTableOpts): Promise<ListResult<NewestOrderModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/newest/list`, tableOpts);
+  const result = mapper.map<any[], ListResult<NewestOrderModel>>("NewestOrder", data, "dto_to_model");
+  return result;
+}
+
+export async function inProgressList(tableOpts: FetchTableOpts): Promise<ListResult<InProgressOrderModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/in-progress/list`, tableOpts);
+  const result = mapper.map<any[], ListResult<InProgressOrderModel>>("InProgressOrder", data, "dto_to_model");
   return result;
 }
 

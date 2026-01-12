@@ -101,15 +101,21 @@ export function relTime(
   if (diffMs == null) return { text: "", color: "" };
 
   const absMs = Math.abs(diffMs);
-  let value = Math.ceil(absMs / MS_PER_DAY);
-  let unit = "ngày";
+  let value: number;
+  let unit: string;
 
-  if (absMs >= MS_PER_YEAR) {
+  if (absMs < MS_PER_DAY) {
+    value = Math.ceil(absMs / (60 * 60 * 1000));
+    unit = "giờ";
+  } else if (absMs >= MS_PER_YEAR) {
     value = Math.ceil(absMs / MS_PER_YEAR);
     unit = "năm";
   } else if (absMs >= MS_PER_MONTH) {
     value = Math.ceil(absMs / MS_PER_MONTH);
     unit = "tháng";
+  } else {
+    value = Math.ceil(absMs / MS_PER_DAY);
+    unit = "ngày";
   }
 
   if (value <= 0) value = 0;

@@ -12,4 +12,12 @@ export interface OrderItemMaterialModel {
   status?: string | null;
   isCloneable?: boolean | null;
   note?: string | null;
+  clinicId?: number | null;
+  clinicName?: string | null;
+  dentistId?: number | null;
+  dentistName?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  onLoanAt?: string | null;
+  returnedAt?: string | null;
 }

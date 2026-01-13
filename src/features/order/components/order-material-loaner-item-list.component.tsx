@@ -43,6 +43,7 @@ function defaultFactory(values: Record<string, any>): OrderItemMaterialModel {
     orderId: values.orderId ?? null,
     quantity: 1,
     retailPrice: 0,
+    status: "on_loan",
   };
 }
 
@@ -53,11 +54,12 @@ function normalizeItem(item: OrderItemMaterialModel) {
     quantity: Number(item.quantity) || 0,
     retailPrice: item.retailPrice == null ? null : Number(item.retailPrice) || 0,
     note: item.note ?? "",
+    status: item.status,
   };
 }
 
 function buildSignature(vals: Record<string, any>) {
-  return `${vals.materialId ?? "null"}|${vals.materialCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}|${vals.note ?? ""}`;
+  return `${vals.materialId ?? "null"}|${vals.materialCode ?? ""}|${Number(vals.quantity) || 0}|${vals.retailPrice ?? "null"}|${vals.status ?? ""}|${vals.note ?? ""}`;
 }
 
 export function OrderLoanerMaterialItemList({

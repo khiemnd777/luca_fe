@@ -19,5 +19,13 @@ mapper.register<OrderItemMaterialModel>({
     status: null,
     isCloneable: null,
     note: null,
+    clinicId: null,
+    clinicName: null,
+    dentistId: null,
+    dentistName: null,
+    patientId: null,
+    patientName: null,
+    onLoanAt: null,
+    returnedAt: null,
   }),
 });

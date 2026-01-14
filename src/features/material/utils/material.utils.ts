@@ -20,6 +20,7 @@ export function materialTypeLabel(value?: string | null): string {
 // status
 export const MATERIAL_STATUSES = [
   { label: "Đang cho mượn", value: "on_loan" },
+  { label: "Thu hồi 1 phần", value: "partial_returned" },
   { label: "Đã thu hồi", value: "returned" },
 ] as const;
 

@@ -18,6 +18,7 @@ mapper.register<OrderItemProcessInProgressProcessModel>({
     completedAt: null,
     processName: null,
     sectionName: null,
+    sectionId: null,
     color: null,
   }),
 });

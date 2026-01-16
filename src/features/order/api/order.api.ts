@@ -122,6 +122,13 @@ export async function inProgressList(tableOpts: FetchTableOpts): Promise<ListRes
   return result;
 }
 
+export async function listBySectionID(sectionId: number, tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/section/${sectionId}/orders`, tableOpts);
+  const result = mapper.map<any[], ListResult<OrderModel>>("Order", data, "dto_to_model");
+  return result;
+}
+
 export async function list(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/list`, tableOpts);

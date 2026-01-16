@@ -14,6 +14,17 @@ const mod: ModuleDescriptor = {
       path: "/section",
       icon: <MapsHomeWorkIcon />,
       priority: 95,
+      children: [
+        {
+          hidden: true,
+          key: "section-detail",
+          permissions: ["staff.view"],
+          label: "Phòng ban",
+          title: "Phòng ban",
+          path: "/section/:sectionId",
+          priority: 99,
+        }
+      ]
     },
   ],
 };

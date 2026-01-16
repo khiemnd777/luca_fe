@@ -11,5 +11,6 @@ export interface OrderItemProcessInProgressProcessModel {
   completedAt?: string | null;
   processName?: string | null;
   sectionName?: string | null;
+  sectionId?: number | null;
   color?: string | null;
 }

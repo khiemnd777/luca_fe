@@ -6,6 +6,7 @@ import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/section/api/section.api";
 import type { SectionModel } from "@features/section/model/section.model";
 import { search } from "@root/core/relation/relation.api";
+import { registerForm } from "@root/core/form/form-registry";
 
 export function buildSectionSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -109,6 +110,8 @@ export function buildSectionSchema(): FormSchema {
     },
   };
 }
+
+registerForm("section", buildSectionSchema);
 
 registerFormDialog("section", buildSectionSchema, {
   title: { create: "Thêm bộ phận", update: "Cập nhật bộ phận" },

@@ -4,6 +4,7 @@ import { openFormDialog } from "@core/form/form-dialog.service";
 import type { SectionModel } from "@features/section/model/section.model";
 import { table, unlink } from "@features/section/api/section.api";
 import { reloadTable } from "@root/core/table/table-reload";
+import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<SectionModel>[] = [
   { key: "name", header: "Tên phòng ban", sortable: true, labelField: true },
@@ -19,6 +20,9 @@ registerTable("sections", () =>
     initialSort: { by: "id", dir: "asc" },
     allowUpdating: ["staff.update"],
     allowDeleting: ["staff.delete"],
+    onView(row) {
+      navigate(`/section/${row.id}`);
+    },
     onEdit(row) {
       openFormDialog("section", { initial: { id: row.id } });
     },

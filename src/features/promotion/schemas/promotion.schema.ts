@@ -4,10 +4,21 @@ import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, id, update } from "@features/promotion/api/promotion.api";
+import { search as searchCategory, id as fetchCategoryById } from "@features/category/api/category.api";
+import type { CategoryModel } from "@features/category/model/category.model";
+import { search as searchProduct, id as fetchProductById } from "@features/product/api/product.api";
+import type { ProductModel } from "@features/product/model/product.model";
+import { search as searchCustomer, id as fetchCustomerById } from "@features/customer/api/customer.api";
+import type { CustomerModel } from "@features/customer/model/customer.model";
 import type {
   CreatePromotionInputModel,
   UpdatePromotionInputModel,
 } from "@features/promotion/model/promotion.model";
+import {
+  PROMOTION_CONDITIONS,
+  PROMOTION_DISCOUNT_TYPES,
+  PROMOTION_SCOPES,
+} from "@features/promotion/model/promotion.const";
 
 const parseDateTime = (value: any): number | null => {
   if (!value) return null;
@@ -42,6 +53,33 @@ const validateEndAt = async (value: any, values: Record<string, any>) => {
 const promotionLabel = (values: any) =>
   values?.dto?.code ?? values?.code ?? "";
 
+const categoryLabel = (c?: CategoryModel | null) => {
+  if (!c) return "";
+  const code = c.code ?? "";
+  const name = c.name ?? "";
+  if (code && name) return `${code} → ${name}`;
+  return code || name;
+};
+
+const productLabel = (p?: ProductModel | null) => {
+  if (!p) return "";
+  const code = p.code ?? "";
+  const name = p.name ?? "";
+  if (code && name) return `${code} → ${name}`;
+  return code || name;
+};
+
+const customerLabel = (c?: CustomerModel | null) => {
+  if (!c) return "";
+  const code = c.code ?? "";
+  const name = c.name ?? "";
+  if (code && name) return `${code} → ${name}`;
+  return code || name;
+};
+
+const hasCondition = (values: Record<string, any>, type: string) =>
+  Array.isArray(values.conditionTypes) && values.conditionTypes.includes(type);
+
 export function buildPromotionSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
@@ -54,12 +92,20 @@ export function buildPromotionSchema(): FormSchema {
       },
     },
     {
-      name: "discountType",
-      label: "Loại giảm",
+      name: "name",
+      label: "Tên khuyến mãi",
       kind: "text",
       rules: {
+        maxLength: 200,
+      },
+    },
+    {
+      name: "discountType",
+      label: "Loại giảm",
+      kind: "select",
+      options: [...PROMOTION_DISCOUNT_TYPES],
+      rules: {
         required: "Yêu cầu nhập loại giảm",
-        maxLength: 50,
       },
     },
     {
@@ -109,6 +155,128 @@ export function buildPromotionSchema(): FormSchema {
       step: 1,
     },
     {
+      name: "scopeType",
+      label: "Phạm vi áp dụng",
+      kind: "select",
+      options: [...PROMOTION_SCOPES],
+      defaultValue: "ALL",
+      rules: {
+        required: "Yêu cầu chọn phạm vi áp dụng",
+      },
+    },
+    {
+      name: "scopeCategoryIds",
+      label: "Danh mục áp dụng",
+      kind: "searchlist",
+      placeholder: "Tìm danh mục áp dụng",
+      fullWidth: true,
+      pageLimit: 50,
+      showIf: (values) => values.scopeType === "CATEGORY",
+      getOptionLabel: (c: CategoryModel) => categoryLabel(c),
+      getOptionValue: (c: CategoryModel) => c?.id,
+      async searchPage(keyword: string, page: number, limit: number) {
+        const result = await searchCategory({
+          keyword,
+          limit,
+          page,
+          orderBy: "code",
+        });
+        return result.items;
+      },
+      async hydrateByIds(ids: Array<number | string>) {
+        if (!ids || ids.length === 0) return [];
+        const items = await Promise.all(
+          ids.map((idValue) => fetchCategoryById(Number(idValue)))
+        );
+        return items.filter(Boolean);
+      },
+    },
+    {
+      name: "scopeProductIds",
+      label: "Sản phẩm áp dụng",
+      kind: "searchlist",
+      placeholder: "Tìm sản phẩm áp dụng",
+      fullWidth: true,
+      pageLimit: 50,
+      showIf: (values) => values.scopeType === "PRODUCT",
+      getOptionLabel: (p: ProductModel) => productLabel(p),
+      getOptionValue: (p: ProductModel) => p?.id,
+      async searchPage(keyword: string, page: number, limit: number) {
+        const result = await searchProduct({
+          keyword,
+          limit,
+          page,
+          orderBy: "code",
+        });
+        return result.items;
+      },
+      async hydrateByIds(ids: Array<number | string>) {
+        if (!ids || ids.length === 0) return [];
+        const items = await Promise.all(
+          ids.map((idValue) => fetchProductById(Number(idValue)))
+        );
+        return items.filter(Boolean);
+      },
+    },
+    {
+      name: "scopeUserIds",
+      label: "Khách hàng áp dụng",
+      kind: "searchlist",
+      placeholder: "Tìm khách hàng áp dụng",
+      fullWidth: true,
+      pageLimit: 50,
+      showIf: (values) => values.scopeType === "USER",
+      getOptionLabel: (c: CustomerModel) => customerLabel(c),
+      getOptionValue: (c: CustomerModel) => c?.id,
+      async searchPage(keyword: string, page: number, limit: number) {
+        const result = await searchCustomer({
+          keyword,
+          limit,
+          page,
+          orderBy: "code",
+        });
+        return result.items;
+      },
+      async hydrateByIds(ids: Array<number | string>) {
+        if (!ids || ids.length === 0) return [];
+        const items = await Promise.all(
+          ids.map((idValue) => fetchCustomerById(Number(idValue)))
+        );
+        return items.filter(Boolean);
+      },
+    },
+    {
+      name: "conditionTypes",
+      label: "Điều kiện",
+      kind: "multiselect",
+      options: [...PROMOTION_CONDITIONS],
+      defaultValue: [],
+    },
+    {
+      name: "conditionRemakeCountLte",
+      label: "Số lần remake ≤",
+      kind: "number",
+      step: 1,
+      showIf: (values) =>
+        hasCondition(values, "REMAKE_COUNT_LTE") &&
+        !hasCondition(values, "REMAKE_WITHIN_DAYS"),
+    },
+    {
+      name: "conditionRemakeWithinDays",
+      label: "Remake trong số ngày",
+      kind: "number",
+      step: 1,
+      showIf: (values) =>
+        hasCondition(values, "REMAKE_WITHIN_DAYS") &&
+        !hasCondition(values, "REMAKE_COUNT_LTE"),
+    },
+    {
+      name: "conditionRemakeReason",
+      label: "Lý do remake",
+      kind: "text",
+      showIf: (values) => hasCondition(values, "REMAKE_REASON"),
+    },
+    {
       name: "startAt",
       label: "Thời gian bắt đầu",
       kind: "datetime",
@@ -135,6 +303,53 @@ export function buildPromotionSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    hooks: {
+      mapToDto: (v) => {
+        const dto = { ...(v.dto ?? {}) };
+        const scopeType = dto.scope_type as string | undefined;
+        const scopeCategoryIds = dto.scope_category_ids;
+        const scopeProductIds = dto.scope_product_ids;
+        const scopeUserIds = dto.scope_user_ids;
+
+        delete dto.scope_type;
+        delete dto.scope_category_ids;
+        delete dto.scope_product_ids;
+        delete dto.scope_user_ids;
+
+        let scopeValue: any = null;
+        if (scopeType === "CATEGORY") scopeValue = scopeCategoryIds ?? null;
+        if (scopeType === "PRODUCT") scopeValue = scopeProductIds ?? null;
+        if (scopeType === "USER") scopeValue = scopeUserIds ?? null;
+
+        dto.scopes = scopeType
+          ? [{ scope_type: scopeType, scope_value: scopeValue }]
+          : [];
+
+        const conditionTypes = dto.condition_types as string[] | undefined;
+        const countValue = dto.condition_remake_count_lte;
+        const withinValue = dto.condition_remake_within_days;
+        const reasonValue = dto.condition_remake_reason;
+
+        delete dto.condition_types;
+        delete dto.condition_remake_count_lte;
+        delete dto.condition_remake_within_days;
+        delete dto.condition_remake_reason;
+
+        const conditions: Array<{ condition_type: string; condition_value: any | null }> = [];
+        if (Array.isArray(conditionTypes)) {
+          for (const type of conditionTypes) {
+            let conditionValue: any = null;
+            if (type === "REMAKE_COUNT_LTE") conditionValue = countValue ?? null;
+            if (type === "REMAKE_WITHIN_DAYS") conditionValue = withinValue ?? null;
+            if (type === "REMAKE_REASON") conditionValue = reasonValue ?? null;
+            conditions.push({ condition_type: type, condition_value: conditionValue });
+          }
+        }
+        dto.conditions = conditions;
+
+        return { ...v, dto };
+      },
+    },
     submit: {
       create: {
         type: "fn",
@@ -169,7 +384,24 @@ export function buildPromotionSchema(): FormSchema {
     },
     async initialResolver(data: any) {
       if (data) {
-        return await id(data.id);
+        const promotion = await id(data.id);
+        const firstScope = promotion.scopes?.[0];
+        const conditionTypes = promotion.conditions?.map((c) => c.conditionType) ?? [];
+        const conditionCount = promotion.conditions?.find((c) => c.conditionType === "REMAKE_COUNT_LTE");
+        const conditionWithin = promotion.conditions?.find((c) => c.conditionType === "REMAKE_WITHIN_DAYS");
+        const conditionReason = promotion.conditions?.find((c) => c.conditionType === "REMAKE_REASON");
+
+        return {
+          ...promotion,
+          scopeType: firstScope?.scopeType ?? "ALL",
+          scopeCategoryIds: firstScope?.scopeType === "CATEGORY" ? firstScope.scopeValue : [],
+          scopeProductIds: firstScope?.scopeType === "PRODUCT" ? firstScope.scopeValue : [],
+          scopeUserIds: firstScope?.scopeType === "USER" ? firstScope.scopeValue : [],
+          conditionTypes,
+          conditionRemakeCountLte: conditionCount?.conditionValue ?? null,
+          conditionRemakeWithinDays: conditionWithin?.conditionValue ?? null,
+          conditionRemakeReason: conditionReason?.conditionValue ?? null,
+        };
       }
       return {};
     },

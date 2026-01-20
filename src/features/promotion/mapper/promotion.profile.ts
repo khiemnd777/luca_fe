@@ -18,6 +18,8 @@ mapper.register<PromotionCodeModel>({
     startAt: "",
     endAt: "",
     isActive: false,
+    scopes: [],
+    conditions: [],
     createdAt: "",
     updatedAt: "",
   }),

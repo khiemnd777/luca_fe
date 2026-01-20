@@ -1,3 +1,18 @@
+import type {
+  PromotionConditionType,
+  PromotionScopeType,
+} from "@features/promotion/model/promotion.const";
+
+export interface PromotionScopeInputModel {
+  scopeType: PromotionScopeType;
+  scopeValue: any[] | null;
+}
+
+export interface PromotionConditionInputModel {
+  conditionType: PromotionConditionType;
+  conditionValue: any | null;
+}
+
 export interface PromotionCodeModel {
   id: number;
   code: string;
@@ -11,6 +26,8 @@ export interface PromotionCodeModel {
   startAt: string;
   endAt: string;
   isActive: boolean;
+  scopes?: PromotionScopeInputModel[];
+  conditions?: PromotionConditionInputModel[];
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +43,8 @@ export interface CreatePromotionInputModel {
   startAt?: string;
   endAt?: string;
   isActive: boolean;
+  scopes: PromotionScopeInputModel[];
+  conditions: PromotionConditionInputModel[];
 }
 
 export interface UpdatePromotionInputModel {
@@ -38,4 +57,6 @@ export interface UpdatePromotionInputModel {
   startAt?: string;
   endAt?: string;
   isActive?: boolean;
+  scopes: PromotionScopeInputModel[];
+  conditions: PromotionConditionInputModel[];
 }

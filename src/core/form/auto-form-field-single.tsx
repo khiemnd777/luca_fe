@@ -782,6 +782,7 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
         searchPage={f.searchPage}
         getOptionLabel={f.getOptionLabel!}
         getOptionValue={f.getOptionValue!}
+        hydrateByIds={f.hydrateByIds}
         fetchList={f.fetchList}
         onAdd={f.onAdd}
         onDelete={f.onDelete}

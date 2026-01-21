@@ -134,7 +134,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     ctx,
   } = props;
 
-  const isControlledByIds = Array.isArray(selectedIds) && selectedIds.length > 0 && typeof hydrateByIds === "function";
+  const isControlledByIds = Array.isArray(selectedIds) && typeof hydrateByIds === "function";
 
   const listInset = 3; // 14px
 
@@ -168,7 +168,8 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!isControlledByIds) return;
+      if (!Array.isArray(selectedIds)) return;
+      if (Array.isArray(selectedIds) && selectedIds.length === 0) return;
       if (!hydrateByIds) return;
 
       try {
@@ -189,7 +190,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       }
     })();
     return () => { cancelled = true; };
-  }, [isControlledByIds, selectedIds, hydrateByIds, values, getOptionValue]);
+  }, [selectedIds, hydrateByIds, values, getOptionValue]);
 
   // Uncontrolled hydrate: dùng fetchDeps (hoặc mặc định values.id) để tránh loop
   const defaultFetchKey = values && "id" in values ? (values as any).id : "__NO_ID__";

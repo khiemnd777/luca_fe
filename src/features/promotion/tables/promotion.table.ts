@@ -3,7 +3,7 @@ import { createTableSchema, type ColumnDef, type FetchTableOpts } from "@core/ta
 import { reloadTable } from "@core/table/table-reload";
 import { openFormDialog } from "@core/form/form-dialog.service";
 import { navigate } from "@root/core/navigation/navigate";
-import { list, remove } from "@features/promotion/api/promotion.api";
+import { list, remove } from "@root/features/promotion/api/promotion-admin.api";
 import type { PromotionCodeModel } from "@features/promotion/model/promotion.model";
 import {
   PROMOTION_CONDITION_LABEL_MAP,

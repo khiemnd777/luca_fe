@@ -3,7 +3,7 @@ import type { FormSchema, GroupConfig } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
-import { create, id, update } from "@features/promotion/api/promotion.api";
+import { create, id, update } from "@root/features/promotion/api/promotion-admin.api";
 import { search as searchCategory, id as fetchCategoryById } from "@features/category/api/category.api";
 import type { CategoryModel } from "@features/category/model/category.model";
 import { search as searchProduct, id as fetchProductById } from "@features/product/api/product.api";

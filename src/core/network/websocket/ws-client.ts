@@ -16,12 +16,14 @@ export class WSClient {
   private reconnectTimer: any = null;
   private refreshing = false;
 
+  // heartbeat (message-level)
+  private hbTimer: any = null;
+  private readonly clientPingPeriodMs = 20000; // must be < server pongWait (60s), keep it stable
+
   private buildUrl(): string | null {
     const token = getAccessToken();
     if (!token) return null;
 
-    // vẫn giữ query token cho đúng với server hiện tại
-    // (sau này có thể đổi sang auth message)
     const qs = new URLSearchParams({ token });
     return `${env.wsBaseUrl}?${qs}`;
   }
@@ -38,9 +40,27 @@ export class WSClient {
     this.ws.onopen = () => {
       this.status = "open";
       this.reconnectAttempts = 0;
+
+      // start client heartbeat
+      this.startHeartbeat();
     };
 
     this.ws.onmessage = (ev) => {
+      // message-level heartbeat with server
+      if (typeof ev.data === "string") {
+        if (ev.data === "ping") {
+          // reply immediately, and DO NOT emit
+          try {
+            this.ws?.send("pong");
+          } catch {}
+          return;
+        }
+        if (ev.data === "pong") {
+          // ignore, do not emit
+          return;
+        }
+      }
+
       let payload: Message = ev.data;
       if (typeof ev.data === "string") {
         try {
@@ -53,10 +73,11 @@ export class WSClient {
     };
 
     this.ws.onclose = async (ev) => {
+      this.stopHeartbeat();
+
       this.status = "closed";
       this.ws = null;
 
-      // server chủ động close vì token
       if (ev.reason === "token_expired") {
         await this.handleTokenExpired();
         return;
@@ -66,8 +87,27 @@ export class WSClient {
     };
 
     this.ws.onerror = () => {
-      // onclose sẽ xử lý reconnect
+      // onclose handles reconnect
     };
+  }
+
+  private startHeartbeat() {
+    if (this.hbTimer) return;
+
+    this.hbTimer = setInterval(() => {
+      if (this.ws?.readyState !== WebSocket.OPEN) return;
+      try {
+        // client-initiated ping helps keep connection alive even if server ping is lost by proxy
+        this.ws.send("ping");
+      } catch {}
+    }, this.clientPingPeriodMs);
+  }
+
+  private stopHeartbeat() {
+    if (this.hbTimer) {
+      clearInterval(this.hbTimer);
+      this.hbTimer = null;
+    }
   }
 
   private async handleTokenExpired() {
@@ -114,10 +154,15 @@ export class WSClient {
   }
 
   close() {
+    this.stopHeartbeat();
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+
+    // Important: prevent auto reconnect after manual close
+    this.reconnectAttempts = 0;
 
     this.ws?.close();
     this.ws = null;

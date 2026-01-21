@@ -1,5 +1,5 @@
 import type { FieldDef } from "@core/form/types";
-import type { FormSchema } from "@core/form/form.types";
+import type { FormSchema, GroupConfig } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
@@ -19,6 +19,25 @@ import {
   PROMOTION_DISCOUNT_TYPES,
   PROMOTION_SCOPES,
 } from "@features/promotion/model/promotion.const";
+
+const promotionGroups: GroupConfig[] = [
+  { 
+    name: "general", 
+    label: "Thông tin chung",
+  },
+  { 
+    name: "scope",
+    label: "Phạm vi áp dụng",
+  },
+  { 
+    name: "condition",
+    label: "Điều kiện",
+  },
+  { 
+    name: "timing",
+    label: "Thời gian",
+  },
+];
 
 const parseDateTime = (value: any): number | null => {
   if (!value) return null;
@@ -86,6 +105,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "code",
       label: "Mã khuyến mãi",
       kind: "text",
+      group: "general",
       rules: {
         required: "Yêu cầu nhập mã khuyến mãi",
         maxLength: 50,
@@ -95,6 +115,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "name",
       label: "Tên khuyến mãi",
       kind: "text",
+      group: "general",
       rules: {
         maxLength: 200,
       },
@@ -103,6 +124,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "discountType",
       label: "Loại giảm",
       kind: "select",
+      group: "general",
       options: [...PROMOTION_DISCOUNT_TYPES],
       rules: {
         required: "Yêu cầu nhập loại giảm",
@@ -112,6 +134,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "discountValue",
       label: "Giá trị giảm",
       kind: "number",
+      group: "general",
       rules: {
         required: "Yêu cầu nhập giá trị giảm",
         min: 0,
@@ -122,6 +145,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "maxDiscountAmount",
       label: "Giảm tối đa",
       kind: "number",
+      group: "general",
       rules: {
         min: 0,
       },
@@ -131,6 +155,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "minOrderValue",
       label: "Giá trị đơn hàng tối thiểu",
       kind: "number",
+      group: "general",
       rules: {
         min: 0,
       },
@@ -140,6 +165,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "totalUsageLimit",
       label: "Giới hạn sử dụng",
       kind: "number",
+      group: "general",
       rules: {
         min: 0,
       },
@@ -149,6 +175,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "usagePerUser",
       label: "Giới hạn mỗi khách hàng",
       kind: "number",
+      group: "general",
       rules: {
         min: 0,
       },
@@ -158,6 +185,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "scopeType",
       label: "Phạm vi áp dụng",
       kind: "select",
+      group: "scope",
       options: [...PROMOTION_SCOPES],
       defaultValue: "ALL",
       rules: {
@@ -168,6 +196,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "scopeCategoryIds",
       label: "Danh mục áp dụng",
       kind: "searchlist",
+      group: "scope",
       placeholder: "Tìm danh mục áp dụng",
       fullWidth: true,
       pageLimit: 50,
@@ -195,6 +224,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "scopeProductIds",
       label: "Sản phẩm áp dụng",
       kind: "searchlist",
+      group: "scope",
       placeholder: "Tìm sản phẩm áp dụng",
       fullWidth: true,
       pageLimit: 50,
@@ -222,6 +252,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "scopeUserIds",
       label: "Khách hàng áp dụng",
       kind: "searchlist",
+      group: "scope",
       placeholder: "Tìm khách hàng áp dụng",
       fullWidth: true,
       pageLimit: 50,
@@ -249,6 +280,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "conditionTypes",
       label: "Điều kiện",
       kind: "multiselect",
+      group: "condition",
       options: [...PROMOTION_CONDITIONS],
       defaultValue: [],
     },
@@ -256,6 +288,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "conditionRemakeCountLte",
       label: "Số lần remake ≤",
       kind: "number",
+      group: "condition",
       step: 1,
       showIf: (values) =>
         hasCondition(values, "REMAKE_COUNT_LTE") &&
@@ -265,6 +298,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "conditionRemakeWithinDays",
       label: "Remake trong số ngày",
       kind: "number",
+      group: "condition",
       step: 1,
       showIf: (values) =>
         hasCondition(values, "REMAKE_WITHIN_DAYS") &&
@@ -274,12 +308,14 @@ export function buildPromotionSchema(): FormSchema {
       name: "conditionRemakeReason",
       label: "Lý do remake",
       kind: "text",
+      group: "condition",
       showIf: (values) => hasCondition(values, "REMAKE_REASON"),
     },
     {
       name: "startAt",
       label: "Thời gian bắt đầu",
       kind: "datetime",
+      group: "timing",
       rules: {
         async: validateStartAt,
       },
@@ -288,6 +324,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "endAt",
       label: "Thời gian kết thúc",
       kind: "datetime",
+      group: "timing",
       rules: {
         async: validateEndAt,
       },
@@ -296,6 +333,7 @@ export function buildPromotionSchema(): FormSchema {
       name: "isActive",
       label: "Kích hoạt",
       kind: "switch",
+      group: "general",
       defaultValue: true,
     },
   ];
@@ -303,6 +341,7 @@ export function buildPromotionSchema(): FormSchema {
   return {
     idField: "id",
     fields,
+    groups: promotionGroups,
     hooks: {
       mapToDto: (v) => {
         const dto = { ...(v.dto ?? {}) };

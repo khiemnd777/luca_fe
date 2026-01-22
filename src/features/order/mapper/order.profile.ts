@@ -8,6 +8,8 @@ mapper.register<OrderModel>({
   defaultModel: () => ({
     id: 0,
     code: "",
+    promotionCode: null,
+    promotionCodeId: null,
     customFields: null,
     customerId: 0,
     customerName: "",

@@ -14,7 +14,7 @@ type PromotionValidateButtonProps = {
 };
 
 export default function PromotionValidateButton({ values, ctx }: PromotionValidateButtonProps) {
-  const promoCode = String(values.__promotionCode ?? "").trim();
+  const promoCode = String(values.promotionCode ?? "").trim();
   const [result, setResult] = React.useState<PromotionValidateResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 

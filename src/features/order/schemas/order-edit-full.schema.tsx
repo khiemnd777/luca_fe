@@ -56,7 +56,7 @@ export function buildEditOrderSchema(): FormSchema {
     },
     {
       kind: "searchsingle",
-      name: "__promotionCode",
+      name: "promotionCode",
       label: "Mã khuyến mãi",
       placeholder: "Nhập mã khuyến mãi",
       fullWidth: true,
@@ -95,7 +95,7 @@ export function buildEditOrderSchema(): FormSchema {
         return items.find((item) => (item?.code ?? "").toLowerCase() === keyword.toLowerCase()) ?? null;
       },
       async fetchOne(values: Record<string, any>) {
-        const code = values.__promotionCode;
+        const code = values.promotionCode;
         if (!code) return null;
         const keyword = String(code);
         const result = await listPromotions({
@@ -110,7 +110,9 @@ export function buildEditOrderSchema(): FormSchema {
       },
       onBlur: (text, matched, ctx) => {
         if (!ctx) return;
-        ctx.setValue("__promotionCode", matched?.code ?? text);
+        const code = matched?.code ?? text;
+        ctx.setValue("promotionCode", code || null);
+        ctx.setValue("promotionCodeId", matched?.id ?? null);
       },
     },
     {

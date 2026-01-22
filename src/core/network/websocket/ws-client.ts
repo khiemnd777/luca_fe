@@ -29,7 +29,16 @@ export class WSClient {
   }
 
   connect() {
-    if (this.status === "connecting" || this.status === "open") return;
+    if (this.ws && (
+      this.ws.readyState === WebSocket.CONNECTING ||
+      this.ws.readyState === WebSocket.OPEN
+    )) {
+      return;
+    }
+
+    if (this.status === "connecting" || this.status === "open") {
+      return;
+    }
 
     const url = this.buildUrl();
     if (!url) return;
@@ -52,7 +61,7 @@ export class WSClient {
           // reply immediately, and DO NOT emit
           try {
             this.ws?.send("pong");
-          } catch {}
+          } catch { }
           return;
         }
         if (ev.data === "pong") {
@@ -99,7 +108,7 @@ export class WSClient {
       try {
         // client-initiated ping helps keep connection alive even if server ping is lost by proxy
         this.ws.send("ping");
-      } catch {}
+      } catch { }
     }, this.clientPingPeriodMs);
   }
 
@@ -154,19 +163,27 @@ export class WSClient {
   }
 
   close() {
+    if (!this.ws) return;
+
+    const state = this.ws.readyState;
+
+    if (state === WebSocket.CONNECTING) return;
+    
+    if (state === WebSocket.OPEN) {
+      this.ws.close();
+    }
+
     this.stopHeartbeat();
+    
+    this.reconnectAttempts = 0;
+    
+    this.ws = null;
+    this.status = "closed";
 
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-
-    // Important: prevent auto reconnect after manual close
-    this.reconnectAttempts = 0;
-
-    this.ws?.close();
-    this.ws = null;
-    this.status = "closed";
   }
 
   getStatus(): WSStatus {

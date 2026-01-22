@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { wsClient } from "@root/core/network/websocket/ws-client";
+import { wsClient, type WSStatus } from "./ws-client";
 
 export function useWebSocket<T = any>() {
-  const [status, setStatus] = useState(wsClient.getStatus());
+  const [status, setStatus] = useState<WSStatus>(wsClient.getStatus());
   const [lastMessage, setLastMessage] = useState<T | null>(null);
 
   useEffect(() => {
     const off = wsClient.on((msg) => setLastMessage(msg as T));
-    const iv = setInterval(() => setStatus(wsClient.getStatus()), 500);
+
+    const iv = setInterval(() => {
+      setStatus(wsClient.getStatus());
+    }, 1000);
+
     return () => {
       off();
       clearInterval(iv);

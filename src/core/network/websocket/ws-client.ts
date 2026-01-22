@@ -11,11 +11,14 @@ export class WSClient {
   private ws: WebSocket | null = null;
   private status: WSStatus = "idle";
   private listeners = new Set<Listener>();
-  private reconnectAttempts = 0;
-  private heartbeatTimer: any = null;
-  private lastPongAt = 0;
 
+  private reconnectAttempts = 0;
+  private reconnectTimer: any = null;
   private refreshing = false;
+
+  // heartbeat (message-level)
+  private hbTimer: any = null;
+  private readonly clientPingPeriodMs = 20000; // must be < server pongWait (60s), keep it stable
 
   private buildUrl(): string | null {
     const token = getAccessToken();
@@ -26,7 +29,16 @@ export class WSClient {
   }
 
   connect() {
-    if (this.status === "connecting" || this.status === "open") return;
+    if (this.ws && (
+      this.ws.readyState === WebSocket.CONNECTING ||
+      this.ws.readyState === WebSocket.OPEN
+    )) {
+      return;
+    }
+
+    if (this.status === "connecting" || this.status === "open") {
+      return;
+    }
 
     const url = this.buildUrl();
     if (!url) return;
@@ -37,40 +49,74 @@ export class WSClient {
     this.ws.onopen = () => {
       this.status = "open";
       this.reconnectAttempts = 0;
+
+      // start client heartbeat
       this.startHeartbeat();
     };
 
     this.ws.onmessage = (ev) => {
-      if (typeof ev.data === "string" && ev.data === "pong") {
-        this.lastPongAt = Date.now();
-        return;
+      // message-level heartbeat with server
+      if (typeof ev.data === "string") {
+        if (ev.data === "ping") {
+          // reply immediately, and DO NOT emit
+          try {
+            this.ws?.send("pong");
+          } catch { }
+          return;
+        }
+        if (ev.data === "pong") {
+          // ignore, do not emit
+          return;
+        }
       }
 
       let payload: Message = ev.data;
-      try {
-        payload = JSON.parse(ev.data as string);
-      } catch { }
-
+      if (typeof ev.data === "string") {
+        try {
+          payload = JSON.parse(ev.data);
+        } catch {
+          payload = ev.data;
+        }
+      }
       this.emit(payload);
     };
 
     this.ws.onclose = async (ev) => {
-      this.status = "closed";
       this.stopHeartbeat();
 
-      // auth close
+      this.status = "closed";
+      this.ws = null;
+
       if (ev.reason === "token_expired") {
         await this.handleTokenExpired();
         return;
       }
 
-      // network / gateway / unknown
       this.scheduleReconnect();
     };
 
     this.ws.onerror = () => {
-      // onclose will handle
+      // onclose handles reconnect
     };
+  }
+
+  private startHeartbeat() {
+    if (this.hbTimer) return;
+
+    this.hbTimer = setInterval(() => {
+      if (this.ws?.readyState !== WebSocket.OPEN) return;
+      try {
+        // client-initiated ping helps keep connection alive even if server ping is lost by proxy
+        this.ws.send("ping");
+      } catch { }
+    }, this.clientPingPeriodMs);
+  }
+
+  private stopHeartbeat() {
+    if (this.hbTimer) {
+      clearInterval(this.hbTimer);
+      this.hbTimer = null;
+    }
   }
 
   private async handleTokenExpired() {
@@ -81,7 +127,7 @@ export class WSClient {
       const refreshToken = getRefreshToken();
       await refreshAccessToken(refreshToken);
       this.refreshing = false;
-      this.connect(); // reconnect with new token
+      this.connect();
     } catch {
       this.refreshing = false;
       this.close();
@@ -89,33 +135,22 @@ export class WSClient {
   }
 
   private scheduleReconnect() {
+    if (this.reconnectTimer) return;
+
     this.reconnectAttempts++;
     const backoff = Math.min(1000 * 2 ** (this.reconnectAttempts - 1), 15000);
-    setTimeout(() => this.connect(), backoff);
-  }
 
-  private startHeartbeat() {
-    this.lastPongAt = Date.now();
-    this.heartbeatTimer = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send("ping");
-        if (Date.now() - this.lastPongAt > 30000) {
-          this.ws.close();
-        }
-      }
-    }, 10000);
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.heartbeatTimer = null;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, backoff);
   }
 
   send(data: any) {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+
     const msg = typeof data === "string" ? data : JSON.stringify(data);
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(msg);
-    }
+    this.ws.send(msg);
   }
 
   on(fn: Listener) {
@@ -128,10 +163,27 @@ export class WSClient {
   }
 
   close() {
+    if (!this.ws) return;
+
+    const state = this.ws.readyState;
+
+    if (state === WebSocket.CONNECTING) return;
+    
+    if (state === WebSocket.OPEN) {
+      this.ws.close();
+    }
+
     this.stopHeartbeat();
-    this.ws?.close();
+    
+    this.reconnectAttempts = 0;
+    
     this.ws = null;
     this.status = "closed";
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
   }
 
   getStatus(): WSStatus {

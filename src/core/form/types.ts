@@ -30,6 +30,7 @@ export type DeriveMode = "always" | "whenEmpty" | "untilManual";
 
 export type FormContext = {
   formSessionId: string | null;
+  metadataBlocks: { meta: FieldDef; fields: FieldDef[]; deps: string[]; collections: string[] }[];
   values: Record<string, any>;
   setValue: (name: string, v: any) => void;
   setAllValues: (obj: Record<string, any>) => void;

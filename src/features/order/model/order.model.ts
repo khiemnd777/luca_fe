@@ -3,6 +3,8 @@ import type { OrderItemModel, OrderItemUpsertModel } from "./order-item.model";
 export interface OrderModel {
   id: number;
   code: string;
+  promotionCode?: string | null;
+  promotionCodeId?: number | null;
   customFields?: Record<string, any> | null;
   latestOrderItemUpsert?: OrderItemUpsertModel | Record<string, any> | null;
   latestOrderItem?: OrderItemModel | Record<string, any> | null;

@@ -852,6 +852,7 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // ----------------------------------------------------
     ctxRef.current = {
       formSessionId: formSessionIdRef.current,
+      metadataBlocks,
       values,
       setValue: setValueProg,
       setAllValues: setAllValuesProg,

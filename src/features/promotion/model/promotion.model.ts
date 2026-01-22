@@ -19,10 +19,10 @@ export interface PromotionCodeModel {
   name?: string;
   discountType: string;
   discountValue: number;
-  maxDiscountAmount?: number;
-  minOrderValue?: number;
-  totalUsageLimit?: number;
-  usagePerUser?: number;
+  maxDiscountAmount?: number | null;
+  minOrderValue?: number | null;
+  totalUsageLimit?: number | null;
+  usagePerUser?: number | null;
   startAt: string;
   endAt: string;
   isActive: boolean;
@@ -36,10 +36,10 @@ export interface CreatePromotionInputModel {
   code: string;
   discountType: string;
   discountValue: number;
-  maxDiscountAmount?: number;
-  minOrderValue?: number;
-  totalUsageLimit?: number;
-  usagePerUser?: number;
+  maxDiscountAmount?: number | null;
+  minOrderValue?: number | null;
+  totalUsageLimit?: number | null;
+  usagePerUser?: number | null;
   startAt?: string;
   endAt?: string;
   isActive: boolean;
@@ -50,10 +50,10 @@ export interface CreatePromotionInputModel {
 export interface UpdatePromotionInputModel {
   discountType: string;
   discountValue: number;
-  maxDiscountAmount?: number;
-  minOrderValue?: number;
-  totalUsageLimit?: number;
-  usagePerUser?: number;
+  maxDiscountAmount?: number | null;
+  minOrderValue?: number | null;
+  totalUsageLimit?: number | null;
+  usagePerUser?: number | null;
   startAt?: string;
   endAt?: string;
   isActive?: boolean;

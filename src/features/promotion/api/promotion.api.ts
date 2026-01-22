@@ -1,9 +1,12 @@
 import { apiClient } from "@core/network/api-client";
+import { mapper } from "@core/mapper/auto-mapper";
+import type { PromotionCodeModel } from "@features/promotion/model/promotion.model";
 import { useAuthStore } from "@store/auth-store";
+import type { OrderModel } from "@root/features/order/model/order.model";
 
 type PromotionValidatePayload = {
   promo_code: string;
-  order_id: number;
+  order: any;
 };
 
 type PromotionValidateResponseDto = {
@@ -20,11 +23,12 @@ export type PromotionValidateResult = {
   finalPrice?: number;
 };
 
-export async function validatePromotion(payload: { promoCode: string; orderId: number }): Promise<PromotionValidateResult> {
+export async function validatePromotion(payload: { promoCode: string; order: any }): Promise<PromotionValidateResult> {
   const { departmentApiPath } = useAuthStore.getState();
+  // const orderDto = mapper.map<any, OrderModel>("Order", payload.order, "model_to_dto");
   const { data } = await apiClient.post<PromotionValidateResponseDto>(`${departmentApiPath()}/promotions/validate`, {
     promo_code: payload.promoCode,
-    order_id: payload.orderId,
+    order: payload.order
   } as PromotionValidatePayload);
 
   return {
@@ -37,7 +41,7 @@ export async function validatePromotion(payload: { promoCode: string; orderId: n
 
 type PromotionApplyPayload = {
   promo_code: string;
-  order_id: number;
+  order: any;
 };
 
 type PromotionApplyResponseDto = {
@@ -54,11 +58,12 @@ export type PromotionApplyResult = {
   promoSnapshot?: unknown;
 };
 
-export async function applyPromotion(payload: { promoCode: string; orderId: number }): Promise<PromotionApplyResult> {
+export async function applyPromotion(payload: { promoCode: string; order: OrderModel }): Promise<PromotionApplyResult> {
   const { departmentApiPath } = useAuthStore.getState();
+  const orderDto = mapper.map<any, OrderModel>("Order", payload.order, "model_to_dto");
   const { data } = await apiClient.post<PromotionApplyResponseDto>(`${departmentApiPath()}/promotions/apply`, {
     promo_code: payload.promoCode,
-    order_id: payload.orderId,
+    order: orderDto,
   } as PromotionApplyPayload);
 
   return {
@@ -67,4 +72,11 @@ export async function applyPromotion(payload: { promoCode: string; orderId: numb
     appliedDiscount: data.applied_discount,
     promoSnapshot: data.promo_snapshot,
   };
+}
+
+export async function getPromotionCodesInUsageByOrderId(orderId: number): Promise<PromotionCodeModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any[]>(`${departmentApiPath()}/order/${orderId}/promotions`);
+  const result = mapper.map<any[], PromotionCodeModel[]>("PromotionCode", data, "dto_to_model");
+  return result;
 }

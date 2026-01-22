@@ -1,5 +1,6 @@
+import * as React from "react";
 import { mapper } from "@core/mapper/auto-mapper";
-import type { FieldDef } from "@core/form/types";
+import type { CustomRenderCtx, FieldDef, FormContext } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
@@ -9,8 +10,109 @@ import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
+import { list as listPromotions } from "@features/promotion/api/promotion-admin.api";
+import { validatePromotion, type PromotionValidateResult } from "@features/promotion/api/promotion.api";
+import { SafeButton } from "@shared/components/button/safe-button";
+import PriceChangeIcon from '@mui/icons-material/PriceChange';
+import { packageData } from "@root/core/form/auto-form-package";
+
+type PromotionValidateFieldProps = {
+  values: Record<string, any>;
+  ctx?: FormContext | null;
+};
+
+function PromotionValidateField({ values, ctx }: PromotionValidateFieldProps) {
+  const promoCode = String(values.__promotionCode ?? "").trim();
+  const [result, setResult] = React.useState<PromotionValidateResult | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setResult(null);
+    setError(null);
+  }, [promoCode]);
+
+  const handleValidate = async () => {
+    if (!promoCode) {
+      setError("Vui lòng nhập mã khuyến mãi");
+      setResult(null);
+      return;
+    }
+
+    setError(null);
+    try {
+      const theOrder = packageData(ctx?.metadataBlocks ?? [], values);
+      const orderDto = {
+        ...theOrder.dto,
+        latest_order_item: {
+          ...mapper.map<any, any>("Common", theOrder.dto.latest_order_item_upsert.dto, "model_to_dto"),
+        }
+      }
+      console.log(orderDto);
+      const validated = await validatePromotion({
+        promoCode,
+        order: orderDto,
+      });
+      setResult(validated);
+    } catch {
+      setResult(null);
+      setError("Không thể kiểm tra mã khuyến mãi");
+    }
+  };
+
+  const statusText = result
+    ? result.valid
+      ? "Mã hợp lệ"
+      : "Mã không hợp lệ"
+    : "";
+
+  return (
+    <Stack spacing={1}>
+      <SafeButton
+        variant="contained"
+        color="info"
+        icon={<PriceChangeIcon />}
+        requireDirty={false}
+        requireValid={false}
+        disabled={!promoCode}
+        onClick={handleValidate}
+      >
+        Kiểm tra mã khuyến mãi
+      </SafeButton>
+      {error ? (
+        <Typography variant="body2" color="error">
+          {error}
+        </Typography>
+      ) : null}
+      {result ? (
+        <Stack spacing={0.5}>
+          <Typography
+            variant="body2"
+            color={result.valid ? "success.main" : "error.main"}
+          >
+            {statusText}
+          </Typography>
+          {result.reason ? (
+            <Typography variant="caption" color="text.secondary">
+              {result.reason}
+            </Typography>
+          ) : null}
+          {Number.isFinite(result.discountAmount) ? (
+            <Typography variant="caption">
+              Giảm giá: {prefixCurrency} {Number(result.discountAmount).toLocaleString()}
+            </Typography>
+          ) : null}
+          {Number.isFinite(result.finalPrice) ? (
+            <Typography variant="caption">
+              Giá sau giảm: {prefixCurrency} {Number(result.finalPrice).toLocaleString()}
+            </Typography>
+          ) : null}
+        </Stack>
+      ) : null}
+    </Stack>
+  );
+}
 
 export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -51,6 +153,74 @@ export function buildEditOrderSchema(): FormSchema {
       name: "patientName",
       label: "Bệnh nhân",
       asText: true,
+    },
+    {
+      kind: "searchsingle",
+      name: "__promotionCode",
+      label: "Mã khuyến mãi",
+      placeholder: "Nhập mã khuyến mãi",
+      fullWidth: true,
+      group: "promotion",
+      size: "small",
+      pageLimit: 20,
+      allowUnmatched: true,
+      getOptionLabel: (item: any) => item?.code ?? "",
+      getInputLabel: (item: any) => item?.code ?? "",
+      getOptionValue: (item: any) => item?.code ?? "",
+      renderItem: (item: any) => (<>{item?.code}</>),
+      async searchPage(keyword: string, page: number, limit: number) {
+        const result = await listPromotions({
+          limit,
+          page: Math.max(page - 1, 0),
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        if (!keyword) return items;
+        const lower = keyword.toLowerCase();
+        return items.filter((item) => (item?.code ?? "").toLowerCase().includes(lower));
+      },
+      async hydrateById(idValue: number | string) {
+        if (!idValue) return null;
+        const keyword = String(idValue);
+        const result = await listPromotions({
+          limit: 10,
+          page: 0,
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        return items.find((item) => (item?.code ?? "").toLowerCase() === keyword.toLowerCase()) ?? null;
+      },
+      async fetchOne(values: Record<string, any>) {
+        const code = values.__promotionCode;
+        if (!code) return null;
+        const keyword = String(code);
+        const result = await listPromotions({
+          limit: 10,
+          page: 0,
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        return items.find((item) => (item?.code ?? "").toLowerCase() === keyword.toLowerCase()) ?? null;
+      },
+      onBlur: (text, matched, ctx) => {
+        if (!ctx) return;
+        ctx.setValue("__promotionCode", matched?.code ?? text);
+      },
+    },
+    {
+      kind: "custom",
+      name: "__promotionValidate",
+      label: "Xác thực khuyến mãi",
+      group: "promotion",
+      render: ({ values, ctx }: CustomRenderCtx) => {
+        return <PromotionValidateField values={values} ctx={ctx} />
+      },
     },
     {
       name: "",
@@ -263,6 +433,10 @@ export function buildEditOrderSchema(): FormSchema {
         name: "general",
         label: "Thông tin chung:",
         col: 2,
+      },
+      {
+        name: "promotion",
+        label: "Khuyến mãi",
       },
       {
         name: "remake",

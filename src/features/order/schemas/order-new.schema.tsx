@@ -1,17 +1,19 @@
 import { mapper } from "@core/mapper/auto-mapper";
-import type { FieldDef } from "@core/form/types";
+import type { CustomRenderCtx, FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerFormDialog } from "@core/form/form-dialog.registry";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, getOrReserveOrderCode, id, prepareForRemakeByOrderID, search, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
+import { list as listPromotions } from "@features/promotion/api/promotion-admin.api";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { Typography } from "@mui/material";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
+import PromotionValidateButton from "../components/order-promotion-validate-button.component";
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -95,6 +97,76 @@ export function buildNewOrderSchema(): FormSchema {
       label: "Số lần làm lại",
       showIf: (values) => values["latestOrderItem.remakeCount"] > 0,
       disableIf: (_) => true,
+    },
+    {
+      kind: "searchsingle",
+      name: "promotionCode",
+      label: "Mã khuyến mãi",
+      placeholder: "Nhập mã khuyến mãi",
+      fullWidth: true,
+      group: "promotion",
+      size: "small",
+      pageLimit: 20,
+      allowUnmatched: true,
+      getOptionLabel: (item: any) => item?.code ?? "",
+      getInputLabel: (item: any) => item?.code ?? "",
+      getOptionValue: (item: any) => item?.code ?? "",
+      renderItem: (item: any) => (<>{item?.code}</>),
+      async searchPage(keyword: string, page: number, limit: number) {
+        const result = await listPromotions({
+          limit,
+          page: Math.max(page - 1, 0),
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        if (!keyword) return items;
+        const lower = keyword.toLowerCase();
+        return items.filter((item) => (item?.code ?? "").toLowerCase().includes(lower));
+      },
+      async hydrateById(idValue: number | string) {
+        if (!idValue) return null;
+        const keyword = String(idValue);
+        const result = await listPromotions({
+          limit: 10,
+          page: 0,
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        return items.find((item) => (item?.code ?? "").toLowerCase() === keyword.toLowerCase()) ?? null;
+      },
+      async fetchOne(values: Record<string, any>) {
+        const code = values.promotionCode;
+        if (!code) return null;
+        const keyword = String(code);
+        const result = await listPromotions({
+          limit: 10,
+          page: 0,
+          orderBy: "code",
+          direction: "asc",
+          keyword,
+        } as any);
+        const items = result.items ?? [];
+        return items.find((item) => (item?.code ?? "").toLowerCase() === keyword.toLowerCase()) ?? null;
+      },
+      onBlur: (text, matched, ctx) => {
+        if (!ctx) return;
+        const code = matched?.code ?? text;
+        ctx.setValue("promotionCode", code || null);
+        ctx.setValue("promotionCodeId", matched?.id ?? null);
+      },
+    },
+    {
+      kind: "custom",
+      name: "__promotionValidate",
+      label: "Xác thực khuyến mãi",
+      group: "promotion",
+      render: ({ values, ctx }: CustomRenderCtx) => {
+        return <PromotionValidateButton values={values} ctx={ctx} />
+      },
     },
     {
       name: "",
@@ -319,6 +391,10 @@ export function buildNewOrderSchema(): FormSchema {
         name: "general",
         label: "Thông tin chung:",
         col: 2,
+      },
+      {
+        name: "promotion",
+        label: "Khuyến mãi:",
       },
       {
         name: "remake",

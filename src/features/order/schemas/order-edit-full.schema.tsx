@@ -338,7 +338,7 @@ export function buildEditOrderSchema(): FormSchema {
       },
       {
         name: "promotion",
-        label: "Khuyến mãi",
+        label: "Khuyến mãi:",
       },
       {
         name: "remake",

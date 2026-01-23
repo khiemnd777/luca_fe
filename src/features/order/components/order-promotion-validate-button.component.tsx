@@ -7,6 +7,7 @@ import { SafeButton } from "@root/shared/components/button/safe-button";
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import React from "react";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
+import { getPromotionErrorMessage } from "@root/features/promotion/model/promotion-reason.const";
 
 type PromotionValidateButtonProps = {
   values: Record<string, any>;
@@ -85,7 +86,7 @@ export default function PromotionValidateButton({ values, ctx }: PromotionValida
           </Typography>
           {result.reason ? (
             <Typography variant="caption" color="text.secondary">
-              {result.reason}
+              {getPromotionErrorMessage(result.reason)}
             </Typography>
           ) : null}
           {Number.isFinite(result.discountAmount) ? (

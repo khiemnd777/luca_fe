@@ -1,8 +1,11 @@
 // ----- Promotion Scope
 export const PROMOTION_SCOPES = [
   { value: "ALL", label: "Tất cả đơn hàng" },
-  { value: "USER", label: "Người dùng cụ thể" },
-  { value: "SELLER", label: "Người bán / phòng khám" },
+  { value: "USER", label: "Nhân viên cụ thể" },
+  { value: "STAFF", label: "Nhân viên" },
+  // { value: "SELLER", label: "Người bán / phòng khám" },
+  { value: "CLINIC", label: "Phòng khám" },
+
   { value: "CATEGORY", label: "Danh mục sản phẩm" },
   { value: "PRODUCT", label: "Sản phẩm cụ thể" },
 ] as const;

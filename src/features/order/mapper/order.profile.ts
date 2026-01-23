@@ -19,6 +19,8 @@ mapper.register<OrderModel>({
     dentistName: null,
     patientId: null,
     patientName: null,
+    refUserId: null,
+    refUserName: null,
     statusLatest: "",
     codeLatest: "",
     priorityLatest: "",

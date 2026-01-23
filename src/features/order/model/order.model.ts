@@ -16,6 +16,8 @@ export interface OrderModel {
   dentistName?: string | null;
   patientId?: number | null;
   patientName?: string | null;
+  refUserId?: number | null;
+  refUserName?: string | null;
   statusLatest?: string;
   codeLatest?: string;
   priorityLatest?: string;

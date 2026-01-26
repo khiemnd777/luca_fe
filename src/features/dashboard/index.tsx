@@ -3,10 +3,10 @@ import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
+const DashboardPage = React.lazy(() => import("@features/dashboard/presentation/pages/dashboard-page"));
 const SamplePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-page"));
 const SampleCreatableStatusBoardPage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-status-board"));
 const SampleTablePage = React.lazy(() => import("@features/dashboard/presentation/pages/sample-table-page"));
-const UnderConstructionPage = React.lazy(() => import("@core/pages/under-construction-page"));
 
 const mod: ModuleDescriptor = {
   id: "dashboard",
@@ -16,7 +16,7 @@ const mod: ModuleDescriptor = {
       label: "Dashboard",
       title: "Dashboard",
       path: "/",
-      element: <UnderConstructionPage />,
+      element: <DashboardPage />,
       icon: <LeaderboardIcon />,
       priority: 100,
       children: [

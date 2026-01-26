@@ -34,7 +34,7 @@ export default function NotificationIcon() {
           pointerEvents: "none",
         }}
       >
-        <NotifierChip count={100} />
+        <NotifierChip count={count} />
       </Box>
     </Box>
   );

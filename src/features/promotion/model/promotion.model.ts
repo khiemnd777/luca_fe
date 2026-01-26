@@ -24,7 +24,7 @@ export interface PromotionCodeModel {
   totalUsageLimit?: number | null;
   usagePerUser?: number | null;
   startAt: string;
-  endAt: string;
+  endAt?: string | null;
   isActive: boolean;
   scopes?: PromotionScopeInputModel[];
   conditions?: PromotionConditionInputModel[];

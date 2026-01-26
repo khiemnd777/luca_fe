@@ -16,7 +16,7 @@ mapper.register<PromotionCodeModel>({
     totalUsageLimit: null,
     usagePerUser: null,
     startAt: "",
-    endAt: "",
+    endAt: null,
     isActive: false,
     scopes: [],
     conditions: [],

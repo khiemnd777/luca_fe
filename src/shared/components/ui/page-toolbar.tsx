@@ -45,7 +45,7 @@ export function PageToolbar({
 
         <Box sx={{ minWidth: 0 }}>
           <Typography
-            variant="h5"
+            variant="h6"
             fontWeight={700}
             textTransform="capitalize"
             noWrap

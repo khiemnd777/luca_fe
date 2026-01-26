@@ -24,9 +24,6 @@ import { useModuleMenu, type SidebarItem } from "@core/navigation/use-module.men
 import { useAuth } from "../auth/use-auth";
 import { Logo } from "@root/shared/components/ui/logo";
 import MyAccountBadge from "@root/shared/components/ui/account-badge";
-import { PageToolbar } from "@root/shared/components/ui/page-toolbar";
-import { SlotHost } from "../module/slot-host";
-import { useRouteMeta } from "../module/route-meta";
 
 const SIDEBAR_W = 280;
 const SIDEBAR_COLLAPSED_W = 76;
@@ -35,10 +32,8 @@ interface CollapsibleChipProps {
   collapsed?: boolean;
 }
 
-export function BasePage({ children }: { children: React.ReactNode }) {
+export function BasePageV1({ children }: { children: React.ReactNode }) {
   const { department } = useAuth();
-  const { key, title, subtitle } = useRouteMeta();
-
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -246,7 +241,6 @@ export function BasePage({ children }: { children: React.ReactNode }) {
               position: collapsed ? "absolute" : "static",
               right: collapsed ? -20 : 0,
               top: collapsed ? 10 : "auto",
-              zIndex:10,
             }}
           >
             <Tooltip title={collapsed ? "Expand" : "Collapse"}>
@@ -294,7 +288,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
                       minWidth: 0,
                       mr: collapsed ? 0 : 1.5,
                       justifyContent: "center",
-                      alignItems: "center",
+                      alignItems: "center", // 👈 quan trọng
                       display: "flex",
                     }}
                   >
@@ -414,49 +408,14 @@ export function BasePage({ children }: { children: React.ReactNode }) {
         sx={{
           flex: 1,
           minWidth: 0,
+          p: 3,
           height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          overflow: "auto", // chỉ phần này cuộn
         }}
       >
-        {/* Sticky PageToolbar */}
-        <Box
-          sx={{
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-            bgcolor: "background.default",
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
-            px: 3,
-            py: 2,
-          }}
-        >
-          <PageToolbar
-            title={title ?? ""}
-            subtitle={subtitle ?? ""}
-            actions={
-              <>
-                <SlotHost name="toolbar" />
-                <SlotHost name={`${key}:toolbar`} />
-              </>
-          }
-          />
-        </Box>
-
-        {/* Scrollable content */}
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            px: 3,
-            py: 2,
-          }}
-        >
-          {children}
-        </Box>
+        {/* The Body Content */}
+        {children}
       </Box>
-
     </Box>
   );
 }

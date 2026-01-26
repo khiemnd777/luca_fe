@@ -2,7 +2,6 @@ import * as React from "react";
 import { Button, Typography } from "@mui/material";
 import { BasePage } from "@core/pages/base-page";
 import { PageContainer } from "@shared/components/ui/page-container";
-import { PageToolbar } from "@shared/components/ui/page-toolbar";
 import { SectionCard } from "@shared/components/ui/section-card";
 import { ResponsiveGrid } from "@shared/components/ui/responsive-grid";
 import { Loading } from "@shared/components/ui/loading";
@@ -13,6 +12,7 @@ import { AutoGrid } from "@root/shared/components/ui/auto-grid";
 import type { FieldDef } from "@core/form/types";
 import { useAutoForm } from "@core/form/use-auto-form";
 import { Spacer } from "@root/shared/components/ui/spacer";
+import { ActionToolbar } from "@root/shared/components/ui/action-toolbar";
 
 const schema: FieldDef[] = [
   { name: "title", label: "Title", kind: "text", rules: { required: true, maxLength: 120 } },
@@ -116,14 +116,12 @@ const schema: FieldDef[] = [
 export default function SamplePage() {
   const [openConfirm, setOpenConfirm] = React.useState(false);
   const [openForm, setOpenForm] = React.useState(false);
-  const { values, setValue, errors, validate: _, validateAll, reset } = useAutoForm(schema);
+  const { validate: _, validateAll, reset } = useAutoForm(schema);
 
   return (
     <BasePage>
       <PageContainer>
-        <PageToolbar
-          title="Roles"
-          subtitle="Manage user roles and permissions"
+        <ActionToolbar
           actions={
             <>
               <Button variant="outlined" onClick={() => setOpenConfirm(true)}>Delete</Button>

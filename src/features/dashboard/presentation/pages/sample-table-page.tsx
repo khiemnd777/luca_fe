@@ -1,17 +1,15 @@
 import { BasePage } from "@core/pages/base-page";
 import { PageContainer } from "@shared/components/ui/page-container";
-import { PageToolbar } from "@shared/components/ui/page-toolbar";
 import { SectionCard } from "@shared/components/ui/section-card";
 import { Spacer } from "@shared/components/ui/spacer";
 import { AutoTable } from "@root/core/table/auto-table";
+import { ActionToolbar } from "@root/shared/components/ui/action-toolbar";
 
 export default function ExamplePage() {
   return (
     <BasePage>
       <PageContainer>
-        <PageToolbar
-          title="Sample Product Table"
-          subtitle="Demonstration of EditTable with server-side paging and sorting"
+        <ActionToolbar
           actions={
             <>
             </>

@@ -5,7 +5,6 @@ import { Section } from "@shared/components/ui/section";
 import { SlotHost } from "@core/module/slot-host"; // giả định sẵn có
 import { useRouteMeta } from "@core/module/route-meta";
 import { ResponsiveGrid } from "@root/shared/components/ui/responsive-grid";
-import { Spacer } from "@root/shared/components/ui/spacer";
 import { ActionToolbar } from "@root/shared/components/ui/action-toolbar";
 
 export default function OneColumnPage() {
@@ -18,13 +17,11 @@ export default function OneColumnPage() {
           <SlotHost name={`${key}:actions`} />
         } />
         <Section>
-          <SlotHost name={`${key}:header`} />
+          <SlotHost direction="column" name={`${key}:header`} />
         </Section>
-        <Spacer />
         <ResponsiveGrid>
-          <SlotHost name={`${key}:top`} />
+          <SlotHost direction="column" name={`${key}:top`} />
         </ResponsiveGrid>
-        <Spacer />
         <AutoGrid>
           <Section>
             <SlotHost name={`${key}:left`} />

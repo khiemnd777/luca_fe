@@ -42,6 +42,7 @@ export function SlotHost({
           {direction === "column" && idx < slots.length - 1 && <Spacer />}
         </Box>
       ))}
+      {slots.length && direction === "column" ? <Spacer /> : null}
     </>
   );
 }

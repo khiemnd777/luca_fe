@@ -6,16 +6,18 @@ type ContentToolbarProps = {
 };
 
 export function ActionToolbar({ actions }: ContentToolbarProps) {
+  return null;
   return (
-    <Stack
-      direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "flex-start", sm: "center" }}
-      justifyContent="space-between"
-      spacing={1.5}
-      sx={{ mb: 2 }}
-    >
-      <span></span>
-      <Stack direction="row" spacing={1}>{actions}</Stack>
-    </Stack>
+    actions != null ?
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        spacing={1.5}
+        sx={{ mb: 2 }}
+      >
+        <span></span>
+        <Stack direction="row" spacing={1}>{actions}</Stack>
+      </Stack> : null
   );
 }

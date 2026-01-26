@@ -26,6 +26,7 @@ import { Logo } from "@root/shared/components/ui/logo";
 import MyAccountBadge from "@root/shared/components/ui/account-badge";
 import { PageToolbar } from "@root/shared/components/ui/page-toolbar";
 import { useRouteMeta } from "../module/route-meta";
+import { useNavigate } from "react-router-dom";
 
 const SIDEBAR_W = 280;
 const SIDEBAR_COLLAPSED_W = 76;
@@ -37,7 +38,7 @@ interface CollapsibleChipProps {
 export function BasePage({ children }: { children: React.ReactNode }) {
   const { department } = useAuth();
   const { key, title, subtitle } = useRouteMeta();
-
+  const reactNavigate = useNavigate();
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -438,6 +439,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
             key={key}
             title={title ?? ""}
             subtitle={subtitle ?? ""}
+            onBack={history.length > 1 ? () => reactNavigate(-1) : undefined}
             actions={
               <>
               </>

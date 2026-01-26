@@ -13,6 +13,7 @@ const mod: ModuleDescriptor = {
       subtitle: "Cấu hình thông tin trang quản lý và giao diện Labo",
       path: "/settings",
       icon: <SettingsRoundedIcon />,
+      hidden: true,
       priority: 0,
     },
   ],

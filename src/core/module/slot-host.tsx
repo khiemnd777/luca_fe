@@ -28,6 +28,7 @@ type SlotHostProps = {
 };
 
 export function SlotHost({
+  direction,
   name,
   itemClassName,
 }: SlotHostProps) {
@@ -38,7 +39,7 @@ export function SlotHost({
       {slots.map((s, idx) => (
         <Box key={s.id} className={itemClassName}>
           {s.render()}
-          {idx < slots.length - 1 && <Spacer />}
+          {direction === "column" && idx < slots.length - 1 && <Spacer />}
         </Box>
       ))}
     </>

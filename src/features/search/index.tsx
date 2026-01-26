@@ -11,6 +11,7 @@ const mod: ModuleDescriptor = {
       title: "Tìm kiếm",
       path: "/search",
       icon: <SearchOutlinedIcon />,
+      hidden: true,
       priority: 9999,
     },
   ],

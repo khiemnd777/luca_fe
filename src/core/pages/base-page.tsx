@@ -25,7 +25,6 @@ import { useAuth } from "../auth/use-auth";
 import { Logo } from "@root/shared/components/ui/logo";
 import MyAccountBadge from "@root/shared/components/ui/account-badge";
 import { PageToolbar } from "@root/shared/components/ui/page-toolbar";
-import { SlotHost } from "../module/slot-host";
 import { useRouteMeta } from "../module/route-meta";
 
 const SIDEBAR_W = 280;
@@ -246,7 +245,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
               position: collapsed ? "absolute" : "static",
               right: collapsed ? -20 : 0,
               top: collapsed ? 10 : "auto",
-              zIndex:10,
+              zIndex: 10,
             }}
           >
             <Tooltip title={collapsed ? "Expand" : "Collapse"}>
@@ -429,18 +428,20 @@ export function BasePage({ children }: { children: React.ReactNode }) {
             bgcolor: "background.default",
             borderBottom: (t) => `1px solid ${t.palette.divider}`,
             px: 3,
-            py: 2,
+            py: 0,
+            height: 81,
+            display: "flex",
+            alignItems: "center",
           }}
         >
           <PageToolbar
+            key={key}
             title={title ?? ""}
             subtitle={subtitle ?? ""}
             actions={
               <>
-                <SlotHost name="toolbar" />
-                <SlotHost name={`${key}:toolbar`} />
               </>
-          }
+            }
           />
         </Box>
 

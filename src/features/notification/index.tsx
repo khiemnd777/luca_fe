@@ -13,6 +13,7 @@ const mod: ModuleDescriptor = {
       path: "/notification",
       icon: <NotificationsIcon />,
       chip: <NotificationChip />,
+      hidden: true,
       priority: 9998,
     },
   ],

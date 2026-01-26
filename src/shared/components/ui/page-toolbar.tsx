@@ -1,20 +1,22 @@
 import * as React from "react";
 import { Stack, Typography, Box } from "@mui/material";
+import { SlotHost } from "@root/core/module/slot-host";
 
 type PageToolbarProps = {
+  key: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
 };
 
-export function PageToolbar({ title, subtitle, actions }: PageToolbarProps) {
+export function PageToolbar({ key, title, subtitle, actions }: PageToolbarProps) {
   return (
     <Stack
-      direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "flex-start", sm: "center" }}
+      direction="row"
+      alignItems="center"
       justifyContent="space-between"
-      spacing={1.5}
-      sx={{ mb: 2 }}
+      spacing={2}
+      sx={{ width: "100%", minWidth: 0 }}
     >
       <Box>
         <Typography variant="h5" fontWeight={700} textTransform={"capitalize"}>{title}</Typography>
@@ -22,7 +24,16 @@ export function PageToolbar({ title, subtitle, actions }: PageToolbarProps) {
           <Typography variant="body2" color="text.secondary">{subtitle}</Typography>
         )}
       </Box>
-      <Stack direction="row" spacing={1}>{actions}</Stack>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2.5}
+      >
+        <SlotHost direction="row" name="toolbar" />
+        <SlotHost direction="row" name={`${key}:toolbar`} />
+        {actions}
+      </Stack>
     </Stack>
   );
 }

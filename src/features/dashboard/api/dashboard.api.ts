@@ -10,6 +10,8 @@ import type {
   AvgTurnaroundResultDto,
   CasesMetricResult,
   CasesMetricResultDto,
+  CaseStatusItemDto,
+  CaseStatusItemModel,
   DueTodayItem,
   DueTodayItemDto,
   DashboardCompareParams,
@@ -21,6 +23,18 @@ export type DashboardStat = {
   delta?: string;
   caption?: string;
 };
+
+type CaseStatusColor = NonNullable<CaseStatusItemModel["color"]>;
+
+const CASE_STATUS_COLORS = new Set<CaseStatusColor>([
+  "primary",
+  "secondary",
+  "error",
+  "info",
+  "success",
+  "warning",
+  "inherit",
+]);
 
 function toQuery(params: DashboardCompareParams): DashboardCompareParamsDto {
   const dto = mapper.map<DashboardCompareParams, DashboardCompareParamsDto>(
@@ -74,6 +88,41 @@ export async function fetchDueToday(): Promise<DueTodayItem[]> {
     deliveryAt: item.deliveryAt ?? "",
     priority: (item.priority ?? "standard").toLowerCase(),
   }));
+}
+
+function normalizeCaseStatusItem(item: CaseStatusItemModel): CaseStatusItemModel {
+  const count = Number.isFinite(item.count) ? item.count : 0;
+  const target = Number.isFinite(item.target) && (item.target ?? 0) > 0 ? item.target : undefined;
+  const label = item.label?.trim() ? item.label : item.status ?? "";
+  const status = item.status?.trim() ? item.status : label;
+  const color: CaseStatusColor =
+    typeof item.color === "string" && CASE_STATUS_COLORS.has(item.color as CaseStatusColor)
+      ? (item.color as CaseStatusColor)
+      : "primary";
+
+  return {
+    status,
+    label,
+    count,
+    target,
+    color,
+    helper: item.helper ?? "",
+  };
+}
+
+export async function fetchCaseStatuses(): Promise<CaseStatusItemModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<CaseStatusItemDto[]>(
+    `${departmentApiPath()}/dashboard/case-statuses`,
+  );
+
+  const mapped = mapper.map<CaseStatusItemDto[], CaseStatusItemModel[]>(
+    "Dashboard",
+    data,
+    "dto_to_model",
+  );
+
+  return (mapped ?? []).map(normalizeCaseStatusItem);
 }
 
 export function fetchAvgTurnaround(
@@ -216,5 +265,13 @@ export function useDueToday() {
     async () => fetchDueToday(),
     [],
     { key: "dashboard:due-today" },
+  );
+}
+
+export function useCaseStatuses() {
+  return useAsync<CaseStatusItemModel[]>(
+    async () => fetchCaseStatuses(),
+    [],
+    { key: "dashboard:case-statuses" },
   );
 }

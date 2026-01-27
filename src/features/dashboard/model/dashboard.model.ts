@@ -1,3 +1,5 @@
+import type { LinearProgressProps } from "@mui/material";
+
 export interface DashboardCompareParams {
   departmentId?: number | null;
   fromDate: string;
@@ -60,4 +62,22 @@ export interface DueTodayItemDto {
   patient?: string;
   delivery_at?: string;
   priority?: string;
+}
+
+export interface CaseStatusItemModel {
+  status: string;
+  label: string;
+  count: number;
+  target?: number;
+  color?: LinearProgressProps["color"];
+  helper?: string;
+}
+
+export interface CaseStatusItemDto {
+  status?: string;
+  label?: string;
+  count?: number;
+  target?: number;
+  color?: string;
+  helper?: string;
 }

@@ -5,7 +5,7 @@ import { DueTodayCard } from "../components/due-today-card";
 
 const mockDueToday: DueTodayItem[] = [
   {
-    id: 1,
+    id: 0,
     code: "–",
     dentist: "",
     patient: "",
@@ -26,4 +26,5 @@ registerSlot({
   id: "dashboard-due-today",
   name: "dashboard:line2",
   render: () => <DueTodayWidget />,
+  priority: 1,
 });

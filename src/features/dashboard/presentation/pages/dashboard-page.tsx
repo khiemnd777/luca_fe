@@ -4,22 +4,10 @@ import { PageContainer } from "@shared/components/ui/page-container";
 import { AutoGrid } from "@shared/components/ui/auto-grid";
 import { ResponsiveGrid } from "@shared/components/ui/responsive-grid";
 import { Spacer } from "@shared/components/ui/spacer";
-import { StatCard } from "@features/dashboard/components/stat-card";
 import { CaseStatusCard } from "@features/dashboard/components/case-status-card";
 import { ProductionQueueCard } from "@features/dashboard/components/production-queue-card";
 import { DueTodayCard } from "@features/dashboard/components/due-today-card";
-import { InventoryAlertsCard } from "@features/dashboard/components/inventory-alerts-card";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import SpeedIcon from "@mui/icons-material/Speed";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-
-const stats = [
-  { title: "Active Cases", value: 48, delta: "+6 today", tone: "success", icon: <PendingActionsIcon fontSize="small" /> },
-  { title: "Cases Completed", value: 132, delta: "+18 this week", tone: "info", icon: <AssignmentTurnedInIcon fontSize="small" /> },
-  { title: "Avg Turnaround", value: "2.4 days", delta: "-0.3", tone: "success", icon: <SpeedIcon fontSize="small" /> },
-  { title: "Remakes", value: "3.1%", delta: "+0.4", tone: "warning", icon: <WarningAmberIcon fontSize="small" /> },
-] as const;
+import { SlotHost } from "@core/module/slot-host";
 
 const caseStatuses = [
   { label: "Received", count: 12, target: 24, color: "info", helper: "Awaiting design" },
@@ -42,12 +30,6 @@ const dueToday = [
   { id: "DL-2835", patient: "D. Lopez", caseType: "Implant Crown", time: "5:30 PM", priority: "standard" },
 ];
 
-const inventoryAlerts = [
-  { name: "Zirconia Disc A2", remaining: 5, threshold: 12, unit: "pcs", color: "warning" },
-  { name: "Staining Liquid", remaining: 1.2, threshold: 4, unit: "L", color: "error" },
-  { name: "Resin (Model)", remaining: 3, threshold: 10, unit: "kg", color: "warning" },
-];
-
 export default function DashboardPage() {
   return (
     <BasePage>
@@ -60,29 +42,20 @@ export default function DashboardPage() {
         </Stack>
 
         <ResponsiveGrid xs={1} sm={2} md={2} lg={4} xl={4}>
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.title}
-              title={stat.title}
-              value={stat.value}
-              delta={stat.delta}
-              tone={stat.tone}
-              icon={stat.icon}
-            />
-          ))}
+          <SlotHost name="dashboard:stat" />
         </ResponsiveGrid>
 
         <Spacer />
 
+        <AutoGrid scheme="equal" equalAt="lg">
+          <DueTodayCard items={dueToday} />
+        </AutoGrid>
+        
         <AutoGrid scheme="lead" equalAt="lg">
           <ProductionQueueCard items={productionQueue} />
           <CaseStatusCard items={caseStatuses} />
         </AutoGrid>
 
-        <AutoGrid scheme="equal" equalAt="lg">
-          <DueTodayCard items={dueToday} />
-          <InventoryAlertsCard items={inventoryAlerts} />
-        </AutoGrid>
       </PageContainer>
     </BasePage>
   );

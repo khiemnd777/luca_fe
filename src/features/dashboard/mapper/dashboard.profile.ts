@@ -1,0 +1,28 @@
+import { mapper } from "@core/mapper/auto-mapper";
+
+mapper.register({
+  name: "Dashboard",
+  dtoToModelNaming: "snake_to_camel",
+  modelToDtoNaming: "camel_to_snake",
+  defaultModel: () => ({
+    avgDays: 0,
+    deltaDays: 0,
+    rate: 0,
+    deltaRate: 0,
+    value: 0,
+    delta: 0,
+  }),
+  defaultDto: () => ({
+    department_id: null,
+    from_date: "",
+    to_date: "",
+    previous_from_date: "",
+    previous_to_date: "",
+    avg_days: 0,
+    delta_days: 0,
+    rate: 0,
+    delta_rate: 0,
+    value: 0,
+    delta: 0,
+  }),
+});

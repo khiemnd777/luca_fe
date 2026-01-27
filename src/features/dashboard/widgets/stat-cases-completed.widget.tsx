@@ -1,6 +1,7 @@
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import { StatCard } from "@features/dashboard/components/stat-card";
 import { useCasesCompletedThisWeek } from "@features/dashboard/api/dashboard.api";
+import { registerSlot } from "@root/core/module/registry";
 
 export function CasesCompletedStatWidget() {
   const { data } = useCasesCompletedThisWeek();
@@ -15,3 +16,9 @@ export function CasesCompletedStatWidget() {
     />
   );
 }
+
+registerSlot({
+  id: "dashboard-stat-cases-completed",
+  name: "dashboard:stat",
+  render: () => <CasesCompletedStatWidget />,
+});

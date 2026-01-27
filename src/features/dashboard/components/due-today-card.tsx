@@ -2,6 +2,7 @@ import { Chip, Divider, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
 import { priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
+import { formatTime12 } from "@root/shared/utils/datetime.utils";
 
 export type DueTodayItem = {
   id: number;
@@ -28,7 +29,7 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
           const priorityLabelText = priorityLabel(priority);
           const priorityColorValue = priorityColor(priority);
           const deliveryLabel = item.deliveryAt != null && item.deliveryAt !== ""
-            ? item.deliveryAt
+            ? formatTime12(item.deliveryAt)
             : "––";
 
           return (
@@ -53,7 +54,7 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
                 />
               </Stack>
               <Typography variant="body2" color="text.secondary">
-                {item.dentist} • {item.patient}
+                {item.dentist} {item.patient ? "•" : ""} {item.patient}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Giao lúc {deliveryLabel}

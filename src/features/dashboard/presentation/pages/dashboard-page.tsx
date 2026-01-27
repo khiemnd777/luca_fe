@@ -33,7 +33,7 @@ export default function DashboardPage() {
           <SlotHost name="dashboard:line2" direction="column" />
         </ResponsiveGrid>
 
-        <ResponsiveGrid xs={1} sm={2} md={2} lg={4} xl={4}>
+        <ResponsiveGrid xs={1} sm={2} md={2} lg={2} xl={2}>
           <SlotHost name="dashboard:line3" direction="column" />
         </ResponsiveGrid>
 

@@ -10,6 +10,8 @@ import type {
   AvgTurnaroundResultDto,
   CasesMetricResult,
   CasesMetricResultDto,
+  DueTodayItem,
+  DueTodayItemDto,
   DashboardCompareParams,
   DashboardCompareParamsDto,
 } from "../model/dashboard.model";
@@ -50,6 +52,28 @@ async function getDashboardMetric<TModel, TDto>(
     params: toQuery(params),
   });
   return mapper.map<TDto, TModel>("Dashboard", data, "dto_to_model");
+}
+
+export async function fetchDueToday(): Promise<DueTodayItem[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<DueTodayItemDto[]>(
+    `${departmentApiPath()}/dashboard/due-today`,
+  );
+
+  const mapped = mapper.map<DueTodayItemDto[], DueTodayItem[]>(
+    "Dashboard",
+    data,
+    "dto_to_model",
+  );
+
+  return (mapped ?? []).map((item) => ({
+    id: item.id,
+    code: item.code ?? "",
+    dentist: item.dentist ?? "",
+    patient: item.patient ?? "",
+    deliveryAt: item.deliveryAt ?? "",
+    priority: (item.priority ?? "standard").toLowerCase(),
+  }));
 }
 
 export function fetchAvgTurnaround(
@@ -184,5 +208,13 @@ export function useAvgRemakeRate() {
     },
     [],
     { key: "dashboard:avg-remake-rate" },
+  );
+}
+
+export function useDueToday() {
+  return useAsync<DueTodayItem[]>(
+    async () => fetchDueToday(),
+    [],
+    { key: "dashboard:due-today" },
   );
 }

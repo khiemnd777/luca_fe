@@ -43,3 +43,21 @@ export interface CasesMetricResultDto {
   value?: number;
   delta?: number;
 }
+
+export interface DueTodayItem {
+  id: number;
+  code: string;
+  dentist: string;
+  patient: string;
+  deliveryAt: string;
+  priority: string;
+}
+
+export interface DueTodayItemDto {
+  id: number;
+  code?: string;
+  dentist?: string;
+  patient?: string;
+  delivery_at?: string;
+  priority?: string;
+}

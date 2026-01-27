@@ -11,6 +11,11 @@ mapper.register({
     deltaRate: 0,
     value: 0,
     delta: 0,
+    code: "",
+    dentist: "",
+    patient: "",
+    deliveryAt: "",
+    priority: "standard",
   }),
   defaultDto: () => ({
     department_id: null,
@@ -24,5 +29,10 @@ mapper.register({
     delta_rate: 0,
     value: 0,
     delta: 0,
+    code: "",
+    dentist: "",
+    patient: "",
+    delivery_at: "",
+    priority: "standard",
   }),
 });

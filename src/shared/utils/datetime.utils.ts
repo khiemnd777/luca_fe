@@ -26,6 +26,29 @@ export function formatDate(value?: string | null): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+export function formatTime24 (value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+
+  return `${h}:${m}`;
+};
+
+export function formatTime12 (value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const period = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12 || 12;
+
+  return `${hours}:${minutes} ${period}`;
+};
+
+
+
 export const fDatetime = "DD/MM/YYYY HH:mm:ss";
 export const fDate = "DD/MM/YYYY";
 

@@ -1,12 +1,15 @@
 import { Chip, Divider, Stack, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { SectionCard } from "@shared/components/ui/section-card";
+import { priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
 
 export type DueTodayItem = {
-  id: string;
+  id: number;
+  code: string;
+  dentist: string;
   patient: string;
-  caseType: string;
-  time: string;
-  priority?: "standard" | "rush";
+  deliveryAt: string;
+  priority?: string;
 };
 
 type DueTodayCardProps = {
@@ -14,26 +17,50 @@ type DueTodayCardProps = {
   items: DueTodayItem[];
 };
 
-export function DueTodayCard({ title = "Due Today", items }: DueTodayCardProps) {
+export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardProps) {
+  const navigate = useNavigate();
+
   return (
     <SectionCard title={title}>
       <Stack spacing={1.5} divider={<Divider flexItem />}>
-        {items.map((item) => (
-          <Stack key={item.id} spacing={0.5}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2" fontWeight={700}>{item.caseType}</Typography>
-              <Chip
-                size="small"
-                color={item.priority === "rush" ? "warning" : "default"}
-                label={item.priority === "rush" ? "Rush" : "Standard"}
-              />
+        {items.map((item) => {
+          const priority = (item.priority ?? "normal").toLowerCase();
+          const priorityLabelText = priorityLabel(priority);
+          const priorityColorValue = priorityColor(priority);
+          const deliveryLabel = item.deliveryAt != null && item.deliveryAt !== ""
+            ? item.deliveryAt
+            : "––";
+
+          return (
+            <Stack
+              key={item.id}
+              spacing={0.5}
+              onClick={() => navigate(`/order/${item.id}`)}
+              role="button"
+              sx={{ cursor: "pointer" }}
+            >
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle2" fontWeight={700}>
+                  {item.code}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={priorityLabelText}
+                  sx={{
+                    bgcolor: priorityColorValue,
+                    color: "#fff",
+                  }}
+                />
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                {item.dentist} • {item.patient}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Giao lúc {deliveryLabel}
+              </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              {item.patient} • {item.id}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Pickup {item.time}</Typography>
-          </Stack>
-        ))}
+          );
+        })}
       </Stack>
     </SectionCard>
   );

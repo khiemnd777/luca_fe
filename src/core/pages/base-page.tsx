@@ -203,7 +203,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          py: 2,
+          py: 1,
           transition: (t) =>
             t.transitions.create("width", {
               duration: t.transitions.duration.shorter,
@@ -217,7 +217,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
           justifyContent={collapsed ? "center" : "flex-start"}
           spacing={collapsed ? 0 : 1.5}
           px={collapsed ? 0 : 1.5}
-          py={1}
+          py={0}
           sx={{
             position: "relative",
             transition: theme.transitions.create(["all"], {
@@ -430,7 +430,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
             borderBottom: (t) => `1px solid ${t.palette.divider}`,
             px: 3,
             py: 0,
-            height: 81,
+            height: 57,
             display: "flex",
             alignItems: "center",
           }}

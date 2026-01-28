@@ -1,5 +1,4 @@
-import { Chip, useMediaQuery } from "@mui/material";
-import { theme } from "@root/app/theme";
+import { Chip } from "@mui/material";
 import { formatBadgeCount } from "@root/shared/utils/badge.utils";
 
 type NotifierChipProps = {
@@ -8,9 +7,9 @@ type NotifierChipProps = {
 };
 
 export function NotifierChip({ count, collapsed = false }: NotifierChipProps) {
-  const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  // const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
   const isCompact = collapsed;
-  const badgeMax = isSmall ? 9 : 99;
+  const badgeMax = 9 // isSmall ? 9 : 99;
 
   if (!count || count <= 0) return null;
 

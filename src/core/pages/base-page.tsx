@@ -245,7 +245,7 @@ export function BasePage({ children }: { children: React.ReactNode }) {
             sx={{
               position: collapsed ? "absolute" : "static",
               right: collapsed ? -20 : 0,
-              top: collapsed ? 10 : "auto",
+              top: collapsed ? 5 : "auto",
               zIndex: 10,
             }}
           >
@@ -360,14 +360,32 @@ export function BasePage({ children }: { children: React.ReactNode }) {
                 parentBtn
               );
 
+              const groupActive = active || (collapsed && hasChildren);
+
+              const groupBg = collapsed && hasChildren
+                ? "action.hover"
+                : groupActive
+                  ? "action.selected"
+                  : "transparent";
+
+
               return (
-                <React.Fragment key={m.key}>
+                <Box
+                  key={m.key}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    mb: 0.5,
+                    bgcolor: groupBg,
+                    transition: "background-color 0.2s ease",
+                  }}
+                >
                   {wrappedTop}
 
                   {/* Submenu: chỉ hiển thị khi không collapsed */}
-                  {!collapsed && hasChildren && (
-                    <Collapse in={isOpen} unmountOnExit timeout="auto">
-                      <List disablePadding sx={{ ml: 1.5 }}>
+                  {hasChildren && (
+                    <Collapse in={collapsed ? true : isOpen} unmountOnExit timeout="auto">
+                      <List disablePadding sx={{ ml: collapsed ? 0 : 1.5, mr: collapsed ? 0 : 1.5 }}>
                         {m.subItems!.map((s) => {
                           const sActive = isItemActive(s);
                           return (
@@ -379,23 +397,40 @@ export function BasePage({ children }: { children: React.ReactNode }) {
                               onClick={s.onClick}
                               sx={{
                                 borderRadius: 1,
-                                mx: 0.5,
-                                my: 0.25,
-                                pl: 5, // indent
-                                py: 0.75,
+                                // mx: 0.5,
+                                // my: 0.25,
+                                // pl: collapsed ? 0 : 4.5,
+                                // py: 0.75,
                               }}
                             >
-                              <ListItemText
-                                disableTypography
-                                primary={renderSubLabel(s.label, sActive, renderChip(s.chip))}
-                              />
+                              {s.icon && (
+                                <ListItemIcon
+                                  sx={{
+                                    minWidth: 0,
+                                    mr: 1.25,
+                                    color: sActive ? "primary.main" : "text.secondary",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {s.icon}
+                                </ListItemIcon>
+                              )}
+                              {collapsed ? null :
+                                <ListItemText
+                                  disableTypography
+                                  primary={renderSubLabel(s.label, sActive, renderChip(s.chip))}
+                                />
+                              }
+
                             </ListItemButton>
                           );
                         })}
                       </List>
                     </Collapse>
                   )}
-                </React.Fragment>
+                </Box>
               );
             })}
           </List>

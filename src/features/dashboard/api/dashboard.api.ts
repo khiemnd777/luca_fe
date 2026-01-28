@@ -16,6 +16,8 @@ import type {
   DueTodayItemDto,
   DashboardCompareParams,
   DashboardCompareParamsDto,
+  ActiveTodayItem,
+  ActiveTodayItemDto,
 } from "../model/dashboard.model";
 
 export type DashboardStat = {
@@ -86,6 +88,30 @@ export async function fetchDueToday(): Promise<DueTodayItem[]> {
     dentist: item.dentist ?? "",
     patient: item.patient ?? "",
     deliveryAt: item.deliveryAt ?? "",
+    priority: (item.priority ?? "standard").toLowerCase(),
+  }));
+}
+
+export async function fetchActiveToday(): Promise<ActiveTodayItem[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<ActiveTodayItemDto[]>(
+    `${departmentApiPath()}/dashboard/active-today`,
+  );
+
+  const mapped = mapper.map<DueTodayItemDto[], ActiveTodayItem[]>(
+    "Dashboard",
+    data,
+    "dto_to_model",
+  );
+
+  return (mapped ?? []).map((item) => ({
+    id: item.id,
+    code: item.code ?? "",
+    dentist: item.dentist ?? "",
+    patient: item.patient ?? "",
+    deliveryAt: item.deliveryAt ?? "",
+    createdAt: item.createdAt ?? "",
+    ageDays: item.ageDays ?? 0,
     priority: (item.priority ?? "standard").toLowerCase(),
   }));
 }
@@ -265,6 +291,14 @@ export function useDueToday() {
     async () => fetchDueToday(),
     [],
     { key: "dashboard:due-today" },
+  );
+}
+
+export function useActiveToday() {
+  return useAsync<ActiveTodayItem[]>(
+    async () => fetchActiveToday(),
+    [],
+    { key: "dashboard:active-today" },
   );
 }
 

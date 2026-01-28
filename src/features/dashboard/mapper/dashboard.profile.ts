@@ -5,6 +5,7 @@ mapper.register({
   dtoToModelNaming: "snake_to_camel",
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
+    id: 0,
     avgDays: 0,
     deltaDays: 0,
     rate: 0,
@@ -15,6 +16,8 @@ mapper.register({
     dentist: "",
     patient: "",
     deliveryAt: "",
+    createdAt: "",
+    ageDays: 0,
     priority: "standard",
     status: "",
     label: "",
@@ -24,6 +27,7 @@ mapper.register({
     helper: "",
   }),
   defaultDto: () => ({
+    id: 0,
     department_id: null,
     from_date: "",
     to_date: "",
@@ -39,6 +43,8 @@ mapper.register({
     dentist: "",
     patient: "",
     delivery_at: "",
+    created_at: "",
+    age_days: 0,
     priority: "standard",
     status: "",
     label: "",

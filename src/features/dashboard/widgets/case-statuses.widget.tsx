@@ -10,7 +10,7 @@ function CaseStatusesWidget() {
 
 registerSlot({
   id: "dashboard-case-statuses",
-  name: "dashboard:line2",
+  name: "dashboard:line3",
   render: () => <CaseStatusesWidget />,
-  priority: 2,
+  priority: 99,
 });

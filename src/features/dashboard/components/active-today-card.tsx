@@ -1,33 +1,31 @@
 import { Chip, Divider, Stack, Typography } from "@mui/material";
 import { SectionCard } from "@shared/components/ui/section-card";
-import { priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
-import { formatTime12 } from "@root/shared/utils/datetime.utils";
+import { formatAgeDays, formatDateTime12 } from "@root/shared/utils/datetime.utils";
 import { navigate } from "@root/core/navigation/navigate";
 
-export type DueTodayItem = {
+export type ActiveTodayItem = {
   id: number;
   code: string;
   dentist: string;
   patient: string;
   deliveryAt: string;
+  createdAt: string;
+  ageDays: number;
   priority?: string;
 };
 
-type DueTodayCardProps = {
+type ActiveTodayCardProps = {
   title?: string;
-  items: DueTodayItem[];
+  items: ActiveTodayItem[];
 };
 
-export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardProps) {
+export function ActiveTodayCard({ title = "Đang làm", items }: ActiveTodayCardProps) {
   return (
     <SectionCard title={title}>
       <Stack spacing={1.5} divider={<Divider flexItem />}>
         {items.map((item) => {
-          const priority = (item.priority ?? "normal").toLowerCase();
-          const priorityLabelText = priorityLabel(priority);
-          const priorityColorValue = priorityColor(priority);
-          const deliveryLabel = item.deliveryAt != null && item.deliveryAt !== ""
-            ? formatTime12(item.deliveryAt)
+          const createdAtLabel = item.createdAt != null && item.createdAt !== ""
+            ? formatDateTime12(item.createdAt)
             : "––";
 
           return (
@@ -42,20 +40,13 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
                 <Typography variant="subtitle2" fontWeight={700}>
                   {item.code}
                 </Typography>
-                <Chip
-                  size="small"
-                  label={priorityLabelText}
-                  sx={{
-                    bgcolor: priorityColorValue,
-                    color: "#fff",
-                  }}
-                />
+                <Chip size="small" variant="outlined" label={formatAgeDays(item.ageDays)} />
               </Stack>
               <Typography variant="body2" color="text.secondary">
                 {item.dentist} {item.patient ? "•" : ""} {item.patient}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Giao lúc {deliveryLabel}
+                Tạo lúc {createdAtLabel}
               </Typography>
             </Stack>
           );

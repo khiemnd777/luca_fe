@@ -64,6 +64,28 @@ export interface DueTodayItemDto {
   priority?: string;
 }
 
+export interface ActiveTodayItem {
+  id: number;
+  code: string;
+  dentist: string;
+  patient: string;
+  deliveryAt: string;
+  createdAt: string;
+  ageDays: number;
+  priority: string;
+}
+
+export interface ActiveTodayItemDto {
+  id: number;
+  code?: string;
+  dentist?: string;
+  patient?: string;
+  delivery_at?: string;
+  created_at?: string;
+  age_days?: number;
+  priority?: string;
+}
+
 export interface CaseStatusItemModel {
   status: string;
   label: string;

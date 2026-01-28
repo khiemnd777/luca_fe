@@ -1,7 +1,7 @@
-export function formatDateTime(value?: string | null): string {
+export function formatDateTime(value?: string | Date | null): string {
   if (!value) return "";
 
-  const date = new Date(value);
+  const date = value instanceof Date ? value : new Date(value);
 
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -9,9 +9,29 @@ export function formatDateTime(value?: string | null): string {
 
   const hh = String(date.getHours()).padStart(2, "0");
   const mi = String(date.getMinutes()).padStart(2, "0");
-  const ss = String(date.getSeconds()).padStart(2, "0");
 
-  return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+}
+
+export function formatDateTime12(value?: string | Date | null): string {
+  if (!value) return "";
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  let hours = date.getHours();
+  const period = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+
+  const hh = String(hours).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi} ${period}`;
 }
 
 export function formatDate(value?: string | Date | null): string {
@@ -99,6 +119,14 @@ export function formatTimeAgo(createdAt?: string | number | Date) {
   const diffMonths = Math.floor(diffDays / 30);
   return `${diffMonths} tháng trước`;
 }
+
+export function formatAgeDays(ageDays: number): string {
+  if (ageDays <= 0) return "Hôm nay";
+  if (ageDays < 30) return `${ageDays} ngày trước`;
+  if (ageDays < 365) return `${Math.floor(ageDays / 30)} tháng trước`;
+  return `${Math.floor(ageDays / 365)} năm trước`;
+}
+
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_MONTH = MS_PER_DAY * 30;

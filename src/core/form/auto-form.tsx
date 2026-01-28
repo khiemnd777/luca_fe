@@ -279,11 +279,18 @@ async function expandOneMetadataBlock(
           getOptionValue: (d: any) => d?.id,
 
           async searchPage(kw: string, page, limit) {
+            const extendWhere =
+              relation.where != null
+                ? Array.isArray(relation.where)
+                  ? relation.where
+                  : [relation.where]
+                : undefined;
             const searched = await search(relation.target, {
               keyword: kw,
               page: page,
               limit: limit,
               orderBy: "name",
+              extendWhere,
             });
             return searched.items;
           },
@@ -331,11 +338,18 @@ async function expandOneMetadataBlock(
           getOptionValue: (d: any) => d?.id,
 
           async searchPage(kw: string, page, limit) {
+            const extendWhere =
+              relation.where != null
+                ? Array.isArray(relation.where)
+                  ? relation.where
+                  : [relation.where]
+                : undefined;
             const searched = await search(relation.target, {
               keyword: kw,
               page: page,
               limit: limit,
               orderBy: "name",
+              extendWhere,
             });
             return searched.items;
           },

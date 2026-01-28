@@ -10,12 +10,12 @@ const ORDER_STATUS_PALETTE = [
 
 // status
 const ORDER_STATUSES = [
-  { value: "received", label: "Đã nhận đơn" },
-  { value: "in_progress", label: "Đang gia công" },
-  { value: "qc", label: "Đang kiểm thử" },
-  { value: "completed", label: "Đã hoàn thành" },
-  { value: "issue", label: "Sự cố" },
-  { value: "rework", label: "Làm lại" },
+  { value: "received", label: "Đã nhận đơn", displayOrder: 1, },
+  { value: "in_progress", label: "Đang gia công", displayOrder: 2, },
+  { value: "qc", label: "Đang kiểm thử", displayOrder: 3, },
+  { value: "issue", label: "Sự cố", displayOrder: 4, },
+  { value: "rework", label: "Làm lại", displayOrder: 5, },
+  { value: "completed", label: "Đã hoàn thành", displayOrder: 6, },
 ] as const;
 
 const ORDER_STATUS_HELPERS = [
@@ -43,6 +43,14 @@ const STATUS_LABEL_MAP = ORDER_STATUSES.reduce<Record<string, string>>(
   {}
 );
 
+const STATUS_DISPLAY_ORDER_MAP = ORDER_STATUSES.reduce<Record<string, number>>(
+  (acc, cur) => {
+    acc[cur.value] = cur.displayOrder;
+    return acc;
+  },
+  {}
+);
+
 const STATUS_HELPER_MAP = ORDER_STATUS_HELPERS.reduce<Record<string, string>>(
   (acc, cur) => {
     acc[cur.value] = cur.label;
@@ -64,6 +72,11 @@ export function statusColor(value?: string | null): string {
 export function statusHelper(value?: string | null): string {
   if (!value) return "";
   return STATUS_HELPER_MAP[value] ?? value;
+}
+
+export function statusDisplayOrder(value?: string | null): number {
+  if (!value) return 99;
+  return STATUS_DISPLAY_ORDER_MAP[value] ?? value;
 }
 
 // priority label

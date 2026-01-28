@@ -1,5 +1,5 @@
 import { LinearProgress, Stack, Typography, type LinearProgressProps } from "@mui/material";
-import { statusColor, statusHelper, statusLabel } from "@root/shared/utils/order.utils";
+import { statusColor, statusDisplayOrder, statusHelper, statusLabel } from "@root/shared/utils/order.utils";
 import { SectionCard } from "@shared/components/ui/section-card";
 
 export type CaseStatusItem = {
@@ -20,7 +20,7 @@ export function CaseStatusCard({ title = "Trạng thái trong ngày", items }: C
   return (
     <SectionCard title={title}>
       <Stack spacing={1.5}>
-        {items.map((item) => {
+        {items.sort((a, b) => statusDisplayOrder(a.status) - statusDisplayOrder(b.status)).map((item) => {
           const progress = item.target ? Math.min(100, Math.round((item.count / item.target) * 100)) : undefined;
           return (
             <Stack key={item.label} spacing={0.5}>

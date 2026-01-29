@@ -89,6 +89,7 @@ export async function fetchDueToday(): Promise<DueTodayItem[]> {
     patient: item.patient ?? "",
     deliveryAt: item.deliveryAt ?? "",
     ageDays: item.ageDays ?? 0,
+    dueType: item.dueType ?? "today",
     priority: (item.priority ?? "standard").toLowerCase(),
   }));
 }

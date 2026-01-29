@@ -1,7 +1,7 @@
 import { Chip, Divider, Stack, Typography } from "@mui/material";
 import { SectionCard } from "@shared/components/ui/section-card";
 import { priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
-import { formatDateTime12, formatTime12, isToday } from "@root/shared/utils/datetime.utils";
+import { formatDateTime12, formatTime12 } from "@root/shared/utils/datetime.utils";
 import { navigate } from "@root/core/navigation/navigate";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
@@ -11,6 +11,8 @@ export type DueTodayItem = {
   dentist: string;
   patient: string;
   deliveryAt: string;
+  ageDays?: number;
+  dueType?: string;
   priority?: string;
 };
 
@@ -32,11 +34,9 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
             : null;
           const deliveryDateMs = deliveryDate != null ? deliveryDate.getTime() : null;
           const isValidDeliveryDate = deliveryDateMs != null && !Number.isNaN(deliveryDateMs);
-          const now = new Date();
-          const isTodayValue = isValidDeliveryDate && deliveryDate ? isToday(deliveryDate, now) : false;
-          const isOverdue = Boolean(isValidDeliveryDate && deliveryDateMs < now.getTime());
+          const isOverdue = item.dueType === "overdue";
           const deliveryLabel = isValidDeliveryDate && deliveryDate
-            ? (isTodayValue ? formatTime12(deliveryDate) : formatDateTime12(deliveryDate))
+            ? (!isOverdue ? formatTime12(deliveryDate) : formatDateTime12(deliveryDate))
             : "––";
 
           return (

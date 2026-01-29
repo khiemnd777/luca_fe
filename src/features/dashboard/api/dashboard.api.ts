@@ -88,6 +88,7 @@ export async function fetchDueToday(): Promise<DueTodayItem[]> {
     dentist: item.dentist ?? "",
     patient: item.patient ?? "",
     deliveryAt: item.deliveryAt ?? "",
+    ageDays: item.ageDays ?? 0,
     priority: (item.priority ?? "standard").toLowerCase(),
   }));
 }

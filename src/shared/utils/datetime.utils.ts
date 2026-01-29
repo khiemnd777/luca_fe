@@ -70,6 +70,19 @@ export function formatTime12 (value: string | Date): string {
   return `${hours}:${minutes} ${period}`;
 };
 
+export function isToday(
+  value?: string | Date | null,
+  base: Date = new Date()
+): boolean {
+  if (!value) return false;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return (
+    date.getFullYear() === base.getFullYear()
+    && date.getMonth() === base.getMonth()
+    && date.getDate() === base.getDate()
+  );
+}
 
 
 export const fDatetime = "DD/MM/YYYY HH:mm:ss";

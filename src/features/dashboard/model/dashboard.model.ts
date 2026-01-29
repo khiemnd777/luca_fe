@@ -52,6 +52,7 @@ export interface DueTodayItem {
   dentist: string;
   patient: string;
   deliveryAt: string;
+  ageDays: number;
   priority: string;
 }
 
@@ -61,6 +62,7 @@ export interface DueTodayItemDto {
   dentist?: string;
   patient?: string;
   delivery_at?: string;
+  age_days?: number;
   priority?: string;
 }
 

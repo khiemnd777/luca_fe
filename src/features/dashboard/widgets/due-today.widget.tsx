@@ -10,6 +10,7 @@ const mockDueToday: DueTodayItem[] = [
     dentist: "",
     patient: "",
     deliveryAt: "",
+    ageDays: 0,
     priority: "–",
   },
 ];

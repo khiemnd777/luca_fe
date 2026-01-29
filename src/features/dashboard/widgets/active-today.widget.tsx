@@ -2,6 +2,10 @@ import { useActiveToday } from "@features/dashboard/api/dashboard.api";
 import type { ActiveTodayItem } from "@features/dashboard/model/dashboard.model";
 import { registerSlot } from "@root/core/module/registry";
 import { ActiveTodayCard } from "../components/active-today-card";
+import { useWebSocket } from "@root/core/network/websocket/use-web-socket";
+import { useEffect } from "react";
+import { invalidate } from "@root/core/hooks/use-async";
+import { registerWS } from "@root/core/network/websocket/ws-widgets";
 
 export const mockActiveToday: ActiveTodayItem[] = [
   {
@@ -31,3 +35,18 @@ registerSlot({
   render: () => <ActiveTodayWidget />,
   priority: 1,
 });
+
+// WS
+function ActiveTodayWSWidget() {
+  const { lastMessage } = useWebSocket();
+
+  useEffect(() => {
+    if (lastMessage?.type === "dashboard:active_today") {
+      invalidate("dashboard:active-today");
+    }
+  }, [lastMessage]);
+
+  return null;
+}
+
+registerWS(<ActiveTodayWSWidget />);

@@ -6,7 +6,6 @@ type ContentToolbarProps = {
 };
 
 export function ActionToolbar({ actions }: ContentToolbarProps) {
-  return null;
   return (
     actions != null ?
       <Stack

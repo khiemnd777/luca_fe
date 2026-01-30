@@ -327,20 +327,21 @@ export function buildRemakeOrderSchema(): FormSchema {
         col: 2,
       },
       {
+        name: "note",
+        col: 1,
+      },
+      {
+        name: "status",
+        label: "Trạng thái đơn hàng:",
+        col: 2,
+      },
+      {
         name: "promotion",
         label: "Khuyến mãi:",
       },
       {
         name: "remake",
         col: 1,
-      },
-      {
-        name: "note",
-        col: 1,
-      },
-      {
-        name: "status",
-        col: 2,
       },
       {
         name: "products",

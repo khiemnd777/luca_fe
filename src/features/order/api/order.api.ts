@@ -201,6 +201,25 @@ export async function updateStatus(orderId: number, orderItemProcessId: number, 
   return result;
 }
 
+export async function updateDeliveryStatus(orderId: number, orderItemId: number, status: string): Promise<OrderModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.put<any>(`${departmentApiPath()}/order/${orderId}/item/${orderItemId}/change-delivery-status/${status}`);
+  const result = mapper.map<any, OrderModel>("Order", data, "dto_to_model");
+  return result;
+}
+
+type DeliveryStatusResponseDto = {
+  delivery_status: string;
+};
+
+export async function getDeliveryStatusByOrderItemId(orderId: number, orderItemId: number): Promise<string> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<DeliveryStatusResponseDto>(
+    `${departmentApiPath()}/order/${orderId}/item/${orderItemId}/delivery-status`
+  );
+  return data.delivery_status;
+}
+
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/order/${id}`);

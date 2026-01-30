@@ -15,6 +15,7 @@ import { generateTitle } from "../utils/order.utils";
 import { OrderInProgress } from "../components/order-inprogress.component";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import { OrderDetailDeliveryStatusBoard } from "../components/order-delivery-status-board.component";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
@@ -101,6 +102,17 @@ function OrderDetailBodyWidget() {
               content: (
                 <Box>
                   <OrderInProgress />
+                </Box>
+              ),
+            },
+            {
+              label: "Giao/Nhận hàng",
+              value: "delivery",
+              content: (
+                <Box>
+                  <SectionCard title={title ?? ""}>
+                    <OrderDetailDeliveryStatusBoard />
+                  </SectionCard>
                 </Box>
               ),
             },

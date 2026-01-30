@@ -91,6 +91,8 @@ export async function fetchDueToday(): Promise<DueTodayItem[]> {
     ageDays: item.ageDays ?? 0,
     dueType: item.dueType ?? "today",
     priority: (item.priority ?? "standard").toLowerCase(),
+    status: item.status?.toLowerCase(),
+    deliveryStatus: item.deliveryStatus?.toLowerCase(),
   }));
 }
 
@@ -115,6 +117,7 @@ export async function fetchActiveToday(): Promise<ActiveTodayItem[]> {
     createdAt: item.createdAt ?? "",
     ageDays: item.ageDays ?? 0,
     priority: (item.priority ?? "standard").toLowerCase(),
+    status: item.status?.toLowerCase(),
   }));
 }
 

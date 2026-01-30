@@ -8,6 +8,11 @@ import { Section } from "@root/shared/components/ui/section";
 import ResponsiveStatusBoard from "@root/shared/components/status-board/responsive-status-board";
 import { formatDateTime } from "@root/shared/utils/datetime.utils";
 import {
+  ORDER_DELIVERY_STATUS_OPTIONS,
+  type OrderDeliveryStatus,
+  deliveryStatusColor,
+} from "@root/shared/utils/order.utils";
+import {
   getDeliveryStatusByOrderItemId,
   id as getById,
   getByOrderIdAndOrderItemId,
@@ -15,22 +20,13 @@ import {
 } from "../api/order.api";
 import type { OrderItemModel } from "../model/order-item.model";
 
-type DeliveryStatus = "pending" | "delivery_in_progress" | "delivered" | "returned";
-
 type DeliveryBoardData = {
   orderId: number;
   orderItemId: number | null;
   order: any;
   orderItem: any;
-  deliveryStatus: DeliveryStatus;
+  deliveryStatus: OrderDeliveryStatus;
 };
-
-const statusOptions = [
-  { label: "Chờ giao", value: "pending" },
-  { label: "Đang giao", value: "delivery_in_progress" },
-  { label: "Đã trả về", value: "returned" },
-  { label: "Đã nhận", value: "delivered" },
-];
 
 export function OrderDetailDeliveryStatusBoard() {
   const { orderId, orderItemId } = useParams();
@@ -53,7 +49,7 @@ export function OrderDetailDeliveryStatusBoard() {
           orderItemId: realOrderItemId ?? null,
           order: detail,
           orderItem: item,
-          deliveryStatus: (deliveryStatus ?? "pending") as DeliveryStatus,
+          deliveryStatus: (deliveryStatus ?? "pending") as OrderDeliveryStatus,
         };
       }
 
@@ -68,7 +64,7 @@ export function OrderDetailDeliveryStatusBoard() {
         orderItemId: realOrderItemId,
         order: detail,
         orderItem: item,
-        deliveryStatus: (deliveryStatus ?? "pending") as DeliveryStatus,
+        deliveryStatus: (deliveryStatus ?? "pending") as OrderDeliveryStatus,
       };
     })();
   }, [orderId, orderItemId], {
@@ -84,6 +80,7 @@ export function OrderDetailDeliveryStatusBoard() {
       {
         id: data.orderItemId,
         status: deliveryStatus,
+        color: deliveryStatusColor(deliveryStatus),
         obj: data,
       },
     ]
@@ -106,7 +103,7 @@ export function OrderDetailDeliveryStatusBoard() {
       {!loading && items.length > 0 && (
         <ResponsiveStatusBoard
           items={items}
-          statuses={statusOptions}
+          statuses={ORDER_DELIVERY_STATUS_OPTIONS}
           renderCard={(_id, _status, payload) => {
             const detail = payload.order;
             const item = payload.orderItem;

@@ -17,6 +17,8 @@ const mockDueToday: DueTodayItem[] = [
     ageDays: 0,
     dueType: "today",
     priority: "–",
+    status: "received",
+    deliveryStatus: "pending",
   },
 ];
 

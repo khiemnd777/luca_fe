@@ -17,6 +17,7 @@ export const mockActiveToday: ActiveTodayItem[] = [
     createdAt: "",
     ageDays: -1,
     priority: "high",
+    status: "received",
   },
 ];
 

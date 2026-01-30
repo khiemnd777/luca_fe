@@ -1,3 +1,99 @@
+export function dueTodayStatusChip(deliveryStatus?: string | null): { label: string; color: string } {
+  if (!deliveryStatus) return { label: "", color: "#9e9e9e" };
+  const normalized = deliveryStatus.toLowerCase();
+  return {
+    label: deliveryStatusLabel(normalized),
+    color: deliveryStatusColor(normalized),
+  };
+}
+
+export function activeTodayStatusChip(status?: string | null): { label: string; color: string } {
+  if (!status) return { label: "", color: "#9e9e9e" };
+  const normalized = status.toLowerCase();
+  return {
+    label: statusLabel(normalized),
+    color: statusColor(normalized),
+  };
+}
+
+const ORDER_DELIVERY_STATUS_PALETTE = [
+  "#9e9e9e", // pending - gray
+  "#1976d2", // delivery in progress - blue
+  "#d32f2f", // returned - red
+  "#2e7d32", // delivered - green
+];
+
+export const ORDER_DELIVERY_STATUSES = [
+  { value: "pending", label: "Chờ giao", displayOrder: 1 },
+  { value: "delivery_in_progress", label: "Đang giao", displayOrder: 2 },
+  { value: "returned", label: "Đã trả về", displayOrder: 3 },
+  { value: "delivered", label: "Đã nhận", displayOrder: 4 },
+] as const;
+
+export type OrderDeliveryStatus = (typeof ORDER_DELIVERY_STATUSES)[number]["value"];
+
+export const ORDER_DELIVERY_STATUS_OPTIONS = ORDER_DELIVERY_STATUSES.map(
+  ({ label, value }) => ({ label, value })
+);
+
+const ORDER_DELIVERY_STATUS_HELPERS = [
+  { value: "pending", label: "Số lượng đơn chờ giao" },
+  { value: "delivery_in_progress", label: "Số lượng đơn đang giao" },
+  { value: "delivered", label: "Số lượng đơn đã nhận" },
+  { value: "returned", label: "Số lượng đơn đã trả về" },
+] as const;
+
+const DELIVERY_STATUS_COLOR_MAP = ORDER_DELIVERY_STATUSES.reduce<Record<string, string>>(
+  (acc, cur, index) => {
+    acc[cur.value] = ORDER_DELIVERY_STATUS_PALETTE[index] ?? "#9e9e9e";
+    return acc;
+  },
+  {}
+);
+
+const DELIVERY_STATUS_LABEL_MAP = ORDER_DELIVERY_STATUSES.reduce<Record<string, string>>(
+  (acc, cur) => {
+    acc[cur.value] = cur.label;
+    return acc;
+  },
+  {}
+);
+
+const DELIVERY_STATUS_DISPLAY_ORDER_MAP = ORDER_DELIVERY_STATUSES.reduce<Record<string, number>>(
+  (acc, cur) => {
+    acc[cur.value] = cur.displayOrder;
+    return acc;
+  },
+  {}
+);
+
+const DELIVERY_STATUS_HELPER_MAP = ORDER_DELIVERY_STATUS_HELPERS.reduce<Record<string, string>>(
+  (acc, cur) => {
+    acc[cur.value] = cur.label;
+    return acc;
+  },
+  {}
+);
+
+export function deliveryStatusLabel(value?: string | null): string {
+  if (!value) return "";
+  return DELIVERY_STATUS_LABEL_MAP[value] ?? value;
+}
+
+export function deliveryStatusColor(value?: string | null): string {
+  if (!value) return "#9e9e9e";
+  return DELIVERY_STATUS_COLOR_MAP[value] ?? "#9e9e9e";
+}
+
+export function deliveryStatusHelper(value?: string | null): string {
+  if (!value) return "";
+  return DELIVERY_STATUS_HELPER_MAP[value] ?? value;
+}
+
+export function deliveryStatusDisplayOrder(value?: string | null): number {
+  if (!value) return 99;
+  return DELIVERY_STATUS_DISPLAY_ORDER_MAP[value] ?? 99;
+}
 
 const ORDER_STATUS_PALETTE = [
   "#607d8b", // received - blue gray

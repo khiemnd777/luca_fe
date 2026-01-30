@@ -1,20 +1,10 @@
 import { Chip, Divider, Stack, Typography } from "@mui/material";
 import { SectionCard } from "@shared/components/ui/section-card";
-import { priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
+import { dueTodayStatusChip, priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
 import { formatDateTime12, formatTime12 } from "@root/shared/utils/datetime.utils";
 import { navigate } from "@root/core/navigation/navigate";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-
-export type DueTodayItem = {
-  id: number;
-  code: string;
-  dentist: string;
-  patient: string;
-  deliveryAt: string;
-  ageDays?: number;
-  dueType?: string;
-  priority?: string;
-};
+import type { DueTodayItem } from "../model/dashboard.model";
 
 type DueTodayCardProps = {
   title?: string;
@@ -38,6 +28,7 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
           const deliveryLabel = isValidDeliveryDate && deliveryDate
             ? (!isOverdue ? formatTime12(deliveryDate) : formatDateTime12(deliveryDate))
             : "––";
+          const deliveryStatusChip = dueTodayStatusChip(item.deliveryStatus);
 
           return (
             <Stack
@@ -63,16 +54,21 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
               <Typography variant="body2" color="text.secondary">
                 {item.dentist} {item.patient ? "•" : ""} {item.patient}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
-              >
-                Giao lúc {deliveryLabel}
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="caption" color="text.secondary">
+                  Dự kiến giao lúc {deliveryLabel}
+                </Typography>
                 {isOverdue ? (
                   <WarningAmberIcon fontSize="inherit" sx={{ color: "error.main" }} />
                 ) : null}
-              </Typography>
+                {deliveryStatusChip.label ? (
+                  <Chip
+                    size="small"
+                    label={deliveryStatusChip.label}
+                    sx={{ bgcolor: deliveryStatusChip.color, color: "#fff" }}
+                  />
+                ) : null}
+              </Stack>
             </Stack>
           );
         })}

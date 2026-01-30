@@ -55,6 +55,8 @@ export interface DueTodayItem {
   ageDays: number;
   dueType: string;
   priority: string;
+  status?: string;
+  deliveryStatus?: string;
 }
 
 export interface DueTodayItemDto {
@@ -66,6 +68,8 @@ export interface DueTodayItemDto {
   age_days?: number;
   due_type?: string;
   priority?: string;
+  status?: string;
+  delivery_status?: string;
 }
 
 export interface ActiveTodayItem {
@@ -77,6 +81,7 @@ export interface ActiveTodayItem {
   createdAt: string;
   ageDays: number;
   priority: string;
+  status?: string;
 }
 
 export interface ActiveTodayItemDto {
@@ -88,6 +93,7 @@ export interface ActiveTodayItemDto {
   created_at?: string;
   age_days?: number;
   priority?: string;
+  status?: string;
 }
 
 export interface CaseStatusItemModel {

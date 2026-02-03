@@ -61,7 +61,7 @@ registerTable("orders", () => {
     columns,
     fetch: async (opts: FetchTableOpts) => await list(opts),
     initialPageSize: 10,
-    initialSort: { by: "updated_at", dir: "desc" },
+    initialSort: { by: "created_at", dir: "desc" },
     // allowUpdating: ["order.update"],
     // allowDeleting: ["order.delete"],
     onView: (row: OrderModel) => { navigate(`/order/${row.id}`) },

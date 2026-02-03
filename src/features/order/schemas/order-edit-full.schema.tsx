@@ -39,7 +39,7 @@ export function buildEditOrderSchema(): FormSchema {
     {
       kind: "text",
       name: "clinicName",
-      label: "Nha sĩ",
+      label: "Nha khoa",
       asText: true,
     },
     {

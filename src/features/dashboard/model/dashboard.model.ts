@@ -113,3 +113,51 @@ export interface CaseStatusItemDto {
   color?: string;
   helper?: string;
 }
+
+export interface SalesSummaryModel {
+  totalRevenue: number;
+  orderItemsCount: number;
+  prevRevenue: number;
+  growthPercent?: number | null;
+}
+
+export interface SalesSummaryDto {
+  total_revenue?: number;
+  order_items_count?: number;
+  prev_revenue?: number;
+  growth_percent?: number | null;
+}
+
+export interface SalesDailyItem {
+  date: string;
+  revenue: number;
+}
+
+export interface SalesDailyItemDto {
+  date?: string;
+  revenue?: number;
+}
+
+export interface SalesReportResult {
+  summary: SalesSummaryModel;
+  daily: SalesDailyItem[];
+}
+
+export interface SalesReportResultDto {
+  summary?: SalesSummaryDto;
+  daily?: SalesDailyItemDto[];
+}
+
+export type SalesReportRange = "today" | "7d" | "30d";
+
+export interface SalesDailyParams {
+  departmentId?: number | null;
+  fromDate: string;
+  toDate: string;
+}
+
+export interface SalesDailyParamsDto {
+  department_id?: number | null;
+  from_date: string;
+  to_date: string;
+}

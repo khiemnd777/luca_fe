@@ -18,6 +18,15 @@ import type {
   DashboardCompareParamsDto,
   ActiveTodayItem,
   ActiveTodayItemDto,
+  SalesDailyItem,
+  SalesDailyItemDto,
+  SalesDailyParams,
+  SalesDailyParamsDto,
+  SalesReportRange,
+  SalesReportResult,
+  SalesReportResultDto,
+  SalesSummaryModel,
+  SalesSummaryDto,
 } from "../model/dashboard.model";
 
 export type DashboardStat = {
@@ -50,6 +59,25 @@ function toQuery(params: DashboardCompareParams): DashboardCompareParamsDto {
     to_date: dto.to_date,
     previous_from_date: dto.previous_from_date,
     previous_to_date: dto.previous_to_date,
+  };
+
+  if (dto.department_id != null) {
+    query.department_id = dto.department_id;
+  }
+
+  return query;
+}
+
+function toDailyQuery(params: SalesDailyParams): SalesDailyParamsDto {
+  const dto = mapper.map<SalesDailyParams, SalesDailyParamsDto>(
+    "Dashboard",
+    params,
+    "model_to_dto",
+  );
+
+  const query: SalesDailyParamsDto = {
+    from_date: dto.from_date,
+    to_date: dto.to_date,
   };
 
   if (dto.department_id != null) {
@@ -189,6 +217,97 @@ export function fetchActiveCases(
   return getDashboardMetric<CasesMetricResult, CasesMetricResultDto>(
     "/dashboard/case-daily-active-stats/active-cases",
     params,
+  );
+}
+
+export function fetchSalesSummary(
+  params: DashboardCompareParams,
+): Promise<SalesSummaryModel> {
+  return getDashboardMetric<SalesSummaryModel, SalesSummaryDto>(
+    "/dashboard/case-daily-sales-stats/summary",
+    params,
+  );
+}
+
+export function useSalesSummary() {
+  return useAsync<SalesSummaryModel>(
+    async () => fetchSalesSummary(buildWeekParams()),
+    [],
+    { key: "dashboard:sales-summary" },
+  );
+}
+
+export async function fetchSalesDaily(
+  params: SalesDailyParams,
+): Promise<SalesDailyItem[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<SalesDailyItemDto[]>(
+    `${departmentApiPath()}/dashboard/case-daily-sales-stats/daily`,
+    { params: toDailyQuery(params) },
+  );
+
+  const mapped = mapper.map<SalesDailyItemDto[], SalesDailyItem[]>(
+    "Dashboard",
+    data,
+    "dto_to_model",
+  );
+
+  return (mapped ?? []).map((item) => ({
+    date: item.date ?? "",
+    revenue: Number.isFinite(item.revenue) ? item.revenue : 0,
+  }));
+}
+
+export function useSalesDaily() {
+  return useAsync<SalesDailyItem[]>(
+    async () => fetchSalesDaily(buildWeekParams()),
+    [],
+    { key: "dashboard:sales-daily" },
+  );
+}
+
+export async function fetchSalesReport(
+  range: SalesReportRange,
+): Promise<SalesReportResult> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<SalesReportResultDto>(
+    `${departmentApiPath()}/dashboard/case-daily-sales-stats/report`,
+    { params: { range } },
+  );
+
+  const summary = mapper.map<SalesSummaryDto, SalesSummaryModel>(
+    "Dashboard",
+    data?.summary ?? {},
+    "dto_to_model",
+  );
+  const daily = mapper.map<SalesDailyItemDto[], SalesDailyItem[]>(
+    "Dashboard",
+    data?.daily ?? [],
+    "dto_to_model",
+  );
+
+  return {
+    summary: {
+      totalRevenue: Number.isFinite(summary.totalRevenue) ? summary.totalRevenue : 0,
+      orderItemsCount: Number.isFinite(summary.orderItemsCount) ? summary.orderItemsCount : 0,
+      prevRevenue: Number.isFinite(summary.prevRevenue) ? summary.prevRevenue : 0,
+      growthPercent:
+        summary.growthPercent == null || Number.isFinite(summary.growthPercent)
+          ? summary.growthPercent ?? null
+          : null,
+    },
+    daily: (daily ?? []).map((item) => ({
+      date: item.date ?? "",
+      revenue: Number.isFinite(item.revenue) ? item.revenue : 0,
+    })),
+  };
+}
+
+export function useSalesReport(range: SalesReportRange) {
+  return useAsync<SalesReportResult>(
+    async () => fetchSalesReport(range),
+    [],
+    { key: "dashboard:sales-report" },
   );
 }
 

@@ -1,6 +1,6 @@
 import { Chip, Divider, Stack, Typography } from "@mui/material";
 import { SectionCard } from "@shared/components/ui/section-card";
-import { dueTodayStatusChip, priorityColor, priorityLabel } from "@root/shared/utils/order.utils";
+import { dueTodayStatusChip, priorityColor, priorityLabel, statusColor, statusLabel } from "@root/shared/utils/order.utils";
 import { formatDateTime12, formatTime12 } from "@root/shared/utils/datetime.utils";
 import { navigate } from "@root/core/navigation/navigate";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -58,17 +58,28 @@ export function DueTodayCard({ title = "Giao hôm nay", items }: DueTodayCardPro
                 <Typography variant="caption" color="text.secondary">
                   Dự kiến giao lúc {deliveryLabel}
                 </Typography>
-                {isOverdue ? (
+
+                {isOverdue && (
                   <WarningAmberIcon fontSize="inherit" sx={{ color: "error.main" }} />
-                ) : null}
-                {deliveryStatusChip.label ? (
+                )}
+
+                {item.status === "completed" ? (
+                  deliveryStatusChip.label ? (
+                    <Chip
+                      size="small"
+                      label={deliveryStatusChip.label}
+                      sx={{ bgcolor: deliveryStatusChip.color, color: "#fff" }}
+                    />
+                  ) : null
+                ) : (
                   <Chip
                     size="small"
-                    label={deliveryStatusChip.label}
-                    sx={{ bgcolor: deliveryStatusChip.color, color: "#fff" }}
+                    label={ statusLabel(item.status) }
+                    sx={{ bgcolor: statusColor(item.status), color: "#fff" }}
                   />
-                ) : null}
+                )}
               </Stack>
+
             </Stack>
           );
         })}

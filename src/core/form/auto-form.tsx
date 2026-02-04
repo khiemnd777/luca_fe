@@ -266,6 +266,11 @@ async function expandOneMetadataBlock(
       const override = metaField.metadata?.def?.find(d => d.name === mf.name);
 
       if (singleChoice) {
+        const requiredRule = override?.rules?.required;
+        const requiredMsg =
+          requiredRule !== undefined
+            ? (requiredRule ? (typeof requiredRule === "string" ? requiredRule : "This field is required") : null)
+            : (mf.required ? "This field is required" : null);
         const fd: FieldDef = {
           prop,
           kind: "searchsingle",
@@ -275,7 +280,6 @@ async function expandOneMetadataBlock(
           group,
           placeholder: relation.placeholer ?? "",
           fullWidth: true,
-          rules: mergeMetadataRules(mf.required, override?.rules),
           onSelect: metaField.onSelect,
 
           getOptionLabel: (d: any) => d?.name,
@@ -321,8 +325,20 @@ async function expandOneMetadataBlock(
           fd.onOpenCreate = () => openFormDialog(frmDlgKey);
         }
         if (override) {
-          const { name: _omit, ...rest } = override;
+          const { name: _omit, rules: _omitRules, ...rest } = override;
           Object.assign(fd, rest);
+        }
+        if (requiredMsg) {
+          const baseValidate = fd.validate;
+          const allowUnmatched = fd.allowUnmatched ?? false;
+          fd.validate = (input, matched, ctx) => {
+            if (allowUnmatched) {
+              if (!input || !input.trim()) return requiredMsg;
+            } else if (!matched) {
+              return requiredMsg;
+            }
+            return baseValidate ? baseValidate(input, matched, ctx) ?? null : null;
+          };
         }
         out.push(fd);
       } else {
@@ -335,7 +351,6 @@ async function expandOneMetadataBlock(
           group,
           placeholder: relation.placeholer ?? "",
           fullWidth: true,
-          rules: mergeMetadataRules(mf.required, override?.rules),
           onSelect: metaField.onSelect,
 
           getOptionLabel: override?.getOptionLabel ?? ((d: any) => d?.name),
@@ -388,7 +403,7 @@ async function expandOneMetadataBlock(
           fd.onOpenCreate = () => openFormDialog(frmDlgKey);
         }
         if (override) {
-          const { name: _omit, renderItem: _omitRenderItem, ...rest } = override;
+          const { name: _omit, renderItem: _omitRenderItem, rules: _omitRules, ...rest } = override;
           Object.assign(fd, rest);
         }
         out.push(fd);

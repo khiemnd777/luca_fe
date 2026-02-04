@@ -191,6 +191,27 @@ function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: 
   return null;
 }
 
+function toInputString(value: any): string {
+  if (value === null || value === undefined) return "";
+  if (Array.isArray(value)) return value.map((v) => (v == null ? "" : String(v))).join(",");
+  if (typeof value === "string") return value;
+  return String(value);
+}
+
+function validateSearchSingle(value: any, def: FieldDef): string | null {
+  const msg = validateOneSync(value, def.rules, def.label, def.kind);
+  if (msg) return msg;
+  if (!def.validate) return null;
+  return def.validate(toInputString(value), null, null) ?? null;
+}
+
+function validateSearchList(value: any, def: FieldDef): string | null {
+  const msg = validateOneSync(value, def.rules, def.label, def.kind);
+  if (msg) return msg;
+  if (!def.validate) return null;
+  return def.validate(toInputString(value), null, null) ?? null;
+}
+
 function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
   let t: any;
   return (...args: Parameters<F>) => {
@@ -484,6 +505,10 @@ export function useAutoForm(
         msg = validateNewPasswordObject(formValues[f.name], f, values);
       } else if (f.kind === "change-password") {
         msg = validateChangePasswordObject(formValues[f.name], f, values);
+      } else if (f.kind === "searchsingle") {
+        msg = validateSearchSingle(formValues[f.name], f);
+      } else if (f.kind === "searchlist") {
+        msg = validateSearchList(formValues[f.name], f);
       } else {
         msg = validateOneSync(formValues[f.name], f.rules, f.label, f.kind);
       }

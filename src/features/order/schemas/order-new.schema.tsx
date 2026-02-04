@@ -24,6 +24,7 @@ export function buildNewOrderSchema(): FormSchema {
       label: "Mã đơn hàng",
       placeholder: "Nhập mã đơn hàng",
       fullWidth: true,
+      validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
       pageLimit: 20,
       resolveDefaultInput: async (_values, ctx) => {
         if (!ctx?.formSessionId) {
@@ -175,6 +176,20 @@ export function buildNewOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
+        def: [
+          {
+            name: "clinic_id",
+            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+          },
+          {
+            name: "dentist_id",
+            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+          },
+          {
+            name: "patient_id",
+            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+          },
+        ],
       }
     },
     // {
@@ -264,6 +279,16 @@ export function buildNewOrderSchema(): FormSchema {
           {
             group: "note",
             fields: ["note"],
+          },
+        ],
+        def: [
+          {
+            name: "priority",
+            rules: { required: true },
+          },
+          {
+            name: "delivery_date",
+            rules: { required: true },
           },
         ],
       }

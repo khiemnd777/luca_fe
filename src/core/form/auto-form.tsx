@@ -399,6 +399,7 @@ async function expandOneMetadataBlock(
 
     const prop = metaField.prop;
     const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
+    const override = metaField.metadata?.def?.find(d => d.name === mf.name);
     let fd: FieldDef = {
       prop,
       kind,
@@ -408,7 +409,6 @@ async function expandOneMetadataBlock(
       rules: mergeMetadataRules(mf.required, override?.rules),
       group,
     };
-    const override = metaField.metadata?.def?.find(d => d.name === mf.name);
     if (override) {
       const { name: _omit, ...rest } = override;
       Object.assign(fd, rest);

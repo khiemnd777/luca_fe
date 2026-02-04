@@ -9,9 +9,10 @@ import { IfPermission } from "@root/core/auth/if-permission";
 registerSlot({
   id: "order",
   name: "order:left",
+  priority: 1,
   render: () => (
     <>
-      <SectionCard title="Tất cả" extra={
+      <SectionCard title="Quản lý đơn hàng" extra={
         <>
           <IfPermission permissions={["order.create"]}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => {

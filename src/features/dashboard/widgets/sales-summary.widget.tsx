@@ -31,6 +31,13 @@ registerSlot({
   priority: 1,
 });
 
+registerSlot({
+  id: "order-sales-summary",
+  name: "order:header",
+  render: () => <SalesSummaryWidget />,
+  priority: 1,
+});
+
 // WS
 function SalesSummaryWSWidget() {
   const { lastMessage } = useWebSocket();

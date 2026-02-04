@@ -6,6 +6,7 @@ import { SlotHost } from "@core/module/slot-host"; // giả định sẵn có
 import { useRouteMeta } from "@core/module/route-meta";
 import { ResponsiveGrid } from "@root/shared/components/ui/responsive-grid";
 import { ActionToolbar } from "@root/shared/components/ui/action-toolbar";
+import { Spacer } from "@root/shared/components/ui/spacer";
 
 export default function OneColumnPage() {
   const { key } = useRouteMeta();
@@ -19,12 +20,13 @@ export default function OneColumnPage() {
         <Section>
           <SlotHost direction="column" name={`${key}:header`} />
         </Section>
-        <ResponsiveGrid>
-          <SlotHost direction="column" name={`${key}:top`} />
+        <ResponsiveGrid xs={1} sm={2} md={2} lg={2} xl={2}>
+          <SlotHost name={`${key}:top`} />
         </ResponsiveGrid>
+        <Spacer />
         <AutoGrid>
           <Section>
-            <SlotHost name={`${key}:left`} />
+            <SlotHost direction="column" name={`${key}:left`} />
           </Section>
         </AutoGrid>
       </PageContainer>

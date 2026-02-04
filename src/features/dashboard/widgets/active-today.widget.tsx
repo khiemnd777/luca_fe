@@ -37,6 +37,13 @@ registerSlot({
   priority: 1,
 });
 
+registerSlot({
+  id: "dashboard-active-today",
+  name: "order:top",
+  render: () => <ActiveTodayWidget />,
+  priority: 1,
+});
+
 // WS
 function ActiveTodayWSWidget() {
   const { lastMessage } = useWebSocket();

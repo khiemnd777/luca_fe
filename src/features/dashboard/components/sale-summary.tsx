@@ -22,7 +22,7 @@ export function SalesSummary({ data }: Props) {
         : "error.main";
 
   return (
-    <ResponsiveGrid xs={1} sm={1} md={1} lg={3} xl={3}>
+    <ResponsiveGrid xs={1} sm={1} md={3} lg={3} xl={3}>
       <Grid spacing={{ xs: 12, md: 4 }}>
         <Card>
           <CardContent>

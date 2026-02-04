@@ -858,11 +858,11 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // ----------------------------------------------------
     const setValueUser = (name: string, v: any) => {
       setValue(name, v);
-      
+
       if (errors[name]) {
         setFieldError(name, null);
       }
-      
+
       schema.onChange?.(name, v, ctxRef.current!, "user");
       ctxRef.current?.emit("form:change", {
         name,
@@ -1112,32 +1112,62 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* SUBMIT */
     const [, setSaving] = React.useState(false);
 
+    function resolveSearchSinglePair(field: FieldDef, values: Record<string, any>) {
+      const primaryIdKey = field.name;
+      const fallbackIdKey = field.altName;
+      const hasPrimary = values[primaryIdKey] !== undefined && values[primaryIdKey] !== null;
+      const idKey = hasPrimary ? primaryIdKey : (fallbackIdKey ?? primaryIdKey);
+
+      if (!idKey.endsWith("Id")) {
+        return null;
+      }
+
+      const nameKey = idKey.replace(/Id$/, "Name");
+
+      const id = values[idKey] ?? null;
+      const name = typeof values[nameKey] === "string" ? values[nameKey] : "";
+
+      return {
+        idKey,
+        nameKey,
+        id,
+        name,
+        matched: id != null && name.trim() ? { id, name } : null,
+      };
+    }
+
     async function validateMetadataFields(): Promise<boolean> {
       let valid = true;
 
       for (const block of metadataBlocks) {
         for (const f of block.fields) {
           let msg: string | null = null;
-          const value = values[f.name];
 
+          if (f.kind === "searchsingle" && f.validate) {
+            const pair = resolveSearchSinglePair(f, values);
+
+            const msg = f.validate(
+              pair?.name ?? "",
+              pair?.matched ?? null,
+              ctxRef.current
+            );
+
+            if (msg) {
+              setFieldError(f.name, msg);
+              valid = false;
+            } else {
+              setFieldError(f.name, null);
+            }
+            continue;
+          }
+
+          const value = values[f.name];
           // ===== sync rules =====
           msg = validateOneSync(value, f.rules, f.label, f.kind);
           if (msg) {
             setFieldError(f.name, msg);
             valid = false;
             continue;
-          }
-
-          // ===== custom field validate (if exists) =====
-          if (f.validate) {
-            const customMsg = f.validate(value, null as any, ctxRef.current);
-            if (customMsg) {
-              setFieldError(f.name, customMsg);
-              valid = false;
-              continue;
-            }
-
-            setFieldError(f.name, null);
           }
 
           // ===== async rules =====
@@ -1156,6 +1186,8 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
               valid = false;
             }
           }
+
+          setFieldError(f.name, null);
         }
       }
 

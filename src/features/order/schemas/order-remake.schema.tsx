@@ -109,6 +109,20 @@ export function buildRemakeOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
+        def: [
+          {
+            name: "clinicId",
+            validate: (input) => (input?.trim() ? null : "Không để trống nha khoa"),
+          },
+          {
+            name: "dentistId",
+            validate: (input) => (input?.trim() ? null : "Không để trống nha sĩ"),
+          },
+          {
+            name: "patientId",
+            validate: (input) => (input?.trim() ? null : "Không để trống bệnh nhân"),
+          },
+        ],
       }
     },
     // {
@@ -198,6 +212,16 @@ export function buildRemakeOrderSchema(): FormSchema {
           {
             group: "note",
             fields: ["note"],
+          },
+        ],
+        def: [
+          {
+            name: "priority",
+            rules: { required: "Không để trống ưu tiên" },
+          },
+          {
+            name: "deliveryDate",
+            rules: { required: "Không để trống ngày giao" },
           },
         ],
       }

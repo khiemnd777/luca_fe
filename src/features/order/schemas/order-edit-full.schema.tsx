@@ -211,6 +211,20 @@ export function buildEditOrderSchema(): FormSchema {
             fields: ["note"],
           },
         ],
+        def: [
+          {
+            name: "priority",
+            rules: { required: "Không để trống ưu tiên" },
+          },
+          {
+            name: "status",
+            rules: { required: "Không để trống trạng thái" },
+          },
+          {
+            name: "deliveryDate",
+            rules: { required: "Không để trống ngày giao" },
+          },
+        ],
       }
     },
     // product

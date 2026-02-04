@@ -179,15 +179,15 @@ export function buildNewOrderSchema(): FormSchema {
         def: [
           {
             name: "clinicId",
-            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống nha khoa"),
+            validate: (input) => (input?.trim() ? null : "Không để trống nha khoa"),
           },
           {
             name: "dentistId",
-            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống nha sĩ"),
+            validate: (input) => (input?.trim() ? null : "Không để trống nha sĩ"),
           },
           {
             name: "patientId",
-            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống bệnh nhân"),
+            validate: (input) => (input?.trim() ? null : "Không để trống bệnh nhân"),
           },
         ],
       }

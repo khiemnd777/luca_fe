@@ -129,6 +129,10 @@ export type MiniFieldOverride = {
   onSelect?: (item: any) => void;
   onChange?: (value: any, ctx?: FormContext) => void;
   onInputChange?: (text: string) => void;
+  validate?: (input: string, matched: any | null, ctx?: FormContext | null) => string | null | undefined;
+  validateAsync?: (input: string, matched: any | null, ctx?: FormContext | null) => Promise<string | null | undefined>;
+  validateOn?: SearchSingleValidateTrigger | SearchSingleValidateTrigger[];
+  onValidate?: (message: string | null, input: string, matched: any | null, ctx?: FormContext | null) => void;
   onDragEnd?: (items: any[]) => void;
 
   // searchlist, autocomplete, relation

@@ -149,6 +149,32 @@ export function ExampleDialog({ open, onClose, onSubmit }: any) {
 }
 ```
 
+- Validation
+
+```ts
+{
+  kind: "searchsingle",
+  name: "customerId",
+  label: "Customer",
+  search: ...,
+  getOptionLabel: ...,
+  getOptionValue: ...,
+  validate: (input, matched) => {
+    if (!input) return "Vui lòng nhập khách hàng";
+    if (!matched) return "Vui lòng chọn từ danh sách";
+    return null;
+  },
+  validateAsync: async (input, matched) => {
+    // optional async check
+    return null;
+  },
+  validateOn: ["blur", "select"], // default if omitted
+  onValidate: (msg) => {
+    // optional side-effects
+  },
+}
+```
+
 - `validateFieldAsync` ở `onBlur`:
 
 ```tsx

@@ -214,6 +214,7 @@ async function expandOneMetadataBlock(
     if (kind === "currency-equation") {
       const prop = metaField.prop;
       const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
       const fd: FieldDef = {
         prop,
         kind: "currency-equation",
@@ -222,8 +223,8 @@ async function expandOneMetadataBlock(
         currencyEquation: snakeToCamel(mf.defaultValue ?? ""),
         fullWidth: true,
         group,
+        rules: mergeMetadataRules(mf.required, override?.rules),
       };
-      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
       if (override) {
         const { name: _omit, ...rest } = override;
         Object.assign(fd, rest);
@@ -236,6 +237,7 @@ async function expandOneMetadataBlock(
       const prop = metaField.prop;
       const cfPrefix = prop ? `${prop}.customFields` : `customFields`;
       const opts = isJSON(mf.options ?? "") ? parseJSON(mf.options ?? "[]") : [];
+      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
       const fd: FieldDef = {
         prop,
         kind: "select",
@@ -244,8 +246,8 @@ async function expandOneMetadataBlock(
         options: opts,
         fullWidth: true,
         group,
+        rules: mergeMetadataRules(mf.required, override?.rules),
       };
-      const override = metaField.metadata?.def?.find(d => d.name === mf.name);
       if (override) {
         const { name: _omit, ...rest } = override;
         Object.assign(fd, rest);
@@ -273,6 +275,7 @@ async function expandOneMetadataBlock(
           group,
           placeholder: relation.placeholer ?? "",
           fullWidth: true,
+          rules: mergeMetadataRules(mf.required, override?.rules),
           onSelect: metaField.onSelect,
 
           getOptionLabel: (d: any) => d?.name,
@@ -332,6 +335,7 @@ async function expandOneMetadataBlock(
           group,
           placeholder: relation.placeholer ?? "",
           fullWidth: true,
+          rules: mergeMetadataRules(mf.required, override?.rules),
           onSelect: metaField.onSelect,
 
           getOptionLabel: override?.getOptionLabel ?? ((d: any) => d?.name),
@@ -401,7 +405,7 @@ async function expandOneMetadataBlock(
       name: `${cfPrefix}.${mf.name}`,
       label: mf.label ?? mf.name,
       fullWidth: true,
-      rules: mf.required ? { required: true } : undefined,
+      rules: mergeMetadataRules(mf.required, override?.rules),
       group,
     };
     const override = metaField.metadata?.def?.find(d => d.name === mf.name);
@@ -450,6 +454,15 @@ function resolveMetadataFieldGroup(
   if (fallbackGroup) return fallbackGroup;
 
   return metaField.group ?? "general";
+}
+
+function mergeMetadataRules(
+  required: boolean,
+  override?: FieldDef["rules"]
+): FieldDef["rules"] | undefined {
+  const base = required ? { required: true } : undefined;
+  if (!override) return base;
+  return { ...(base ?? {}), ...override };
 }
 
 function flattenInitialRecursive(obj: any, prefix: string, out: any) {

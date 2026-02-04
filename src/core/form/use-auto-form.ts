@@ -137,7 +137,7 @@ function validateChangePasswordObject(value: any, def: FieldDef, allValues: Reco
   return null;
 }
 
-function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
+export function validateOneSync(value: any, rules?: FieldRules, label?: string, kind?: string): string | null {
   if (!rules) return null;
 
   const reqMsg = getReqMsg(rules.required);
@@ -516,7 +516,6 @@ export function useAutoForm(
       err[f.name] = msg ?? null;
     }
 
-    // hard errors (business errors from ctx.setFieldError)
     const merged: Record<string, string | null> = {
       ...err,
       ...hardErrorsRef.current,

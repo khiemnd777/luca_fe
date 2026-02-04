@@ -178,16 +178,16 @@ export function buildNewOrderSchema(): FormSchema {
         mode: "whole",
         def: [
           {
-            name: "clinic_id",
-            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+            name: "clinicId",
+            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống nha khoa"),
           },
           {
-            name: "dentist_id",
-            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+            name: "dentistId",
+            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống nha sĩ"),
           },
           {
-            name: "patient_id",
-            validate: (input) => (input?.trim() ? null : "Trường này là bắt buộc"),
+            name: "patientId",
+            validate: (input) => (typeof input === "number" && input > 0 ? null : "Không để trống bệnh nhân"),
           },
         ],
       }
@@ -284,11 +284,11 @@ export function buildNewOrderSchema(): FormSchema {
         def: [
           {
             name: "priority",
-            rules: { required: true },
+            rules: { required: "Không để trống ưu tiên" },
           },
           {
-            name: "delivery_date",
-            rules: { required: true },
+            name: "deliveryDate",
+            rules: { required: "Không để trống ngày giao" },
           },
         ],
       }

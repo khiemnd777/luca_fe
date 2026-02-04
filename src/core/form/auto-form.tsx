@@ -3,7 +3,7 @@ import { Stack } from "@mui/material";
 import toast from "react-hot-toast";
 
 import { AutoFormFieldsGrouped } from "@core/form/auto-form-fields";
-import { useAutoForm } from "@core/form/use-auto-form";
+import { useAutoForm, validateOneSync } from "@core/form/use-auto-form";
 
 import type {
   AutoFormRef,
@@ -857,7 +857,12 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     // WRAPPED SETTERS WITH changeSource
     // ----------------------------------------------------
     const setValueUser = (name: string, v: any) => {
-      setValue(name, v);  // original
+      setValue(name, v);
+      
+      if (errors[name]) {
+        setFieldError(name, null);
+      }
+      
       schema.onChange?.(name, v, ctxRef.current!, "user");
       ctxRef.current?.emit("form:change", {
         name,
@@ -1107,9 +1112,62 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
     /* SUBMIT */
     const [, setSaving] = React.useState(false);
 
+    async function validateMetadataFields(): Promise<boolean> {
+      let valid = true;
+
+      for (const block of metadataBlocks) {
+        for (const f of block.fields) {
+          let msg: string | null = null;
+          const value = values[f.name];
+
+          // ===== sync rules =====
+          msg = validateOneSync(value, f.rules, f.label, f.kind);
+          if (msg) {
+            setFieldError(f.name, msg);
+            valid = false;
+            continue;
+          }
+
+          // ===== custom field validate (if exists) =====
+          if (f.validate) {
+            const customMsg = f.validate(value, null as any, ctxRef.current);
+            if (customMsg) {
+              setFieldError(f.name, customMsg);
+              valid = false;
+              continue;
+            }
+
+            setFieldError(f.name, null);
+          }
+
+          // ===== async rules =====
+          if (f.rules?.async) {
+            try {
+              const asyncMsg = await f.rules.async(value, values);
+              if (asyncMsg) {
+                setFieldError(f.name, asyncMsg);
+                valid = false;
+              }
+            } catch (e: any) {
+              setFieldError(
+                f.name,
+                e?.message ?? "Validation failed"
+              );
+              valid = false;
+            }
+          }
+        }
+      }
+
+      return valid;
+    }
+
     async function handleSubmitButton(btn: SubmitButton, mode: FormMode) {
-      const ok = await validateAll();
-      if (!ok) return false;
+      const okBase = await validateAll();
+      if (!okBase) return false;
+
+      const okMeta = await validateMetadataFields();
+      if (!okMeta) return false;
 
       setSaving(true);
 

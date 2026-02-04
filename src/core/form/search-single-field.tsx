@@ -14,6 +14,7 @@ import type { FormContext } from "./types";
 
 
 type Size = "small" | "medium";
+type ValidateTrigger = "blur" | "select" | "input" | "clear";
 
 export type SearchSingleFieldProps<T> = {
   // Field basics
@@ -55,6 +56,12 @@ export type SearchSingleFieldProps<T> = {
   getInputLabel?: (item: T) => string;
   renderItem?: (item: T) => React.ReactNode;
 
+  /** Validation */
+  validate?: (input: string, matched: T | null, ctx?: FormContext | null) => string | null | undefined;
+  validateAsync?: (input: string, matched: T | null, ctx?: FormContext | null) => Promise<string | null | undefined>;
+  validateOn?: ValidateTrigger | ValidateTrigger[];
+  onValidate?: (message: string | null, input: string, matched: T | null, ctx?: FormContext | null) => void;
+
   /** Paging */
   autoLoadAllOnMount?: boolean;
   pageLimit?: number;
@@ -87,6 +94,7 @@ function SearchSingleFieldInner<T>(
   ref: React.ForwardedRef<SearchSingleFieldHandle>
 ) {
   const {
+    name,
     label,
     placeholder,
     size = "small",
@@ -113,6 +121,10 @@ function SearchSingleFieldInner<T>(
     getOptionLabel,
     getOptionValue,
     renderItem,
+    validate,
+    validateAsync,
+    validateOn,
+    onValidate,
 
     values,
     refreshKey,
@@ -136,6 +148,7 @@ function SearchSingleFieldInner<T>(
   const [page, setPage] = React.useState(1);
   const [hasMore, setHasMore] = React.useState(false);
   const [cachedOptions, setCachedOptions] = React.useState<T[]>([]);
+  const [internalError, setInternalError] = React.useState<string | null>(null);
 
   const debounce = useDebounce();
   const defaultInputRef = React.useRef<string | null>(null);
@@ -143,6 +156,8 @@ function SearchSingleFieldInner<T>(
   const userInteractedRef = React.useRef(false);
   const inputValueRef = React.useRef(inputValue);
   const valueRef = React.useRef(value);
+  const validationSeqRef = React.useRef(0);
+  const mountedRef = React.useRef(true);
 
   /* ======================================================
      Controlled mode → hydrateById
@@ -159,6 +174,66 @@ function SearchSingleFieldInner<T>(
   React.useEffect(() => {
     valueRef.current = value;
   }, [value]);
+
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const validateOnSet = React.useMemo(() => {
+    const base = validateOn
+      ? (Array.isArray(validateOn) ? validateOn : [validateOn])
+      : ["blur", "select"];
+    return new Set(base);
+  }, [validateOn]);
+
+  const isErrorControlled = typeof error !== "undefined";
+  const mergedError = isErrorControlled ? error : internalError;
+
+  const reportValidation = React.useCallback((
+    message: string | null,
+    input: string,
+    matched: T | null
+  ) => {
+    if (ctx?.setFieldError) {
+      ctx.setFieldError(name, message ?? null);
+    }
+    onValidate?.(message ?? null, input, matched, ctx);
+    if (!isErrorControlled) {
+      setInternalError(message ?? null);
+    }
+  }, [ctx, name, onValidate, isErrorControlled]);
+
+  const runValidation = React.useCallback(async (
+    trigger: ValidateTrigger,
+    input: string,
+    matched: T | null
+  ) => {
+    if (!validate && !validateAsync) return;
+    if (!validateOnSet.has(trigger)) return;
+
+    const seq = ++validationSeqRef.current;
+    const syncMsg = validate?.(input, matched, ctx) ?? null;
+    if (syncMsg) {
+      reportValidation(syncMsg, input, matched);
+      return;
+    }
+
+    if (!validateAsync) {
+      reportValidation(null, input, matched);
+      return;
+    }
+
+    try {
+      const asyncMsg = await validateAsync(input, matched, ctx);
+      if (!mountedRef.current || seq !== validationSeqRef.current) return;
+      reportValidation(asyncMsg ?? null, input, matched);
+    } catch (e: any) {
+      if (!mountedRef.current || seq !== validationSeqRef.current) return;
+      reportValidation(e?.message ?? "Validation failed", input, matched);
+    }
+  }, [validate, validateAsync, validateOnSet, ctx, reportValidation]);
 
   /* ======================================================
      Resolve default input (initial)
@@ -360,6 +435,8 @@ function SearchSingleFieldInner<T>(
     setKeyword(v);
 
     onInputChange?.(v);
+    if (reason === "input") runValidation("input", v, null);
+    if (reason === "clear") runValidation("clear", v, null);
 
     if (v === "" || reason === "clear") {
       debounce(() => loadFirstPage(""), 0);
@@ -379,6 +456,8 @@ function SearchSingleFieldInner<T>(
     const val = obj ? getOptionValue(obj) : null;
     onChange?.(val, obj);
     onSelect?.(obj);
+    const nextInput = obj ? getOptionLabel(obj, options) : inputValueRef.current;
+    runValidation("select", nextInput ?? "", obj);
   };
 
   /* ======================================================
@@ -398,7 +477,7 @@ function SearchSingleFieldInner<T>(
   );
 
   return (
-    <FormControl fullWidth={fullWidth} disabled={disabled} error={!!error}>
+    <FormControl fullWidth={fullWidth} disabled={disabled} error={!!mergedError}>
       <Stack spacing={1}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Autocomplete
@@ -442,6 +521,7 @@ function SearchSingleFieldInner<T>(
                     }) ?? null;
 
                   onBlur?.(t, matched, ctx);
+                  runValidation("blur", t, matched);
 
                   if (!matched) {
                     return;
@@ -474,8 +554,8 @@ function SearchSingleFieldInner<T>(
           )}
         </Stack>
 
-        {error ? (
-          <FormHelperText>{error}</FormHelperText>
+        {mergedError ? (
+          <FormHelperText>{mergedError}</FormHelperText>
         ) : helperText ? (
           <FormHelperText>{helperText}</FormHelperText>
         ) : null}

@@ -80,6 +80,8 @@ export type Option = {
   value: string | number | boolean;
 };
 
+export type SearchSingleValidateTrigger = "blur" | "select" | "input" | "clear";
+
 export type QROptions = {
   size?: number;
   tooltipSize?: number;
@@ -222,6 +224,10 @@ export type FieldDef = {
   allowUnmatched?: boolean;
   fetchOne?: (values: Record<string, any>) => Promise<any | null>;
   hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
+  validate?: (input: string, matched: any | null, ctx?: FormContext | null) => string | null | undefined;
+  validateAsync?: (input: string, matched: any | null, ctx?: FormContext | null) => Promise<string | null | undefined>;
+  validateOn?: SearchSingleValidateTrigger | SearchSingleValidateTrigger[];
+  onValidate?: (message: string | null, input: string, matched: any | null, ctx?: FormContext | null) => void;
 
   // metadata
   metadata?: {

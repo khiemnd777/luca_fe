@@ -21,6 +21,29 @@ export async function processesForStaff(staffId: number): Promise<OrderItemProce
   return result;
 }
 
+export async function getInProgressesForStaffTimeline(
+  staffId: number,
+  fromDate: string,
+  toDate: string,
+): Promise<OrderItemProcessInProgressProcessModel[]> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.get<any[]>(
+    `${departmentApiPath()}/staff/${staffId}/order/processes/in-progresses/timeline`,
+    {
+      params: {
+        from_date: fromDate,
+        to_date: toDate,
+      },
+    },
+  );
+  const result = mapper.map<any[], OrderItemProcessInProgressProcessModel[]>(
+    "OrderItemProcessInProgressProcess",
+    data,
+    "dto_to_model",
+  );
+  return result;
+}
+
 export async function getInProgressesForStaff(staffId: number, tableOpts: FetchTableOpts): Promise<ListResult<OrderItemProcessInProgressProcessModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/staff/${staffId}/order/processes/in-progresses`, tableOpts);

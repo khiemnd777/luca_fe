@@ -18,6 +18,7 @@ const mod: ModuleDescriptor = {
       priority: 94,
       children: [
         {
+          hidden: true,
           key: "staff-detail",
           permissions: ["staff.view", "staff.update"],
           label: "Chi tiết nhân sự",
@@ -25,7 +26,7 @@ const mod: ModuleDescriptor = {
           subtitle: "Thay đổi thông tin, mật khẩu, và theo dõi tiến độ gia công.",
           path: "/staff/:staffId",
           icon: <BadgeIcon />,
-          hidden: true,
+          element: <OneColumnPage />,
           priority: 99,
         },
       ],

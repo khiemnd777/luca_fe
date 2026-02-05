@@ -1,6 +1,7 @@
 import type { ModuleDescriptor } from "@root/core/module/types";
 import { registerModule } from "@root/core/module/registry";
 import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
+import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
   id: "section",
@@ -22,6 +23,7 @@ const mod: ModuleDescriptor = {
           label: "Phòng ban",
           title: "Phòng ban",
           path: "/section/:sectionId",
+          element: <OneColumnPage />,
           priority: 99,
         }
       ]

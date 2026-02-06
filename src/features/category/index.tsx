@@ -18,7 +18,7 @@ const mod: ModuleDescriptor = {
       title: "Danh mục",
       path: "/category",
       icon: <ClassIcon />,
-      priority: 99,
+      priority: 98,
       children: [
         {
           key: "restoration_type",

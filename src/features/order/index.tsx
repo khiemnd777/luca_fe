@@ -16,7 +16,7 @@ const mod: ModuleDescriptor = {
       title: "Đơn hàng",
       path: "/order",
       icon: <ChecklistIcon />,
-      priority: 97,
+      priority: 99,
       children: [
         {
           hidden: true,

@@ -129,6 +129,19 @@ export async function listBySectionID(sectionId: number, tableOpts: FetchTableOp
   return result;
 }
 
+export async function listByPromotionCodeID(
+  promotionCodeId: number,
+  tableOpts: FetchTableOpts
+): Promise<ListResult<OrderModel>> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.getTable<any[]>(
+    `${departmentApiPath()}/order/promotion/${promotionCodeId}/list`,
+    tableOpts
+  );
+  const result = mapper.map<any[], ListResult<OrderModel>>("Order", data, "dto_to_model");
+  return result;
+}
+
 export async function list(tableOpts: FetchTableOpts): Promise<ListResult<OrderModel>> {
   const { departmentApiPath } = useAuthStore.getState();
   const { data } = await apiClient.getTable<any[]>(`${departmentApiPath()}/order/list`, tableOpts);

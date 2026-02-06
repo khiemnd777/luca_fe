@@ -7,6 +7,8 @@ import { useParams } from "react-router-dom";
 import { SafeButton } from "@shared/components/button/safe-button";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import { AutoForm } from "@root/core/form/auto-form";
+import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
+import { AutoTable } from "@core/table/auto-table";
 
 function PromotionDetailWidget() {
   const frmPromotionRef = React.useRef<AutoFormRef>(null);
@@ -14,17 +16,35 @@ function PromotionDetailWidget() {
   const promotionId = Number(id ?? 0);
 
   return (
-    <>
-      <SectionCard title="Chi tiết khuyến mãi" extra={
-        <IfPermission permissions={["promotion.update"]}>
-          <SafeButton variant="contained" startIcon={<SaveOutlinedIcon />} onClick={() => frmPromotionRef.current?.submit()}>
-            Luu
-          </SafeButton>
-        </IfPermission>
-      }>
-        <AutoForm name="promotion" ref={frmPromotionRef} initial={{ id: promotionId }} />
-      </SectionCard>
-    </>
+    <TabContainer
+      key={promotionId || "promotion-detail"}
+      tabs={[
+        {
+          label: "Thông tin chung",
+          value: "info",
+          content: (
+            <SectionCard title="Chi tiết khuyến mãi" extra={
+              <IfPermission permissions={["promotion.update"]}>
+                <SafeButton
+                  variant="contained"
+                  startIcon={<SaveOutlinedIcon />}
+                  onClick={() => frmPromotionRef.current?.submit()}
+                >
+                  Lưu
+                </SafeButton>
+              </IfPermission>
+            }>
+              <AutoForm name="promotion" ref={frmPromotionRef} initial={{ id: promotionId }} />
+            </SectionCard>
+          ),
+        },
+        {
+          label: "Đơn hàng đã áp dụng",
+          value: "orders",
+          content: <AutoTable name="promotion-orders" params={{ promotionCodeId: promotionId }} />,
+        },
+      ] satisfies TabItem[]}
+    />
   );
 }
 

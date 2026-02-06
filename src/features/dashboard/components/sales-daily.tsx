@@ -16,14 +16,15 @@ type LineItem = {
 
 type Props = {
   data: LineItem[];
+  rangeText: string;
 };
 
-export function SalesDaily({ data }: Props) {
+export function SalesDaily({ data, rangeText }: Props) {
   return (
     <Card>
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600} mb={2}>
-          Doanh số trong 7 ngày
+          Doanh số {rangeText}
         </Typography>
 
         <ResponsiveContainer width="100%" height={300}>

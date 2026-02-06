@@ -9,9 +9,10 @@ type SalesKPIs = {
 
 type Props = {
   data: SalesKPIs;
+  rangeText: string;
 };
 
-export function SalesSummary({ data }: Props) {
+export function SalesSummary({ data, rangeText }: Props) {
   const { totalRevenue, orderItemsCount, growthPercent } = data;
 
   const growthColor =
@@ -27,7 +28,7 @@ export function SalesSummary({ data }: Props) {
         <Card>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              Tổng doanh số 7 ngày
+              Tổng doanh số {rangeText}
             </Typography>
             <Typography variant="h5" fontWeight={700}>
               {totalRevenue.toLocaleString()} ₫
@@ -43,7 +44,7 @@ export function SalesSummary({ data }: Props) {
         <Card>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              Số đơn mới trong 7 ngày
+              Số đơn mới {rangeText}
             </Typography>
             <Typography variant="h5" fontWeight={700}>
               {orderItemsCount}

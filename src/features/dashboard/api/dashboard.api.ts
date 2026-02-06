@@ -229,10 +229,35 @@ export function fetchSalesSummary(
   );
 }
 
-export function useSalesSummary() {
+function buildSalesSummaryParams(range: SalesReportRange): DashboardCompareParams {
+  const now = dayjs();
+  let start = now.startOf("day");
+  let end = now.endOf("day");
+
+  if (range === "7d") {
+    start = now.subtract(6, "day").startOf("day");
+    end = now.endOf("day");
+  } else if (range === "30d") {
+    start = now.subtract(29, "day").startOf("day");
+    end = now.endOf("day");
+  }
+
+  const totalDays = Math.max(1, end.startOf("day").diff(start.startOf("day"), "day") + 1);
+  const prevStart = start.subtract(totalDays, "day");
+  const prevEnd = end.subtract(totalDays, "day");
+
+  return {
+    fromDate: start.toISOString(),
+    toDate: end.toISOString(),
+    previousFromDate: prevStart.toISOString(),
+    previousToDate: prevEnd.toISOString(),
+  };
+}
+
+export function useSalesSummary(range: SalesReportRange = "7d") {
   return useAsync<SalesSummaryModel>(
-    async () => fetchSalesSummary(buildWeekParams()),
-    [],
+    async () => fetchSalesSummary(buildSalesSummaryParams(range)),
+    [range],
     { key: "dashboard:sales-summary" },
   );
 }
@@ -258,10 +283,29 @@ export async function fetchSalesDaily(
   }));
 }
 
-export function useSalesDaily() {
+function buildSalesDailyParams(range: SalesReportRange): SalesDailyParams {
+  const now = dayjs();
+  let start = now.startOf("day");
+  let end = now.endOf("day");
+
+  if (range === "7d") {
+    start = now.subtract(6, "day").startOf("day");
+    end = now.endOf("day");
+  } else if (range === "30d") {
+    start = now.subtract(29, "day").startOf("day");
+    end = now.endOf("day");
+  }
+
+  return {
+    fromDate: start.toISOString(),
+    toDate: end.toISOString(),
+  };
+}
+
+export function useSalesDaily(range: SalesReportRange = "7d") {
   return useAsync<SalesDailyItem[]>(
-    async () => fetchSalesDaily(buildWeekParams()),
-    [],
+    async () => fetchSalesDaily(buildSalesDailyParams(range)),
+    [range],
     { key: "dashboard:sales-daily" },
   );
 }

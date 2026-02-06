@@ -9,6 +9,8 @@ import { useParams } from "react-router-dom";
 import { IfPermission } from "@root/core/auth/if-permission";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
 import { AutoTable } from "@core/table/auto-table";
+import { SlotHost } from "@root/core/module/slot-host";
+import { Spacer } from "@root/shared/components/ui/spacer";
 
 function StaffDetailInformationWidget() {
   const { staffId } = useParams();
@@ -37,6 +39,8 @@ function StaffDetailInformationWidget() {
           value: "inprogress",
           content: (
             <IfPermission permissions={["order.development"]}>
+              <SlotHost name={`staff-detail:inprogress`} />
+              <Spacer />
               <AutoTable name="staff-order-inprogress" params={{ staffId }} />
             </IfPermission>
           ),

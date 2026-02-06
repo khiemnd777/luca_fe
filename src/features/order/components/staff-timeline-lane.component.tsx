@@ -1,25 +1,26 @@
-import React from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import type { OrderItemProcessInProgressProcessModel } from "@features/order/model/order-item-process-inprogress-process.model";
 import { StaffTimelineBlock } from "@features/order/components/staff-timeline-block.component";
 
 export type StaffTimelineLaneProps = {
-  laneName: string;
+  label: string;
   items: OrderItemProcessInProgressProcessModel[];
   rangeStart: Date;
   rangeEnd: Date;
   gridCount: number;
   gridType: "hour" | "day";
+  onLabelClick?: () => void;
   onBlockClick?: (item: OrderItemProcessInProgressProcessModel) => void;
 };
 
 export function StaffTimelineLane({
-  laneName,
+  label,
   items,
   rangeStart,
   rangeEnd,
   gridCount,
   gridType,
+  onLabelClick,
   onBlockClick,
 }: StaffTimelineLaneProps) {
   const background = gridCount > 1
@@ -37,8 +38,19 @@ export function StaffTimelineLane({
         fontWeight={600}
         color="text.secondary"
         sx={{ minWidth: 140 }}
+        onClick={onLabelClick}
+        role={onLabelClick ? "button" : undefined}
+        tabIndex={onLabelClick ? 0 : undefined}
+        onKeyDown={(event) => {
+          if (!onLabelClick) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onLabelClick();
+          }
+        }}
+        style={{ cursor: onLabelClick ? "pointer" : "default" }}
       >
-        {laneName || "Process"}
+        {label}
       </Typography>
       <Box
         data-grid-type={gridType}

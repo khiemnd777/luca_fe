@@ -10,7 +10,6 @@ import { getInProgressesForStaffTimeline } from "@features/order/api/order-item-
 import { id as getStaffById } from "@features/staff/api/staff.api";
 import { StaffTimeline } from "@features/order/components/staff-timeline.component";
 import { StaffThroughputChart, type ThroughputItem } from "@features/order/components/staff-throughput-chart.component";
-import { StaffProcessTable } from "@features/order/components/staff-process-table.component";
 
 type RangeKey = "today" | "7d" | "30d";
 
@@ -80,7 +79,11 @@ export function StaffDetailWidget() {
     return getInProgressesForStaffTimeline(Number(staffId), fromDate, toDate);
   }, [staffId, fromDate, toDate]);
 
-  const items = timelineItems ?? [];
+  const items = React.useMemo<OrderItemProcessInProgressProcessModel[]>(
+    () => timelineItems ?? [],
+    [timelineItems],
+  );
+
   const throughputData = React.useMemo(
     () => buildThroughputData(items, range.start, range.end),
     [items, range.start, range.end],
@@ -89,14 +92,6 @@ export function StaffDetailWidget() {
   const handleBlockClick = React.useCallback((item: OrderItemProcessInProgressProcessModel) => {
     void item; // placeholder for future drawer interaction
   }, []);
-
-  const sortedItems = React.useMemo(() => {
-    return [...items].sort((a, b) => {
-      const aStart = a.startedAt ? new Date(a.startedAt).getTime() : 0;
-      const bStart = b.startedAt ? new Date(b.startedAt).getTime() : 0;
-      return aStart - bStart;
-    });
-  }, [items]);
 
   return (
     <Stack spacing={2}>
@@ -118,9 +113,9 @@ export function StaffDetailWidget() {
             size="small"
             onChange={(_, value) => value && setRangeKey(value)}
           >
-            <ToggleButton value="today">Today</ToggleButton>
-            <ToggleButton value="7d">7 days</ToggleButton>
-            <ToggleButton value="30d">30 days</ToggleButton>
+            <ToggleButton value="today">Hôm nay</ToggleButton>
+            <ToggleButton value="7d">7 ngày</ToggleButton>
+            <ToggleButton value="30d">30 ngày</ToggleButton>
           </ToggleButtonGroup>
         }
       >
@@ -142,16 +137,13 @@ export function StaffDetailWidget() {
         <StaffThroughputChart data={throughputData} />
       </SectionCard>
 
-      {/* <SectionCard title="Process drill-down">
-        <StaffProcessTable rows={sortedItems} loading={loading} />
-      </SectionCard> */}
     </Stack>
   );
 }
 
 registerSlot({
   id: "staff-detail-timeline",
-  name: "staff-detail:left",
+  name: "staff-detail:inprogress",
   priority: 3,
   render: () => <StaffDetailWidget />,
 });

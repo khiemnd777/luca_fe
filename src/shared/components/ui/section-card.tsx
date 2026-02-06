@@ -8,7 +8,7 @@ type SectionCardProps = React.PropsWithChildren<{
   dense?: boolean;
   noDivider?: boolean;
   footer?: React.ReactNode;
-}> & PaperProps;  // <- kế thừa PaperProps để nhận sx, elevation,...
+}> & Omit<PaperProps, "title">;
 
 export function SectionCard({
   title,

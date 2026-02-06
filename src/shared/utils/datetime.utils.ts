@@ -48,6 +48,41 @@ export function formatDate(value?: string | Date | null): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+export function formatDateShort(value?: string | Date | null): string {
+  if (!value) return "";
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const currentYear = new Date().getFullYear();
+
+  return yyyy === currentYear ? `${dd}/${mm}` : `${dd}/${mm}/${yyyy}`;
+}
+
+export function formatDuration(durationSec?: number | null): string {
+  const totalSeconds = Math.max(0, Math.floor(durationSec ?? 0));
+  if (totalSeconds === 0) return "0 phút";
+
+  const totalMinutes = Math.ceil(totalSeconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes} phút`;
+
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  if (totalHours < 24) {
+    return remainingMinutes > 0
+      ? `${totalHours} giờ ${remainingMinutes} phút`
+      : `${totalHours} giờ`;
+  }
+
+  const totalDays = Math.floor(totalHours / 24);
+  const remainingHours = totalHours % 24;
+  if (remainingHours > 0) return `${totalDays} ngày ${remainingHours} giờ`;
+  return `${totalDays} ngày`;
+}
+
 
 export function formatTime24 (value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;

@@ -1,7 +1,7 @@
-import React from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import type { OrderItemProcessInProgressProcessModel } from "@features/order/model/order-item-process-inprogress-process.model";
 import { durationSec } from "@features/order/components/staff-timeline.utils";
+import { formatDateTime12, formatDuration } from "@shared/utils/datetime.utils";
 
 export type StaffTimelineBlockProps = {
   item: OrderItemProcessInProgressProcessModel;
@@ -21,15 +21,50 @@ export function StaffTimelineBlock({ item, rangeStart, rangeEnd, onClick }: Staf
   const widthPercent = Math.max(0, Math.min(100 - leftPercent, (widthSec / rangeSec) * 100));
   const safeWidthPercent = Math.max(0.5, widthPercent);
 
-  const minutes = Math.max(1, Math.round(widthSec / 60));
+  const durationLabel = formatDuration(widthSec);
+  const sectionProcessLabel = [item.sectionName, item.processName].filter(Boolean).join(" > ");
   const tooltipContent = (
-    <Box sx={{ minWidth: 200 }}>
+    <Box sx={{ minWidth: 240 }}>
       <Typography variant="subtitle2" fontWeight={700} gutterBottom>
         {item.orderItemCode ?? "N/A"}
       </Typography>
-      <Typography variant="body2">Duration: {minutes} min</Typography>
-      <Typography variant="body2">Check-in: {item.checkInNote || "—"}</Typography>
-      <Typography variant="body2">Check-out: {item.checkOutNote || "—"}</Typography>
+      {sectionProcessLabel && (
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            mb: 0.75,
+            backgroundColor: item.color || "rgba(0,0,0,0.08)",
+            color: item.color ? "#fff" : "text.primary",
+          }}
+        >
+          <Typography variant="caption" fontWeight={600}>
+            {sectionProcessLabel}
+          </Typography>
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "90px 1fr",
+          columnGap: 1,
+          rowGap: 0.5,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">Bắt đầu:</Typography>
+        <Typography variant="body2">{formatDateTime12(item.startedAt)}</Typography>
+        <Typography variant="body2" color="text.secondary">Hoàn thành:</Typography>
+        <Typography variant="body2">{formatDateTime12(item.completedAt)}</Typography>
+        <Typography variant="body2" color="text.secondary">Làm trong:</Typography>
+        <Typography variant="body2">{durationLabel}</Typography>
+        <Typography variant="body2" color="text.secondary">Check-in:</Typography>
+        <Typography variant="body2">{item.checkInNote || "—"}</Typography>
+        <Typography variant="body2" color="text.secondary">Check-out:</Typography>
+        <Typography variant="body2">{item.checkOutNote || "—"}</Typography>
+      </Box>
     </Box>
   );
 

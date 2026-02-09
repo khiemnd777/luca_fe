@@ -19,7 +19,7 @@ export default function DashboardPage() {
           </Typography>
         </Stack>
 
-        <ResponsiveGrid xs={1} sm={2} md={2} lg={4} xl={4}>
+        <ResponsiveGrid xs={1} sm={1} md={1} lg={1} xl={1}>
           <SlotHost name="dashboard:stat" />
         </ResponsiveGrid>
 

@@ -229,7 +229,7 @@ export function fetchSalesSummary(
   );
 }
 
-function buildSalesSummaryParams(range: SalesReportRange): DashboardCompareParams {
+function buildCompareRangeParams(range: SalesReportRange): DashboardCompareParams {
   const now = dayjs();
   let start = now.startOf("day");
   let end = now.endOf("day");
@@ -256,7 +256,7 @@ function buildSalesSummaryParams(range: SalesReportRange): DashboardCompareParam
 
 export function useSalesSummary(range: SalesReportRange = "7d") {
   return useAsync<SalesSummaryModel>(
-    async () => fetchSalesSummary(buildSalesSummaryParams(range)),
+    async () => fetchSalesSummary(buildCompareRangeParams(range)),
     [range],
     { key: "dashboard:sales-summary" },
   );
@@ -360,66 +360,44 @@ function formatDelta(delta: number, suffix: string): string {
   return `${sign}${delta} ${suffix}`;
 }
 
-function buildTodayParams(): DashboardCompareParams {
-  const todayStart = dayjs().startOf("day");
-  const todayEnd = dayjs().endOf("day");
-  const prevStart = todayStart.subtract(1, "day");
-  const prevEnd = todayEnd.subtract(1, "day");
-
-  return {
-    fromDate: todayStart.toISOString(),
-    toDate: todayEnd.toISOString(),
-    previousFromDate: prevStart.toISOString(),
-    previousToDate: prevEnd.toISOString(),
-  };
+function rangeSuffix(range: SalesReportRange) {
+  if (range === "today") return "hôm nay";
+  if (range === "7d") return "7 ngày";
+  return "30 ngày";
 }
 
-function buildWeekParams(): DashboardCompareParams {
-  const weekStart = dayjs().startOf("week");
-  const weekEnd = dayjs().endOf("week");
-  const prevStart = weekStart.subtract(1, "week");
-  const prevEnd = weekEnd.subtract(1, "week");
-
-  return {
-    fromDate: weekStart.toISOString(),
-    toDate: weekEnd.toISOString(),
-    previousFromDate: prevStart.toISOString(),
-    previousToDate: prevEnd.toISOString(),
-  };
-}
-
-export function useActiveCasesToday() {
+export function useActiveCasesToday(range: SalesReportRange = "today") {
   return useAsync<DashboardStat>(
     async () => {
-      const res = await fetchActiveCases(buildTodayParams());
+      const res = await fetchActiveCases(buildCompareRangeParams(range));
       return {
         value: res.value,
-        delta: formatDelta(res.delta, "hôm nay"),
+        delta: formatDelta(res.delta, rangeSuffix(range)),
       };
     },
-    [],
+    [range],
     { key: "dashboard:active-cases-today" },
   );
 }
 
-export function useCasesCompletedThisWeek() {
+export function useCasesCompletedThisWeek(range: SalesReportRange = "7d") {
   return useAsync<DashboardStat>(
     async () => {
-      const res = await fetchCompletedCases(buildWeekParams());
+      const res = await fetchCompletedCases(buildCompareRangeParams(range));
       return {
         value: res.value,
-        delta: formatDelta(res.delta, "tuần này"),
+        delta: formatDelta(res.delta, rangeSuffix(range)),
       };
     },
-    [],
+    [range],
     { key: "dashboard:cases-completed-week" },
   );
 }
 
-export function useAvgTurnaround() {
+export function useAvgTurnaround(range: SalesReportRange = "7d") {
   return useAsync<DashboardStat>(
     async () => {
-      const res = await fetchAvgTurnaround(buildWeekParams());
+      const res = await fetchAvgTurnaround(buildCompareRangeParams(range));
       const avgDays = Number.isFinite(res.avgDays) ? res.avgDays : 0;
       const deltaDays = Number.isFinite(res.deltaDays) ? res.deltaDays : 0;
       const sign = deltaDays > 0 ? "+" : "";
@@ -430,15 +408,15 @@ export function useAvgTurnaround() {
         caption: "so với kỳ trước", //"vs previous period",
       };
     },
-    [],
+    [range],
     { key: "dashboard:avg-turnaround" },
   );
 }
 
-export function useAvgRemakeRate() {
+export function useAvgRemakeRate(range: SalesReportRange = "7d") {
   return useAsync<DashboardStat>(
     async () => {
-      const res = await fetchAvgRemakeRate(buildWeekParams());
+      const res = await fetchAvgRemakeRate(buildCompareRangeParams(range));
       const rate = Number.isFinite(res.rate) ? res.rate : 0;
       const deltaRate = Number.isFinite(res.deltaRate) ? res.deltaRate : 0;
       const sign = deltaRate > 0 ? "+" : "";
@@ -449,7 +427,7 @@ export function useAvgRemakeRate() {
         caption: "làm lại",
       };
     },
-    [],
+    [range],
     { key: "dashboard:avg-remake-rate" },
   );
 }

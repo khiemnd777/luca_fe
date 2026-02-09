@@ -22,3 +22,19 @@ export interface CategoryUpsertModel {
   dto: CategoryModel;
   collections?: (string | undefined)[];
 }
+
+export interface CategoryImportRowResult {
+  row_index: number;
+  status: string;
+  reason?: string;
+}
+
+export interface CategoryImportResult {
+  totalRows: number;
+  addedLV1: number;
+  addedLV2: number;
+  addedLV3: number;
+  skipped: number;
+  errors?: string[];
+  rows?: CategoryImportRowResult[];
+}

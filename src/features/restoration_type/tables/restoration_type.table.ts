@@ -7,7 +7,7 @@ import { table, unlink } from "@features/restoration_type/api/restoration_type.a
 
 const columns: ColumnDef<RestorationTypeModel>[] = [
   { key: "name", header: "Kiểu phục hình", sortable: true, labelField: true },
-  { key: "categoryId", header: "Danh mục", sortable: true },
+  { key: "categoryName", header: "Danh mục", sortable: true },
 ];
 
 registerTable("restoration_types", () => {

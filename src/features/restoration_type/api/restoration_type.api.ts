@@ -1,6 +1,6 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
-import type { RestorationTypeModel } from "@features/restoration_type/model/restoration_type.model";
+import type { RestorationTypeImportResult, RestorationTypeModel } from "@features/restoration_type/model/restoration_type.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
@@ -43,4 +43,14 @@ export async function update(model: RestorationTypeModel): Promise<void> {
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/restoration_type/${id}`);
+}
+
+export async function importExcel(file: File): Promise<RestorationTypeImportResult> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  const { data } = await apiClient.post<any>(`${departmentApiPath()}/restoration_type/import-excel`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data as RestorationTypeImportResult;
 }

@@ -8,6 +8,7 @@ mapper.register<RawMaterialModel>({
   defaultModel: () => ({
     id: 0,
     categoryId: null,
+    categoryName: null,
     name: "",
     createdAt: "",
     updatedAt: "",

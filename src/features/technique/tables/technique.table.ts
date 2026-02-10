@@ -7,7 +7,7 @@ import { table, unlink } from "@features/technique/api/technique.api";
 
 const columns: ColumnDef<TechniqueModel>[] = [
   { key: "name", header: "Công nghệ", sortable: true, labelField: true },
-  { key: "categoryId", header: "Danh mục", sortable: true },
+  { key: "categoryName", header: "Danh mục", sortable: true },
 ];
 
 registerTable("techniques", () => {

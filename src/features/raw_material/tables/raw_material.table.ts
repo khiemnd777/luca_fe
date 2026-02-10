@@ -7,7 +7,7 @@ import { table, unlink } from "@features/raw_material/api/raw_material.api";
 
 const columns: ColumnDef<RawMaterialModel>[] = [
   { key: "name", header: "Nguyên liệu", sortable: true, labelField: true },
-  { key: "categoryId", header: "Danh mục", sortable: true },
+  { key: "categoryName", header: "Danh mục", sortable: true },
 ];
 
 registerTable("raw_materials", () => {

@@ -7,7 +7,7 @@ import { table, unlink } from "@features/brand_name/api/brand_name.api";
 
 const columns: ColumnDef<BrandNameModel>[] = [
   { key: "name", header: "Thương hiệu", sortable: true, labelField: true },
-  { key: "categoryId", header: "Danh mục", sortable: true },
+  { key: "categoryName", header: "Danh mục", sortable: true },
 ];
 
 registerTable("brand_names", () => {

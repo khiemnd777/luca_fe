@@ -1,6 +1,6 @@
 import type { FetchTableOpts } from "@core/table/table.types";
 import type { ListResult } from "@core/types/list-result";
-import type { SectionModel } from "@features/section/model/section.model";
+import type { SectionImportResult, SectionModel } from "@features/section/model/section.model";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
 import { mapper } from "@core/mapper/auto-mapper";
@@ -50,4 +50,14 @@ export async function update(model: SectionModel): Promise<void> {
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/section/${id}`);
+}
+
+export async function importExcel(file: File): Promise<SectionImportResult> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  const { data } = await apiClient.post<any>(`${departmentApiPath()}/section/import-excel`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data as SectionImportResult;
 }

@@ -11,3 +11,10 @@ export interface SectionModel {
   description: string;
   active: boolean;
 }
+
+export interface SectionImportResult {
+  totalRows: number;
+  added: number;
+  skipped: number;
+  errors?: string[];
+}

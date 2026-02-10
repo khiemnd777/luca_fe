@@ -10,3 +10,10 @@ export interface ProcessModel {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ProcessImportResult {
+  totalRows: number;
+  added: number;
+  skipped: number;
+  errors?: string[];
+}

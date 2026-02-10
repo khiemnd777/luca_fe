@@ -14,6 +14,7 @@ const mod: ModuleDescriptor = {
       subtitle: "Đơn vị chuyên đảm nhận việc gia công, sản xuất và lắp ráp các thiết bị, chi tiết nha khoa theo yêu cầu kỹ thuật.",
       path: "/section",
       icon: <MapsHomeWorkIcon />,
+      element: <OneColumnPage />,
       priority: 95,
       children: [
         {

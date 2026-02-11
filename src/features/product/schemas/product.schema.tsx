@@ -30,6 +30,24 @@ export function buildProductSchema(): FormSchema {
       },
     },
     {
+      name: "retailPrice",
+      label: "Giá bán",
+      kind: "currency",
+      group: "price",
+      rules: {
+        min: 0,
+      },
+    },
+    {
+      name: "costPrice",
+      label: "Giá vốn",
+      kind: "currency",
+      group: "price",
+      rules: {
+        min: 0,
+      },
+    },
+    {
       name: "",
       label: "",
       kind: "metadata",
@@ -59,10 +77,6 @@ export function buildProductSchema(): FormSchema {
           {
             group: "process",
             fields: ["customFields.processIds"],
-          },
-          {
-            group: "price",
-            fields: ["customFields.retailPrice", "customFields.costPrice"],
           },
         ],
       }

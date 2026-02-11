@@ -14,6 +14,8 @@ mapper.register<ProductModel>({
     processNames: "",
     categoryId: null,
     categoryName: null,
+    retailPrice: null,
+    costPrice: null,
     updatedAt: "",
     collectionId: null,
     templateId: null,

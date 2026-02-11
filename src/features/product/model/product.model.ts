@@ -8,6 +8,8 @@ export interface ProductModel {
   processNames?: string;
   categoryId?: number | null;
   categoryName?: string | null;
+  retailPrice?: number | null;
+  costPrice?: number | null;
   // template
   collectionId?: number | null;
   templateId?: number | null;
@@ -20,4 +22,12 @@ export interface ProductModel {
 export interface ProductUpsertModel {
   dto: ProductModel;
   collections?: (string | undefined)[];
+}
+
+export interface ProductImportResult {
+  totalRows: number;
+  added: number;
+  updated: number;
+  skipped: number;
+  errors?: string[];
 }

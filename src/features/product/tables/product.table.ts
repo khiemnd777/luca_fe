@@ -8,8 +8,10 @@ import { navigate } from "@root/core/navigation/navigate";
 
 const columns: ColumnDef<ProductModel>[] = [
   { key: "code", header: "Mã sản phẩm", sortable: true, },
-  { key: "name", header: "Tên sản phẩm", sortable: true, labelField: true },
-  { key: "categoryName", header: "Danh mục", sortable: true, },
+  { key: "name", header: "Tên sản phẩm", width: 256, sortable: true, labelField: true },
+  { key: "categoryName", header: "Danh mục", width: 300, sortable: true, },
+  { key: "retailPrice", header: "Giá bán", type: "currency", sortable: true },
+  { key: "costPrice", header: "Giá vốn", type: "currency", sortable: true },
   {
     key: "",
     type: "metadata",

@@ -91,7 +91,7 @@ export function buildProductSchema(): FormSchema {
         tag: "catalog",
         groups: [
           {
-            group: "category_fields",
+            group: "general",
           }
         ],
       }

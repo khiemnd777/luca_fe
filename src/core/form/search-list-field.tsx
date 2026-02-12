@@ -78,7 +78,7 @@ export type SearchListFieldProps<T> = {
   fetchDeps?: any[];
 
   pageLimit?: number;
-  
+
   // Context
   ctx?: FormContext;
 };
@@ -91,8 +91,9 @@ function makeEquality<T>(
   return (a: T, b: T) => getOptionValue(a) === getOptionValue(b);
 }
 
-const sameIds = (a: Array<string | number>, b: Array<string | number>) =>
-  a.length === b.length && a.every((x, i) => String(x) === String(b[i]));
+// ✅ normalize IDs to string for stable compare
+const normalizeIds = (ids: Array<string | number>) => ids.map((x) => String(x));
+const sameIds = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 export function SearchListField<T>(props: SearchListFieldProps<T>) {
   const {
@@ -134,62 +135,86 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     ctx,
   } = props;
 
-  const isControlledByIds = Array.isArray(selectedIds) && selectedIds.length > 0 && typeof hydrateByIds === "function";
+  // ✅ FIX: controlled phải dựa vào việc prop tồn tại, không phụ thuộc length>0
+  const isControlledByIds = Array.isArray(selectedIds) && typeof hydrateByIds === "function";
 
   const listInset = 3; // 14px
 
   const [items, setItems] = React.useState<T[]>([]);
   const itemsRef = React.useRef(items);
-  const deriveIds = React.useCallback(
-    (arr: T[]) => arr.map((x) => getOptionValue(x)),
-    [getOptionValue]
-  );
+
+  const deriveIds = React.useCallback((arr: T[]) => arr.map((x) => getOptionValue(x)), [getOptionValue]);
 
   React.useEffect(() => {
     itemsRef.current = items;
   }, [items]);
 
-  // chỉ emit khi IDs thay đổi
-  const lastEmittedIdsRef = React.useRef<Array<string | number>>([]);
+  // ✅ Emit only when IDs change (always normalize)
+  const lastEmittedIdsRef = React.useRef<string[]>([]);
   const emitIdsIfChanged = React.useCallback(
     (arr: T[]) => {
-      if (Array.isArray(selectedIds)) return;
-      const ids = deriveIds(arr);
+      const rawIds = deriveIds(arr);
+      const ids = normalizeIds(rawIds);
       if (!sameIds(ids, lastEmittedIdsRef.current)) {
         lastEmittedIdsRef.current = ids;
-        if (onIdsChange) onIdsChange(ids);
-        else if (onChange) onChange(ids as any);
+        if (onIdsChange) {
+          onIdsChange(rawIds);
+        } else if (onChange) {
+          onChange(rawIds as any);
+        }
       }
     },
-    [deriveIds, selectedIds, onIdsChange, onChange]
+    [deriveIds, onIdsChange, onChange]
   );
 
-  // Controlled by IDs: hydrate từ selectedIds -> items
+  // ✅ Controlled by IDs: hydrate selectedIds -> items
+  // Fix nháy revert:
+  //  - ignore stale async response (requestId)
+  //  - skip overwrite nếu items hiện tại đã match selectedIds (do vừa add xong)
+  const hydrateReqIdRef = React.useRef(0);
+
   React.useEffect(() => {
     let cancelled = false;
+
     (async () => {
-      if (!isControlledByIds) return;
-      if (!hydrateByIds) return;
+      if (!isControlledByIds || !hydrateByIds) return;
+
+      const reqId = ++hydrateReqIdRef.current;
 
       try {
-        const hydrated = await hydrateByIds(selectedIds, values);
+        const idsWanted = normalizeIds(selectedIds ?? []);
+        const idsCurrent = normalizeIds(deriveIds(itemsRef.current));
+
+        // Nếu UI đã đúng theo selectedIds thì khỏi hydrate overwrite
+        if (sameIds(idsWanted, idsCurrent)) {
+          lastEmittedIdsRef.current = idsWanted;
+          return;
+        }
+
+        const hydrated = await hydrateByIds(selectedIds ?? [], values);
+
         if (cancelled) return;
-        // Giữ thứ tự theo selectedIds
-        const order = new Map(selectedIds.map((id, i) => [String(id), i]));
-        const sorted = [...hydrated].sort((a, b) => {
+        // Ignore stale response
+        if (reqId !== hydrateReqIdRef.current) return;
+
+        const order = new Map(idsWanted.map((id, i) => [id, i]));
+        const sorted = [...(hydrated ?? [])].sort((a, b) => {
           const ia = order.get(String(getOptionValue(a))) ?? 0;
           const ib = order.get(String(getOptionValue(b))) ?? 0;
           return ia - ib;
         });
+
         setItems(sorted);
-        // Không emit ở đây: controlled đã là nguồn truth IDs
-        lastEmittedIdsRef.current = selectedIds.map(String);
+        lastEmittedIdsRef.current = idsWanted;
       } catch {
         // ignore
       }
     })();
-    return () => { cancelled = true; };
-  }, [isControlledByIds, selectedIds, hydrateByIds, values, getOptionValue]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isControlledByIds, selectedIds, hydrateByIds, values, getOptionValue, deriveIds]);
 
   // Uncontrolled hydrate: dùng fetchDeps (hoặc mặc định values.id) để tránh loop
   const defaultFetchKey = values && "id" in values ? (values as any).id : "__NO_ID__";
@@ -210,7 +235,10 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         // ignore
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, depsForFetch);
 
   // refreshKey → refetch list hiện có
@@ -219,7 +247,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     const data = await fetchList(values, ctx);
     setItems(data ?? []);
     emitIdsIfChanged(data ?? []);
-  }, [fetchList, values, emitIdsIfChanged]);
+  }, [fetchList, values, ctx, emitIdsIfChanged]);
 
   React.useEffect(() => {
     if (refreshKey === undefined) return;
@@ -279,30 +307,26 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         setLoading(false);
       }
     },
-    [searchPage, pageLimit, filterOutSelected, search]
+    [searchPage, pageLimit, ctx, filterOutSelected, search]
   );
 
   // Load trang kế tiếp
-  const loadNextPage = React.useCallback(
-    async () => {
-      if (!searchPage) return;
-      if (loadingMore || !hasMore) return;
+  const loadNextPage = React.useCallback(async () => {
+    if (!searchPage) return;
+    if (loadingMore || !hasMore) return;
 
-      setLoadingMore(true);
-      try {
-        const nextPage = page + 1;
-        const data = await searchPage(keyword, nextPage, pageLimit, ctx);
-        const filtered = filterOutSelected(data ?? []);
-        // Nối + dedup
-        setOptions((prev) => dedupById([...prev, ...filtered]));
-        setPage(nextPage);
-        setHasMore((data?.length ?? 0) >= pageLimit);
-      } finally {
-        setLoadingMore(false);
-      }
-    },
-    [searchPage, loadingMore, hasMore, page, keyword, pageLimit, filterOutSelected, dedupById]
-  );
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const data = await searchPage(keyword, nextPage, pageLimit, ctx);
+      const filtered = filterOutSelected(data ?? []);
+      setOptions((prev) => dedupById([...prev, ...filtered]));
+      setPage(nextPage);
+      setHasMore((data?.length ?? 0) >= pageLimit);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [searchPage, loadingMore, hasMore, page, keyword, pageLimit, ctx, filterOutSelected, dedupById]);
 
   // Auto load ALL (first page) on mount
   React.useEffect(() => {
@@ -318,12 +342,11 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       setKeyword(v);
       if (debounceRef.current) clearTimeout(debounceRef.current);
 
-      // rỗng → load ALL ngay (không debounce)
       if (v === "" || reason === "clear") {
         loadFirstPage("").catch(() => void 0);
         return;
       }
-      // có chữ → debounce
+
       debounceRef.current = setTimeout(() => {
         loadFirstPage(v).catch(() => void 0);
       }, 300);
@@ -333,7 +356,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   // Khi add/remove item → reload lại trang hiện tại theo từ khoá (đảm bảo ẩn item đã chọn)
   const reloadCurrentAfterSelectionChange = React.useCallback(() => {
-    // nếu có paging → refresh lại từ trang 1 với keyword hiện tại
     loadFirstPage(keyword).catch(() => void 0);
   }, [keyword, loadFirstPage]);
 
@@ -352,7 +374,9 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
     async (item: T) => {
       if (!canAddMore) return;
       if (!allowDuplicate && items.some((x) => eq(x, item))) return;
+
       if (onAdd) await onAdd(item);
+
       setItemsAndEmit([...items, item]);
       reloadCurrentAfterSelectionChange();
     },
@@ -371,7 +395,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
 
   const defaultItemContent = React.useCallback(
     (item: T) => <Chip label={getOptionLabel(item, options)} size="small" />,
-    [getOptionLabel]
+    [getOptionLabel, options]
   );
 
   const handleOpenCreate = React.useCallback(async () => {
@@ -390,22 +414,22 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
   const dragIndexRef = React.useRef<number | null>(null);
   const [draggingIndex, setDraggingIndex] = React.useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
+
   const handleDragStart = React.useCallback(
     (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
       dragIndexRef.current = index;
       setDraggingIndex(index);
       setDragOverIndex(index);
+
       const rowEl = (event.currentTarget as HTMLElement).closest("[data-drag-row]") as
         | HTMLElement
         | null;
+
       if (rowEl) {
         const rect = rowEl.getBoundingClientRect();
-        event.dataTransfer.setDragImage(
-          rowEl,
-          event.clientX - rect.left,
-          event.clientY - rect.top
-        );
+        event.dataTransfer.setDragImage(rowEl, event.clientX - rect.left, event.clientY - rect.top);
       }
+
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", String(index));
     },
@@ -427,10 +451,12 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
       const from = dragIndexRef.current;
       dragIndexRef.current = null;
       if (from == null || from === index) return;
+
       const next = [...items];
       const [moved] = next.splice(from, 1);
       if (!moved) return;
       next.splice(index, 0, moved);
+
       setItemsAndEmit(next);
       setDragOverIndex(null);
       setDraggingIndex(null);
@@ -452,12 +478,9 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         const el = e.currentTarget;
         const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 32;
         if (nearBottom) {
-          // nếu còn trang → tải tiếp
           loadNextPage();
         }
       },
-      // Có thể thêm style cố định height để dễ scroll (tuỳ UI)
-      // style: { maxHeight: 320, overflow: "auto" },
     }),
     [loadNextPage]
   );
@@ -483,8 +506,8 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
                 loadFirstPage("").catch(() => void 0);
               }
             }}
-            filterOptions={(opts) => /* lớp chặn 2 */ filterOutSelected(opts as T[])}
-            ListboxProps={listboxProps} // NEW: infinite scroll
+            filterOptions={(opts) => filterOutSelected(opts as T[])}
+            ListboxProps={listboxProps}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -504,7 +527,6 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
             )}
           />
 
-          {/* Create new → mở FormDialog, sau đó tự refresh danh sách */}
           {onOpenCreate != null ? (
             <Tooltip title="Tạo mới">
               <span>
@@ -522,11 +544,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         </Stack>
 
         {/* Helper / Error */}
-        {error ? (
-          <FormHelperText>{error}</FormHelperText>
-        ) : helperText ? (
-          <FormHelperText>{helperText}</FormHelperText>
-        ) : null}
+        {error ? <FormHelperText>{error}</FormHelperText> : helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
 
         {/* List đã chọn */}
         <Box
@@ -546,8 +564,8 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
                 const key = String(getOptionValue(item));
                 const disabledDel = disableDelete?.(item) ?? false;
                 const isDragging = draggingIndex === idx;
-                const isOverlayVisible =
-                  draggingIndex != null && dragOverIndex === idx && draggingIndex !== idx;
+                const isOverlayVisible = draggingIndex != null && dragOverIndex === idx && draggingIndex !== idx;
+
                 return (
                   <Stack
                     data-drag-row

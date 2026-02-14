@@ -7,6 +7,7 @@ mapper.register<StaffModel>({
   modelToDtoNaming: "camel_to_snake",
   defaultModel: () => ({
     id: 0,
+    departmentId: null,
     name: "",
     email: "",
     phone: "",

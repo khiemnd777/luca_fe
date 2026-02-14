@@ -1,8 +1,15 @@
 import * as React from "react";
 import { Button, Tooltip, CircularProgress, type ButtonProps } from "@mui/material";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
+import { styled } from "@mui/material/styles";
 
 type MaybePromise<T = unknown> = T | Promise<T>;
+
+const IconPlaceholder = styled("span")({
+  display: "inline-block",
+  width: 16,
+  height: 16,
+});
 
 export type SafeButtonProps = Omit<ButtonProps, "onClick" | "children" | "startIcon"> & {
   onClick?: (event?: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
@@ -111,8 +118,7 @@ export const SafeButton = React.forwardRef<HTMLButtonElement, SafeButtonProps>(f
     if (inFlight) return computedStartIcon;
     if (computedStartIcon) return computedStartIcon;
     if (!preserveIconSpace) return undefined;
-    // placeholder (16px) giữ chỗ
-    return <span style={{ display: "inline-block", width: 16, height: 16 }} />;
+    return <IconPlaceholder />;
   }, [inFlight, computedStartIcon, preserveIconSpace]);
 
   const btn = (

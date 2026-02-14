@@ -74,6 +74,15 @@ export async function update(model: StaffModel): Promise<void> {
   await apiClient.put<any>(`${departmentApiPath()}/staff/${model.id}`, model);
 }
 
+export async function assignDepartment(staffId: number, departmentId: number): Promise<StaffModel> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.post<any>(`${departmentApiPath()}/staff/${staffId}/assign-department`, {
+    department_id: departmentId,
+  });
+  const result = mapper.map<any, StaffModel>("Staff", data, "dto_to_model");
+  return result;
+}
+
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/staff/${id}`);

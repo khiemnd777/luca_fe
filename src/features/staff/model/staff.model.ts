@@ -1,6 +1,7 @@
 
 export interface StaffModel {
   id: number;
+  departmentId?: number | null;
   name: string;
   password?: string;
   email: string;

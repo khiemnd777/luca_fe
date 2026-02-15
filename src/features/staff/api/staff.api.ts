@@ -83,6 +83,13 @@ export async function assignDepartment(staffId: number, departmentId: number): P
   return result;
 }
 
+export async function assignAdminToDepartment(staffId: number, departmentId: number): Promise<void> {
+  const { departmentApiPath } = useAuthStore.getState();
+  await apiClient.post<any>(`${departmentApiPath()}/staff/${staffId}/assign-admin-department`, {
+    department_id: departmentId,
+  });
+}
+
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/staff/${id}`);

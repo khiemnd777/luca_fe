@@ -1,6 +1,7 @@
 export interface DeparmentModel {
   id?: number;
   slug?: string | null;
+  administratorId?: number | null;
   active?: boolean;
   name: string;
   logo?: string | null;
@@ -10,4 +11,3 @@ export interface DeparmentModel {
   createdAt?: string | null;
   updatedAt?: string | null;
 }
-

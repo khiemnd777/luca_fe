@@ -10,6 +10,7 @@ import { OrderLoanerMaterialItemList } from "../components/order-material-loaner
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
+import { normalizeOrderPaymentFlags } from "./payment-flags";
 
 export function buildHistoricalOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -131,6 +132,13 @@ export function buildHistoricalOrderSchema(): FormSchema {
       }
     },
     {
+      kind: "switch",
+      name: "isCredit",
+      prop: "latestOrderItem",
+      label: "Công nợ",
+      group: "status",
+    },
+    {
       name: "",
       label: "",
       kind: "metadata",
@@ -138,7 +146,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
-        ignoreFields: ["retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
+        ignoreFields: ["isCash", "isCredit", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
           {
             group: "status",
@@ -347,7 +355,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Order", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Order", normalizeOrderPaymentFlags(v), "model_to_dto"),
     },
   };
 }

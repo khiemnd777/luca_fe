@@ -13,6 +13,7 @@ import { Typography } from "@mui/material";
 import { prefixCurrency } from "@root/shared/utils/currency.utils";
 import { list as listPromotions } from "@features/promotion/api/promotion-admin.api";
 import PromotionValidateButton from "../components/order-promotion-validate-button.component";
+import { normalizeOrderPaymentFlags } from "./payment-flags";
 
 export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -193,6 +194,13 @@ export function buildEditOrderSchema(): FormSchema {
       }
     },
     {
+      kind: "switch",
+      name: "isCredit",
+      prop: "latestOrderItem",
+      label: "Công nợ",
+      group: "status",
+    },
+    {
       name: "",
       label: "",
       kind: "metadata",
@@ -200,7 +208,7 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
-        ignoreFields: ["retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
+        ignoreFields: ["isCash", "isCredit", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
           {
             group: "status",
@@ -431,7 +439,7 @@ export function buildEditOrderSchema(): FormSchema {
     },
 
     hooks: {
-      mapToDto: (v) => mapper.map("Order", v, "model_to_dto"),
+      mapToDto: (v) => mapper.map("Order", normalizeOrderPaymentFlags(v), "model_to_dto"),
     },
   };
 }

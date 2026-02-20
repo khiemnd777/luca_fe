@@ -14,6 +14,8 @@ export interface OrderItemModel {
   codeOriginal: string;
   qrCode?: string | null;
   remakeCount: number;
+  isCash: boolean;
+  isCredit: boolean;
   // product
   productId?: number | null;
   productName?: string;

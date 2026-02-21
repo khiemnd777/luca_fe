@@ -198,7 +198,7 @@ export function buildEditOrderSchema(): FormSchema {
       name: "isCredit",
       prop: "latestOrderItem",
       label: "Công nợ",
-      group: "status",
+      group: "total",
     },
     {
       name: "",
@@ -208,7 +208,7 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order-item",
         mode: "whole",
-        ignoreFields: ["isCash", "isCredit", "retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
+        ignoreFields: ["retailPrice", "quantity", "vat", "discountPrice", "totalPrice"],
         groups: [
           {
             group: "status",

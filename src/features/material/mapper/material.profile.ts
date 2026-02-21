@@ -10,6 +10,7 @@ mapper.register<MaterialModel>({
     code: "",
     name: "",
     type: null,
+    isImplant: false,
     active: true,
     retailPrice: null,
     supplierIds: [],

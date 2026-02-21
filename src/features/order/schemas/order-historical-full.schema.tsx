@@ -136,7 +136,7 @@ export function buildHistoricalOrderSchema(): FormSchema {
       name: "isCredit",
       prop: "latestOrderItem",
       label: "Công nợ",
-      group: "status",
+      group: "total",
     },
     {
       name: "",

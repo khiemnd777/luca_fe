@@ -268,7 +268,7 @@ export function buildNewOrderSchema(): FormSchema {
       name: "isCredit",
       prop: "latestOrderItem",
       label: "Công nợ",
-      group: "status",
+      group: "total",
     },
     {
       name: "",

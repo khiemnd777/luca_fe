@@ -35,6 +35,12 @@ export function buildSampleSchema(): FormSchema {
       options: [...MATERIAL_TYPES],
     },
     {
+      name: "isImplant",
+      label: "Dành cho implant",
+      kind: "switch",
+      defaultValue: false,
+    },
+    {
       name: "",
       label: "",
       kind: "metadata",

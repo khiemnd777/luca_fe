@@ -43,6 +43,8 @@ mapper.register<OrderModel>({
         code: "",
         codeOriginal: "",
         qrCode: null,
+        isCash: false,
+        isCredit: false,
         remakeCount: 0,
         customFields: null,
         createdAt: "",
@@ -63,6 +65,8 @@ mapper.register<OrderModel>({
       orderId: 0,
       parentItemId: null,
       customFields: null,
+      isCash: false,
+      isCredit: false,
       createdAt: "",
       updatedAt: "",
       // order

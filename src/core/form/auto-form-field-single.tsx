@@ -1015,12 +1015,13 @@ export const AutoFormFieldSingle = React.memo(function AutoFormFieldSingle({
     <TextField
       {...common}
       value={textInputValue}
-      onChange={(e) => setValue(f.name, e.target.value)}
-      // onChange={(e) => {
-      //   const nextVal = e.target.value;
-      //   setTextInputValue(nextVal);
-      //   debouncedTextChange(nextVal);
-      // }}
+      // onChange={(e) => setValue(f.name, e.target.value)}
+      onChange={(e) => {
+        const nextVal = e.target.value;
+        setTextInputValue(nextVal);
+        setValue(f.name, nextVal);
+        // debouncedTextChange(nextVal);
+      }}
       InputProps={{
         endAdornment:
           f.rules?.maxLength != null ? (

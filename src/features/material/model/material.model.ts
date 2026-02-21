@@ -3,6 +3,7 @@ export interface MaterialModel {
   code: string;
   name?: string | null;
   type?: string | null;
+  isImplant?: boolean;
   active: boolean;
   supplierIds?: number[];
   supplierNames?: string;

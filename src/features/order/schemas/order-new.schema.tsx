@@ -306,7 +306,7 @@ export function buildNewOrderSchema(): FormSchema {
       kind: "custom",
       name: "__totalPrice",
       prop: "latestOrderItem",
-      label: "Thành tiền = Sản phẩm + Vật tư tiêu hao",
+      label: "Thành tiền = Sản phẩm - Khuyến mãi",
       group: "total",
       render(ctx) {
         const consumableMaterialPrice = ctx.values["latestOrderItem.__totalConsumableMaterialPrice"] as number;
@@ -314,7 +314,7 @@ export function buildNewOrderSchema(): FormSchema {
         if (!Number.isFinite(consumableMaterialPrice) || !Number.isFinite(productPrice)) {
           return (
             <Typography>
-              Thành tiền = Sản phẩm + Vật tư tiêu hao: —
+              Thành tiền = Sản phẩm - Khuyến mãi: —
             </Typography>
           );
         }
@@ -322,7 +322,7 @@ export function buildNewOrderSchema(): FormSchema {
         const total = Number(consumableMaterialPrice) + Number(productPrice);
         return (
           <Typography>
-            Thành tiền = Sản phẩm + Vật tư tiêu hao: {prefixCurrency} {total.toLocaleString()}
+            Thành tiền = Sản phẩm - Khuyến mãi: {prefixCurrency} {total.toLocaleString()}
           </Typography>
         );
       },

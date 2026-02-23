@@ -39,6 +39,21 @@ export async function validatePromotion(payload: { promoCode: string; order: any
   };
 }
 
+export async function calculateTotalPrice(payload: { promoCode: string; order: any }): Promise<PromotionValidateResult> {
+  const { departmentApiPath } = useAuthStore.getState();
+  const { data } = await apiClient.post<PromotionValidateResponseDto>(`${departmentApiPath()}/promotions/calculate-total-price`, {
+    promo_code: payload.promoCode,
+    order: payload.order
+  } as PromotionValidatePayload);
+
+  return {
+    valid: data.valid,
+    reason: data.reason,
+    discountAmount: data.discount_amount,
+    finalPrice: data.final_price,
+  };
+}
+
 type PromotionApplyPayload = {
   promo_code: string;
   order: any;

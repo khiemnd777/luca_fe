@@ -8,12 +8,11 @@ import type { OrderUpsertModel } from "@features/order/model/order.model";
 import { alphabetSeq } from "@root/shared/utils/string.utils";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
 import { OrderConsumableMaterialItemList } from "../components/order-material-consumable-item-list.component";
-import { Typography } from "@mui/material";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 import { navigate } from "@root/core/navigation/navigate";
-import { prefixCurrency } from "@root/shared/utils/currency.utils";
 import { list as listPromotions } from "@features/promotion/api/promotion-admin.api";
 import PromotionValidateButton from "../components/order-promotion-validate-button.component";
+import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-promotion.component";
 
 export function buildRemakeOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -234,22 +233,12 @@ export function buildRemakeOrderSchema(): FormSchema {
       prop: "latestOrderItem",
       label: "Thành tiền = Sản phẩm - Khuyến mãi",
       group: "total",
-      render(ctx) {
-        const consumableMaterialPrice = ctx.values["latestOrderItem.__totalConsumableMaterialPrice"] as number;
-        const productPrice = ctx.values["latestOrderItem.__totalProductPrice"] as number;
-        if (!Number.isFinite(consumableMaterialPrice) || !Number.isFinite(productPrice)) {
-          return (
-            <Typography>
-              Thành tiền = Sản phẩm - Khuyến mãi: —
-            </Typography>
-          );
-        }
-
-        const total = Number(consumableMaterialPrice) + Number(productPrice);
+      render({ values, ctx }: CustomRenderCtx) {
         return (
-          <Typography>
-            Thành tiền = Sản phẩm - Khuyến mãi: {prefixCurrency} {total.toLocaleString()}
-          </Typography>
+          <TotalPriceWithPromotionV2
+            values={values}
+            formCtx={ctx}
+          />
         );
       },
     },

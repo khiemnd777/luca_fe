@@ -1,15 +1,14 @@
 import { mapper } from "@core/mapper/auto-mapper";
-import type { FieldDef } from "@core/form/types";
+import type { CustomRenderCtx, FieldDef } from "@core/form/types";
 import type { FormSchema } from "@core/form/form.types";
 import { registerForm } from "@core/form/form-registry";
 import { reloadTable } from "@core/table/table-reload";
 import { create, update } from "@features/order/api/order.api";
 import type { OrderUpsertModel } from "@features/order/model/order.model";
-import { Typography } from "@mui/material";
 import { OrderLoanerMaterialItemList } from "../components/order-material-loaner-item-list.component";
 import { OrderProductItemList } from "../components/order-product-item-list.component";
-import { prefixCurrency } from "@root/shared/utils/currency.utils";
 import { normalizeOrderPaymentFlags } from "./payment-flags";
+import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-promotion.component";
 
 export function buildHistoricalOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
@@ -249,24 +248,14 @@ export function buildHistoricalOrderSchema(): FormSchema {
       kind: "custom",
       name: "__totalPrice",
       prop: "latestOrderItem",
-      label: "Thành tiền = Sản phẩm + Vật tư tiêu hao",
+      label: "Thành tiền = Sản phẩm - Khuyến mãi",
       group: "total",
-      render(ctx) {
-        const consumableMaterialPrice = ctx.values["latestOrderItem.__totalConsumableMaterialPrice"] as number;
-        const productPrice = ctx.values["latestOrderItem.__totalProductPrice"] as number;
-        if (!Number.isFinite(consumableMaterialPrice) || !Number.isFinite(productPrice)) {
-          return (
-            <Typography>
-              Thành tiền = Sản phẩm + Vật tư tiêu hao: —
-            </Typography>
-          );
-        }
-
-        const total = Number(consumableMaterialPrice) + Number(productPrice);
+      render({ values, ctx }: CustomRenderCtx) {
         return (
-          <Typography>
-            Thành tiền = Sản phẩm + Vật tư tiêu hao: {prefixCurrency} {total.toLocaleString()}
-          </Typography>
+          <TotalPriceWithPromotionV2
+            values={values}
+            formCtx={ctx}
+          />
         );
       },
     },

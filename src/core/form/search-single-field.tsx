@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import AddCircleOutlineRounded from "@mui/icons-material/AddCircleOutlineRounded";
 import type { FormContext } from "./types";
+import { normalizeVietnamese } from "@root/shared/utils/string.utils";
 
 
 type Size = "small" | "medium";
@@ -485,6 +486,7 @@ function SearchSingleFieldInner<T>(
             options={options}
             loading={loading || loadingMore}
             value={value}
+            filterOptions={(x) => x}
             getOptionLabel={(o) => (o ? getOptionLabel(o as T, options) : "")}
             isOptionEqualToValue={(a, b) =>
               getOptionValue(a as T) === getOptionValue(b as T)
@@ -509,6 +511,7 @@ function SearchSingleFieldInner<T>(
                 size={size}
                 onBlur={() => {
                   const t = inputValue.trim();
+                  const nt = normalizeVietnamese(t);
                   const sourceOptions = (options.length > 0 ? options : cachedOptions)
                     .slice()
                     .reverse();
@@ -517,7 +520,8 @@ function SearchSingleFieldInner<T>(
                     sourceOptions.find((o) => {
                       const raw = getRawLabel(o)?.trim();
                       if (!raw) return false;
-                      return t.includes(raw);
+                      const nraw = normalizeVietnamese(raw);
+                      return nt.includes(nraw) || nraw.includes(nt);
                     }) ?? null;
 
                   onBlur?.(t, matched, ctx);

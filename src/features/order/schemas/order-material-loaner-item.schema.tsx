@@ -8,7 +8,7 @@ const materialLabel = (p?: MaterialModel | null) => {
   if (!p) return "";
   const code = p.code ?? "";
   const name = p.name ?? "";
-  if (code && name) return `${code} → ${name}`;
+  if (code && name) return `${name}`;
   return code || name;
 };
 

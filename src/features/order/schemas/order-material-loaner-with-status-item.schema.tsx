@@ -5,14 +5,6 @@ import { id as fetchMaterialById, search as searchMaterial } from "@features/mat
 import type { MaterialModel } from "@features/material/model/material.model";
 import { MATERIAL_STATUSES } from "@root/features/material/utils/material.utils";
 
-const materialLabel = (p?: MaterialModel | null) => {
-  if (!p) return "";
-  const code = p.code ?? "";
-  const name = p.name ?? "";
-  if (code && name) return `${code} → ${name}`;
-  return code || name;
-};
-
 function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
   const fields: FieldDef[] = [
     {
@@ -30,8 +22,8 @@ function buildOrderLoanerMaterialWithStatusItemSchema(): FormSchema {
       rules: {
         required: "Vui lòng chọn vật tư cho mượn",
       },
-      getOptionLabel: (p: MaterialModel) => materialLabel(p),
-      getInputLabel: (p: MaterialModel) => p?.code ?? "",
+      getOptionLabel: (p: MaterialModel) => p?.name ?? "",
+      getInputLabel: (p: MaterialModel) => p?.name ?? "",
       async searchPage(keyword: string, page: number, limit: number) {
         const result = await searchMaterial({
           keyword,

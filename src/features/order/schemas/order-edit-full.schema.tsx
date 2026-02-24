@@ -147,10 +147,20 @@ export function buildEditOrderSchema(): FormSchema {
           },
           {
             name: "dentistId",
+            where: (values, _ctx) => {
+              const clinicId = values["relationFields.clinicId"] ?? values["clinicId"];
+              if (!clinicId) return [];
+              return [`clinic_id=${clinicId}`];
+            },
             validate: (input) => (input?.trim() ? null : "Không để trống nha sĩ"),
           },
           {
             name: "patientId",
+            where: (values, _ctx) => {
+              const clinicId = values["relationFields.clinicId"] ?? values["clinicId"];
+              if (!clinicId) return [];
+              return [`clinic_id=${clinicId}`];
+            },
             validate: (input) => (input?.trim() ? null : "Không để trống bệnh nhân"),
           },
         ],

@@ -136,6 +136,7 @@ export type MiniFieldOverride = {
   onDragEnd?: (items: any[]) => void;
 
   // searchlist, autocomplete, relation
+  where?: (values: Record<string, any>, ctx?: FormContext) => string[];
   searchPage?: SearchListSearchPageFn;
   fetchOne?: (values: Record<string, any>) => Promise<any | null>;
   hydrateById?: (id: string | number, values: Record<string, any>) => Promise<any | null>;
@@ -205,6 +206,7 @@ export type FieldDef = {
   };
 
   // searchlist
+  where?: (values: Record<string, any>, ctx?: FormContext) => string[];
   search?: SearchListSearchFn;                                   // search(kw): T[]
   searchPage?: SearchListSearchPageFn;                           // searchPage(kw, page, limit): T[]
   fetchList?: SearchListFetchListFn;                             // hydrate list hiện có theo ngữ cảnh (values): T[]

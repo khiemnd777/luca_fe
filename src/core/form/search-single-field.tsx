@@ -355,7 +355,7 @@ function SearchSingleFieldInner<T>(
         setLoading(false);
       }
     },
-    [search, searchPage, pageLimit]
+    [search, searchPage, pageLimit, ctx]
   );
 
   const loadNextPage = React.useCallback(async () => {
@@ -370,7 +370,7 @@ function SearchSingleFieldInner<T>(
     } finally {
       setLoadingMore(false);
     }
-  }, [searchPage, keyword, page, pageLimit, loadingMore, hasMore]);
+  }, [searchPage, keyword, page, pageLimit, loadingMore, hasMore, ctx]);
 
   /* ======================================================
      AutoLoad options on mount

@@ -307,7 +307,7 @@ export function SearchListField<T>(props: SearchListFieldProps<T>) {
         setLoading(false);
       }
     },
-    [searchPage, pageLimit, ctx, filterOutSelected, search]
+    [searchPage, pageLimit, ctx, filterOutSelected, search, ctx]
   );
 
   // Load trang kế tiếp

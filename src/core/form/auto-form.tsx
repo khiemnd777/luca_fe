@@ -271,6 +271,10 @@ async function expandOneMetadataBlock(
           requiredRule !== undefined
             ? (requiredRule ? (typeof requiredRule === "string" ? requiredRule : "This field is required") : null)
             : (mf.required ? "This field is required" : null);
+        const staticWhere =
+          relation.where != null
+            ? (Array.isArray(relation.where) ? relation.where : [relation.where])
+            : [];
         const fd: FieldDef = {
           prop,
           kind: "searchsingle",
@@ -285,13 +289,11 @@ async function expandOneMetadataBlock(
           getOptionLabel: (d: any) => d?.name,
           getOptionValue: (d: any) => d?.id,
 
-          async searchPage(kw: string, page, limit) {
-            const extendWhere =
-              relation.where != null
-                ? Array.isArray(relation.where)
-                  ? relation.where
-                  : [relation.where]
-                : undefined;
+          async searchPage(kw: string, page, limit, ctx) {
+            const dynamicWhere = fd.where?.(ctx?.values ?? {}, ctx) ?? [];
+            const extendWhere = dynamicWhere.length > 0
+              ? [...staticWhere, ...dynamicWhere]
+              : (staticWhere.length > 0 ? staticWhere : undefined);
             const searched = await search(relation.target, {
               keyword: kw,
               page: page,
@@ -343,6 +345,10 @@ async function expandOneMetadataBlock(
         out.push(fd);
       } else {
         const override = metaField.metadata?.def?.find(d => d.name === mf.name);
+        const staticWhere =
+          relation.where != null
+            ? (Array.isArray(relation.where) ? relation.where : [relation.where])
+            : [];
         let fd: FieldDef = {
           prop,
           kind: "searchlist",
@@ -356,13 +362,11 @@ async function expandOneMetadataBlock(
           getOptionLabel: override?.getOptionLabel ?? ((d: any) => d?.name),
           getOptionValue: (d: any) => d?.id,
 
-          async searchPage(kw: string, page, limit) {
-            const extendWhere =
-              relation.where != null
-                ? Array.isArray(relation.where)
-                  ? relation.where
-                  : [relation.where]
-                : undefined;
+          async searchPage(kw: string, page, limit, ctx) {
+            const dynamicWhere = fd.where?.(ctx?.values ?? {}, ctx) ?? [];
+            const extendWhere = dynamicWhere.length > 0
+              ? [...staticWhere, ...dynamicWhere]
+              : (staticWhere.length > 0 ? staticWhere : undefined);
             const searched = await search(relation.target, {
               keyword: kw,
               page: page,

@@ -164,6 +164,12 @@ export function buildEditOrderSchema(): FormSchema {
           },
           {
             name: "dentistId",
+            onBlur: (_text, matched, ctx) => {
+              if (matched || !ctx) return;
+              ctx.setValue("relationFields.dentistId", null);
+              ctx.setValue("dentistId", null);
+              ctx.setValue("customFields.dentistId", null);
+            },
             where: (values, _ctx) => {
               const clinicId = values["relationFields.clinicId"] ?? values["clinicId"];
               if (!clinicId) return [];
@@ -173,6 +179,12 @@ export function buildEditOrderSchema(): FormSchema {
           },
           {
             name: "patientId",
+            onBlur: (_text, matched, ctx) => {
+              if (matched || !ctx) return;
+              ctx.setValue("relationFields.patientId", null);
+              ctx.setValue("patientId", null);
+              ctx.setValue("customFields.patientId", null);
+            },
             where: (values, _ctx) => {
               const clinicId = values["relationFields.clinicId"] ?? values["clinicId"];
               if (!clinicId) return [];

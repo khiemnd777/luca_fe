@@ -285,6 +285,9 @@ function SearchSingleFieldInner<T>(
     if (selectedId == null) {
       setValue(null);
       setInputValue("");
+      setKeyword("");
+      setOptions([]);
+      setCachedOptions([]);
       return;
     }
 
@@ -331,7 +334,9 @@ function SearchSingleFieldInner<T>(
   React.useEffect(() => {
     if (options.length > 0) {
       setCachedOptions(options);
+      return;
     }
+    setCachedOptions([]);
   }, [options]);
 
   /* ======================================================

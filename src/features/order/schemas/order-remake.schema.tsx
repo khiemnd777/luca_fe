@@ -15,6 +15,8 @@ import PromotionValidateButton from "../components/order-promotion-validate-butt
 import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-promotion.component";
 
 export function buildRemakeOrderSchema(): FormSchema {
+  let previousClinicId: string | number | null = null;
+
   const fields: FieldDef[] = [
     // Mã đơn làm lại
     {
@@ -116,6 +118,21 @@ export function buildRemakeOrderSchema(): FormSchema {
         def: [
           {
             name: "clinicId",
+            onBlur: (_text, matched, ctx) => {
+              const nextClinicId = matched?.id ?? null;
+              const changed = String(previousClinicId ?? "") !== String(nextClinicId ?? "");
+              previousClinicId = nextClinicId;
+
+              if (!changed || !ctx) return;
+
+              ctx.setValue("relationFields.dentistId", null);
+              ctx.setValue("dentistId", null);
+              ctx.setValue("customFields.dentistId", null);
+
+              ctx.setValue("relationFields.patientId", null);
+              ctx.setValue("patientId", null);
+              ctx.setValue("customFields.patientId", null);
+            },
             validate: (input) => (input?.trim() ? null : "Không để trống nha khoa"),
           },
           {

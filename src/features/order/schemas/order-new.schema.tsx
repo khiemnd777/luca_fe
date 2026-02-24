@@ -16,6 +16,7 @@ import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-
 
 export function buildNewOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
+    // Mã đơn hàng
     {
       kind: "searchsingle",
       name: "code",
@@ -83,6 +84,7 @@ export function buildNewOrderSchema(): FormSchema {
       disableDelete: (d: any) => d?.locked === true,
       autoLoadAllOnMount: true,
     },
+    // Mã đơn làm lại
     {
       name: "code",
       prop: "latestOrderItem",
@@ -90,6 +92,7 @@ export function buildNewOrderSchema(): FormSchema {
       label: "Mã đơn làm lại",
       showIf: (values) => values["latestOrderItem.remakeCount"] > 0,
     },
+    // Số lần làm lại
     {
       name: "remakeCount",
       prop: "latestOrderItem",
@@ -98,6 +101,7 @@ export function buildNewOrderSchema(): FormSchema {
       showIf: (values) => values["latestOrderItem.remakeCount"] > 0,
       disableIf: (_) => true,
     },
+    // Mã khuyến mãi
     {
       kind: "searchsingle",
       name: "promotionCode",
@@ -159,6 +163,7 @@ export function buildNewOrderSchema(): FormSchema {
         ctx.setValue("promotionCodeId", matched?.id ?? null);
       },
     },
+    // Nút xác thực khuyến mãi
     {
       kind: "custom",
       name: "__promotionValidate",
@@ -168,6 +173,7 @@ export function buildNewOrderSchema(): FormSchema {
         return <PromotionValidateButton values={values} ctx={ctx} />
       },
     },
+    // Metadata: Order basic info and clinicId, dentistId, patientId
     {
       name: "",
       label: "",
@@ -231,6 +237,8 @@ export function buildNewOrderSchema(): FormSchema {
     //     ],
     //   }
     // },
+
+    // Metadata: product, remake, note, priority, status
     {
       name: "",
       label: "",
@@ -246,6 +254,7 @@ export function buildNewOrderSchema(): FormSchema {
         ]
       }
     },
+    // Metadata: remake reason
     {
       name: "",
       label: "",
@@ -261,6 +270,7 @@ export function buildNewOrderSchema(): FormSchema {
         ],
       }
     },
+    // Công nợ
     {
       kind: "switch",
       name: "isCredit",
@@ -268,6 +278,7 @@ export function buildNewOrderSchema(): FormSchema {
       label: "Công nợ",
       group: "total",
     },
+    // Tiền mặt
     {
       name: "",
       label: "",
@@ -299,7 +310,6 @@ export function buildNewOrderSchema(): FormSchema {
         ],
       }
     },
-
     // Total Price
     {
       kind: "custom",
@@ -316,7 +326,7 @@ export function buildNewOrderSchema(): FormSchema {
         );
       },
     },
-    // product
+    // Total Product Price
     {
       kind: "currency",
       name: "__totalProductPrice",
@@ -325,6 +335,7 @@ export function buildNewOrderSchema(): FormSchema {
       group: "products",
       asText: true,
     },
+    // Product List
     {
       kind: "custom",
       prop: "latestOrderItem",
@@ -347,15 +358,15 @@ export function buildNewOrderSchema(): FormSchema {
         />
       ),
     },
-    // consumable material
-    {
-      kind: "currency",
-      name: "__totalConsumableMaterialPrice",
-      prop: "latestOrderItem",
-      label: "Tổng cộng:",
-      group: "consumable-materials",
-      asText: true,
-    },
+    // Consumable material
+    // {
+    //   kind: "currency",
+    //   name: "__totalConsumableMaterialPrice",
+    //   prop: "latestOrderItem",
+    //   label: "Tổng cộng:",
+    //   group: "consumable-materials",
+    //   asText: true,
+    // },
     // {
     //   kind: "custom",
     //   prop: "latestOrderItem",

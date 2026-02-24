@@ -15,18 +15,21 @@ import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-
 
 export function buildEditOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
+    // Mã đơn hàng
     {
       kind: "text",
       name: "codeLatest",
       label: "Mã đơn hàng",
       asText: true,
     },
+    // Mã gốc
     {
       kind: "text",
       name: "code",
       label: "Mã gốc",
       asText: true,
     },
+    // Số lần làm lại
     {
       kind: "text",
       name: "remakeCount",
@@ -35,24 +38,28 @@ export function buildEditOrderSchema(): FormSchema {
       asText: true,
       showIf: (v) => v["latestOrderItem.remakeCount"] > 0,
     },
-    {
-      kind: "text",
-      name: "clinicName",
-      label: "Nha khoa",
-      asText: true,
-    },
-    {
-      kind: "text",
-      name: "dentistName",
-      label: "Nha sĩ",
-      asText: true,
-    },
-    {
-      kind: "text",
-      name: "patientName",
-      label: "Bệnh nhân",
-      asText: true,
-    },
+    // // Nha khoa
+    // {
+    //   kind: "text",
+    //   name: "clinicName",
+    //   label: "Nha khoa",
+    //   asText: true,
+    // },
+    // // Nha sĩ
+    // {
+    //   kind: "text",
+    //   name: "dentistName",
+    //   label: "Nha sĩ",
+    //   asText: true,
+    // },
+    // // Bệnh nhân
+    // {
+    //   kind: "text",
+    //   name: "patientName",
+    //   label: "Bệnh nhân",
+    //   asText: true,
+    // },
+    // Mã khuyến mãi
     {
       kind: "searchsingle",
       name: "promotionCode",
@@ -114,6 +121,7 @@ export function buildEditOrderSchema(): FormSchema {
         ctx.setValue("promotionCodeId", matched?.id ?? null);
       },
     },
+    // Nút xác thực khuyến mãi
     {
       kind: "custom",
       name: "__promotionValidate",
@@ -123,6 +131,7 @@ export function buildEditOrderSchema(): FormSchema {
         return <PromotionValidateButton values={values} ctx={ctx} />
       },
     },
+    // Metadata: Order basic info
     {
       name: "",
       label: "",
@@ -130,9 +139,24 @@ export function buildEditOrderSchema(): FormSchema {
       metadata: {
         collection: "order",
         mode: "whole",
-        ignoreFields: ["clinicId", "dentistId", "patientId"],
+        // ignoreFields: ["clinicId", "dentistId", "patientId"],
+        def: [
+          {
+            name: "clinicId",
+            validate: (input) => (input?.trim() ? null : "Không để trống nha khoa"),
+          },
+          {
+            name: "dentistId",
+            validate: (input) => (input?.trim() ? null : "Không để trống nha sĩ"),
+          },
+          {
+            name: "patientId",
+            validate: (input) => (input?.trim() ? null : "Không để trống bệnh nhân"),
+          },
+        ],
       }
     },
+    // Metadata: product category
     {
       name: "",
       label: "",
@@ -155,6 +179,7 @@ export function buildEditOrderSchema(): FormSchema {
         ],
       }
     },
+    // Metadata: tooth position
     {
       name: "",
       label: "",
@@ -176,6 +201,7 @@ export function buildEditOrderSchema(): FormSchema {
         ],
       }
     },
+    // Metadata: remake
     {
       name: "",
       label: "",
@@ -191,6 +217,7 @@ export function buildEditOrderSchema(): FormSchema {
         ],
       }
     },
+    // Công nợ
     {
       kind: "switch",
       name: "isCredit",
@@ -198,6 +225,7 @@ export function buildEditOrderSchema(): FormSchema {
       label: "Công nợ",
       group: "total",
     },
+    // Tiền mặt
     {
       name: "",
       label: "",
@@ -233,7 +261,7 @@ export function buildEditOrderSchema(): FormSchema {
         ],
       }
     },
-    // product
+    // Total Product Price
     {
       kind: "currency",
       name: "__totalProductPrice",
@@ -242,6 +270,7 @@ export function buildEditOrderSchema(): FormSchema {
       group: "products",
       asText: true,
     },
+    // Product List
     {
       kind: "custom",
       prop: "latestOrderItem",
@@ -264,15 +293,15 @@ export function buildEditOrderSchema(): FormSchema {
         />
       ),
     },
-    // consumable material
-    {
-      kind: "currency",
-      name: "__totalConsumableMaterialPrice",
-      prop: "latestOrderItem",
-      label: "Tổng cộng:",
-      group: "consumable-materials",
-      asText: true,
-    },
+    // Consumable material
+    // {
+    //   kind: "currency",
+    //   name: "__totalConsumableMaterialPrice",
+    //   prop: "latestOrderItem",
+    //   label: "Tổng cộng:",
+    //   group: "consumable-materials",
+    //   asText: true,
+    // },
     // {
     //   kind: "custom",
     //   prop: "latestOrderItem",
@@ -295,7 +324,7 @@ export function buildEditOrderSchema(): FormSchema {
     //     />
     //   ),
     // },
-    // -- loaner material
+    // Loaner material
     {
       kind: "custom",
       prop: "latestOrderItem",

@@ -16,6 +16,7 @@ import { TotalPriceWithPromotionV2 } from "../components/order-total-price-with-
 
 export function buildRemakeOrderSchema(): FormSchema {
   const fields: FieldDef[] = [
+    // Mã đơn làm lại
     {
       name: "code",
       prop: "latestOrderItem",
@@ -23,6 +24,7 @@ export function buildRemakeOrderSchema(): FormSchema {
       label: "Mã đơn làm lại",
       showIf: (values) => values["latestOrderItem.remakeCount"] > 0,
     },
+    // Số lần làm lại
     {
       name: "remakeCount",
       prop: "latestOrderItem",
@@ -31,6 +33,7 @@ export function buildRemakeOrderSchema(): FormSchema {
       showIf: (values) => values["latestOrderItem.remakeCount"] > 0,
       disableIf: (_) => true,
     },
+    // Mã khuyến mãi
     {
       kind: "searchsingle",
       name: "promotionCode",
@@ -92,6 +95,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         ctx.setValue("promotionCodeId", matched?.id ?? null);
       },
     },
+    // Xác thực khuyến mãi
     {
       kind: "custom",
       name: "__promotionValidate",
@@ -101,6 +105,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         return <PromotionValidateButton values={values} ctx={ctx} />
       },
     },
+    // Metadata: Order basic info and clinicId, dentistId, patientId
     {
       name: "",
       label: "",
@@ -164,6 +169,8 @@ export function buildRemakeOrderSchema(): FormSchema {
     //     ],
     //   }
     // },
+    
+    // Metadata: OrderItem info
     {
       name: "",
       label: "",
@@ -179,6 +186,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         ]
       }
     },
+    // Metadata: Remake info
     {
       name: "",
       label: "",
@@ -194,6 +202,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         ],
       }
     },
+    // Metadata: Note and priority for remake order item
     {
       name: "",
       label: "",
@@ -225,7 +234,6 @@ export function buildRemakeOrderSchema(): FormSchema {
         ],
       }
     },
-
     // Total Price
     {
       kind: "custom",
@@ -242,7 +250,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         );
       },
     },
-    // product
+    // Tổng cộng sản phẩm (chưa trừ khuyến mãi)
     {
       kind: "currency",
       name: "__totalProductPrice",
@@ -251,6 +259,7 @@ export function buildRemakeOrderSchema(): FormSchema {
       group: "products",
       asText: true,
     },
+    // Product list
     {
       kind: "custom",
       prop: "latestOrderItem",
@@ -273,7 +282,7 @@ export function buildRemakeOrderSchema(): FormSchema {
         />
       ),
     },
-    // consumable material
+    // Consumable material
     {
       kind: "currency",
       name: "__totalConsumableMaterialPrice",

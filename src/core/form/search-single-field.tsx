@@ -516,18 +516,25 @@ function SearchSingleFieldInner<T>(
                 size={size}
                 onBlur={() => {
                   const t = inputValue.trim();
-                  const nt = normalizeVietnamese(t);
-                  const sourceOptions = (options.length > 0 ? options : cachedOptions)
-                    .slice()
-                    .reverse();
 
-                  const matched =
-                    sourceOptions.find((o) => {
-                      const raw = getRawLabel(o)?.trim();
-                      if (!raw) return false;
-                      const nraw = normalizeVietnamese(raw);
-                      return nt.includes(nraw) || nraw.includes(nt);
-                    }) ?? null;
+                  const matched = (() => {
+                    if (!t) return null;
+                    const nt = normalizeVietnamese(t);
+                    if (!nt) return null;
+                    const sourceOptions = (options.length > 0 ? options : cachedOptions)
+                      .slice()
+                      .reverse();
+
+                    return (
+                      sourceOptions.find((o) => {
+                        const raw = getRawLabel(o)?.trim();
+                        if (!raw) return false;
+                        const nraw = normalizeVietnamese(raw);
+                        if (nraw) return false;
+                        return nt.includes(nraw) || nraw.includes(nt);
+                      }) ?? null
+                    );
+                  })();
 
                   onBlur?.(t, matched, ctx);
                   runValidation("blur", t, matched);

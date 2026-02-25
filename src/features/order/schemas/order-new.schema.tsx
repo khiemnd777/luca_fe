@@ -193,6 +193,10 @@ export function buildNewOrderSchema(): FormSchema {
 
               if (!changed || !ctx) return;
 
+              ctx.setValue("relationFields.clinicId", null);
+              ctx.setValue("clinicId", null);
+              ctx.setValue("customFields.clinicId", null);
+
               ctx.setValue("relationFields.dentistId", null);
               ctx.setValue("dentistId", null);
               ctx.setValue("customFields.dentistId", null);
@@ -232,6 +236,15 @@ export function buildNewOrderSchema(): FormSchema {
               return [`clinic_id=${clinicId}`];
             },
             validate: (input) => (input?.trim() ? null : "Không để trống bệnh nhân"),
+          },
+          {
+            name: "refUserId",
+            onBlur: (_text, matched, ctx) => {
+              if (matched || !ctx) return;
+              ctx.setValue("relationFields.refUserId", null);
+              ctx.setValue("refUserId", null);
+              ctx.setValue("customFields.refUserId", null);
+            },
           },
         ],
       }

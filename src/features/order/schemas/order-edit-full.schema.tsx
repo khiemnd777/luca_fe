@@ -152,6 +152,10 @@ export function buildEditOrderSchema(): FormSchema {
 
               if (!changed || !ctx) return;
 
+              ctx.setValue("relationFields.clinicId", null);
+              ctx.setValue("clinicId", null);
+              ctx.setValue("customFields.clinicId", null);
+
               ctx.setValue("relationFields.dentistId", null);
               ctx.setValue("dentistId", null);
               ctx.setValue("customFields.dentistId", null);

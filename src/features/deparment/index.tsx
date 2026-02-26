@@ -1,6 +1,6 @@
 import type { ModuleDescriptor } from "@core/module/types";
 import { registerModule } from "@core/module/registry";
-import MapsHomeWorkIcon from "@mui/icons-material/MapsHomeWork";
+import BusinessIcon from '@mui/icons-material/Business';
 import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
@@ -13,7 +13,7 @@ const mod: ModuleDescriptor = {
       title: "Chi nhánh",
       subtitle: "Quản lý thông tin chi nhánh và quan hệ chi nhánh cha - con.",
       path: "/deparment",
-      icon: <MapsHomeWorkIcon />,
+      icon: <BusinessIcon />,
       element: <OneColumnPage />,
       priority: 96,
       children: [

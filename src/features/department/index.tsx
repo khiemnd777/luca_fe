@@ -4,26 +4,26 @@ import BusinessIcon from '@mui/icons-material/Business';
 import OneColumnPage from "@root/core/pages/one-column-page";
 
 const mod: ModuleDescriptor = {
-  id: "deparment",
+  id: "department",
   routes: [
     {
-      key: "deparment",
+      key: "department",
       permissions: ["department.view"],
       label: "Chi nhánh",
       title: "Chi nhánh",
       subtitle: "Quản lý thông tin chi nhánh và quan hệ chi nhánh cha - con.",
-      path: "/deparment",
+      path: "/department",
       icon: <BusinessIcon />,
       element: <OneColumnPage />,
       priority: 96,
       children: [
         {
           hidden: true,
-          key: "deparment-detail",
+          key: "department-detail",
           permissions: ["department.view"],
           label: "Chi nhánh",
           title: "Chi nhánh",
-          path: "/deparment/:deparmentId",
+          path: "/department/:departmentId",
           element: <OneColumnPage />,
           priority: 97,
         },

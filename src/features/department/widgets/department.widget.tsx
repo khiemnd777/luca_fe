@@ -19,7 +19,7 @@ function DeparmentWidget() {
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => openFormDialog("deparment", { initial: { parentId: deptId } })}
+              onClick={() => openFormDialog("department", { initial: { parentId: deptId } })}
             >
               Thêm chi nhánh
             </Button>
@@ -27,13 +27,13 @@ function DeparmentWidget() {
         </Stack>
       }
     >
-      <AutoTable name="deparment-children" params={{ deptId }} />
+      <AutoTable name="department-children" params={{ deptId }} />
     </SectionCard>
   );
 }
 
 registerSlot({
-  id: "deparment",
-  name: "deparment:left",
+  id: "department",
+  name: "department:left",
   render: () => <DeparmentWidget />,
 });

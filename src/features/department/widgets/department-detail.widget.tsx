@@ -9,7 +9,7 @@ import { SafeButton } from "@shared/components/button/safe-button";
 import { SectionCard } from "@shared/components/ui/section-card";
 
 function DeparmentDetailWidget() {
-  const { deparmentId } = useParams();
+  const { departmentId } = useParams();
   const formRef = React.useRef<AutoFormRef>(null);
 
   return (
@@ -27,14 +27,14 @@ function DeparmentDetailWidget() {
         </IfPermission>
       }
     >
-      <AutoForm name="deparment" ref={formRef} initial={{ id: deparmentId }} />
+      <AutoForm name="department" ref={formRef} initial={{ id: departmentId }} />
     </SectionCard>
   );
 }
 
 registerSlot({
-  id: "deparment-detail",
-  name: "deparment-detail:left",
+  id: "department-detail",
+  name: "department-detail:left",
   render: () => <DeparmentDetailWidget />,
 });
 

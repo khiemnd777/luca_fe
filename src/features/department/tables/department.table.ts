@@ -3,8 +3,8 @@ import { navigate } from "@core/navigation/navigate";
 import { reloadTable } from "@core/table/table-reload";
 import { registerTable } from "@core/table/table-registry";
 import { createTableSchema, type ColumnDef, type FetchTableOpts } from "@core/table/table.types";
-import { childrenList, unlink } from "@features/deparment/api/deparment.api";
-import type { DeparmentModel } from "@features/deparment/model/deparment.model";
+import { childrenList, unlink } from "@features/department/api/department.api";
+import type { DeparmentModel } from "@features/department/model/department.model";
 
 const columns: ColumnDef<DeparmentModel>[] = [
   { key: "name", header: "Tên chi nhánh", sortable: true, labelField: true },
@@ -14,7 +14,7 @@ const columns: ColumnDef<DeparmentModel>[] = [
   { key: "updatedAt", header: "Cập nhật lúc", type: "datetime", sortable: true },
 ];
 
-registerTable("deparment-children", () =>
+registerTable("department-children", () =>
   createTableSchema<DeparmentModel>({
     columns,
     fetch: async (opts: FetchTableOpts & { deptId?: number }) => {
@@ -25,14 +25,14 @@ registerTable("deparment-children", () =>
     allowUpdating: ["department.update"],
     allowDeleting: ["department.delete"],
     onView(row) {
-      navigate(`/deparment/${row.id}`);
+      navigate(`/department/${row.id}`);
     },
     onEdit(row) {
-      openFormDialog("deparment", { initial: { id: row.id } });
+      openFormDialog("department", { initial: { id: row.id } });
     },
     async onDelete(row) {
       await unlink(Number(row.id));
-      reloadTable("deparment-children");
+      reloadTable("department-children");
     },
   })
 );

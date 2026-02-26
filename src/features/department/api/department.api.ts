@@ -3,7 +3,7 @@ import type { ListResult } from "@core/types/list-result";
 import { mapper } from "@core/mapper/auto-mapper";
 import { apiClient } from "@core/network/api-client";
 import { useAuthStore } from "@store/auth-store";
-import type { DeparmentModel } from "@features/deparment/model/deparment.model";
+import type { DeparmentModel } from "@root/features/department/model/department.model";
 
 function deptPath(deptId?: number): string {
   const { departmentApiPath } = useAuthStore.getState();

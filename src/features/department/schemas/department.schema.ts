@@ -7,8 +7,8 @@ import { getOpenDialogs, openFormDialog } from "@core/form/form-dialog.service";
 import { uploadImages } from "@root/core/form/image-upload-utils";
 import { rel1, search } from "@root/core/relation/relation.api";
 import { reloadTable } from "@core/table/table-reload";
-import { create, getById, update } from "@features/deparment/api/deparment.api";
-import type { DeparmentModel } from "@features/deparment/model/deparment.model";
+import { create, getById, update } from "@features/department/api/department.api";
+import type { DeparmentModel } from "@features/department/model/department.model";
 import { useAuthStore } from "@store/auth-store";
 
 function parsePositiveNumber(v: unknown): number {
@@ -24,12 +24,12 @@ function resolveDeptIdForCreateStaff(): number {
   const dialogs = getOpenDialogs();
   for (let i = dialogs.length - 1; i >= 0; i -= 1) {
     const d = dialogs[i];
-    if (d.name !== "deparment") continue;
+    if (d.name !== "department") continue;
     const fromDialog = parsePositiveNumber(d.options?.initial?.id ?? d.options?.initial?.parentId);
     if (fromDialog > 0) return fromDialog;
   }
 
-  const m = window.location.pathname.match(/\/deparment\/(\d+)$/);
+  const m = window.location.pathname.match(/\/department\/(\d+)$/);
   const fromPath = parsePositiveNumber(m?.[1]);
   if (fromPath > 0) return fromPath;
 
@@ -162,14 +162,14 @@ export function buildDeparmentSchema(): FormSchema {
       mapToDto: (v) => mapper.map("Department", v, "model_to_dto"),
     },
     async afterSaved() {
-      reloadTable("deparment-children");
+      reloadTable("department-children");
     },
   };
 }
 
-registerForm("deparment", buildDeparmentSchema);
+registerForm("department", buildDeparmentSchema);
 
-registerFormDialog("deparment", buildDeparmentSchema, {
+registerFormDialog("department", buildDeparmentSchema, {
   title: { create: "Thêm chi nhánh", update: "Cập nhật chi nhánh" },
   confirmText: { create: "Thêm", update: "Lưu" },
   cancelText: "Thoát",

@@ -17,3 +17,5 @@ import.meta.glob("@features/**/tables/*.table.tsx", { eager: true });
 // Auto-load widgets
 import.meta.glob("@features/**/widgets/*.widget.tsx", { eager: true });
 import.meta.glob("@core/**/widgets/*.widget.tsx", { eager: true });
+// Auto-load auditlog
+import.meta.glob("@features/**/config/*.auditlog.ts", { eager: true });

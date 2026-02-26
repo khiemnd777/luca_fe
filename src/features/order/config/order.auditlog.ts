@@ -1,11 +1,27 @@
 import { registerAuditRenderers } from "@root/core/auditlog/auditlog-registrar";
+import type { AuditLog } from "@core/auditlog/types";
 import type { AuditRenderer } from "@core/auditlog/types";
+
+function dataValue(row: AuditLog, key: string): string | null {
+  const value = row.data?.[key];
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
+}
+
+function orderItemLabel(row: AuditLog): string {
+  return dataValue(row, "order_item_code")
+    ?? dataValue(row, "order_code")
+    ?? dataValue(row, "order_id")
+    ?? dataValue(row, "order_item_id")
+    ?? "không xác định";
+}
 
 const orderAuditRenderers: AuditRenderer[] = [
   {
     match: { module: "order", action: "created" },
     moduleLabel: "Order",
     actionLabel: () => "Created",
+    summary: (_row) => `Đơn hàng được tạo mới.`,
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_code", label: "Order Code" },
@@ -17,6 +33,7 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "updated" },
     moduleLabel: "Order",
     actionLabel: () => "Updated",
+    summary: (_row) => `Đơn hàng được cập nhật.`,
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_code", label: "Order Code" },
@@ -28,6 +45,10 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "updated:status:change" },
     moduleLabel: "Order",
     actionLabel: () => "Status Changed",
+    summary: (row) => {
+      const status = dataValue(row, "status") ?? "không xác định";
+      return `Đơn hàng thay đổi trạng thái thành ${status}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_code", label: "Order Code" },
@@ -40,6 +61,10 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "updated:delivery-status:change" },
     moduleLabel: "Order",
     actionLabel: () => "Delivery Status Changed",
+    summary: (row) => {
+      const deliveryStatus = dataValue(row, "delivery_status") ?? "không xác định";
+      return `Đơn hàng thay đổi trạng thái giao/nhận thành ${deliveryStatus}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_code", label: "Order Code" },
@@ -52,6 +77,11 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "inprogress:checkout" },
     moduleLabel: "Order",
     actionLabel: () => "Checkout",
+    summary: (row) => {
+      const sectionName = dataValue(row, "section_name") ?? "không xác định";
+      const processName = dataValue(row, "process_name") ?? "không xác định";
+      return `Đơn hàng đã checkout khỏi khâu ${sectionName} - ${processName}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_item_id", label: "Order Item ID" },
@@ -64,6 +94,11 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "inprogress:checkin" },
     moduleLabel: "Order",
     actionLabel: () => "Checkin",
+    summary: (row) => {
+      const sectionName = dataValue(row, "section_name") ?? "không xác định";
+      const processName = dataValue(row, "process_name") ?? "không xác định";
+      return `Đơn hàng đã checkin vào khâu ${sectionName} - ${processName}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_item_id", label: "Order Item ID" },
@@ -76,6 +111,10 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "inprogress:checkin:assigned" },
     moduleLabel: "Order",
     actionLabel: () => "Checkin Assigned",
+    summary: (row) => {
+      const assignedName = dataValue(row, "assigned_name") ?? "không xác định";
+      return `Đơn hàng được phân công cho ${assignedName}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_item_id", label: "Order Item ID" },
@@ -87,6 +126,11 @@ const orderAuditRenderers: AuditRenderer[] = [
     match: { module: "order", action: "inprogress:*" },
     moduleLabel: "Order",
     actionLabel: (action) => action.replace("inprogress:", ""),
+    summary: (row) => {
+      const status = dataValue(row, "status");
+      const verb = row.action.replace("inprogress:", "");
+      return `Đơn hàng cập nhật tiến trình ${verb}${status ? ` (${status})` : ""}.`;
+    },
     fields: [
       { key: "order_id", label: "Order ID" },
       { key: "order_item_id", label: "Order Item ID" },
@@ -102,9 +146,8 @@ const orderAuditRenderers: AuditRenderer[] = [
   {
     match: { module: "order", action: "*" },
     moduleLabel: "Order",
+    summary: (row) => `Đơn hàng ${orderItemLabel(row)} thực hiện thao tác ${row.action}.`,
   },
 ];
 
 registerAuditRenderers(orderAuditRenderers);
-
-export {};

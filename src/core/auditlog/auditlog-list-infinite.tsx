@@ -6,20 +6,20 @@ import {
   CircularProgress,
   List,
   ListItem,
-  ListItemButton,
   ListItemText,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
-import type { AuditLog } from "./types";
-import AuditLogDetailDrawer from "./auditlog-detail-drawer";
 import { getAuditRenderers } from "./auditlog-registrar";
 import { defaultSummary, pickRenderer } from "./auditlog-registry";
 import { useAuditLogInfinite } from "./use-auditlog-infinite";
+import { formatDateTime } from "@root/shared/utils/datetime.utils";
 
 export type AuditLogListInfiniteProps = {
-  http: any;
+  http: {
+    get<T>(url: string, config?: { params?: Record<string, unknown> }): Promise<{ data: T } | T>;
+  };
   module?: string;
   targetId?: number;
   limit?: number;
@@ -37,7 +37,6 @@ export function AuditLogListInfinite({
     target_id: targetId,
     limit,
   });
-  const [selectedRow, setSelectedRow] = React.useState<AuditLog | null>(null);
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -62,9 +61,8 @@ export function AuditLogListInfinite({
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Typography variant="subtitle1">Audit Logs</Typography>
         <Button size="small" onClick={refresh} disabled={loading}>
-          Refresh
+          Làm mới
         </Button>
       </Stack>
 
@@ -78,26 +76,26 @@ export function AuditLogListInfinite({
         {items.map((row) => {
           const renderer = pickRenderer(renderers, row);
           const summary = renderer.summary ? renderer.summary(row) : defaultSummary(row);
+          const createdAtDate = new Date(row.created_at);
+          const createdAt = Number.isNaN(createdAtDate.getTime())
+            ? row.created_at
+            : formatDateTime(createdAtDate);
 
           return (
             <ListItem key={String(row.id)} disablePadding divider>
-              <ListItemButton onClick={() => setSelectedRow(row)} sx={{ alignItems: "flex-start" }}>
+              <Box sx={{ width: "100%", px: 2, py: 1.25 }}>
                 <ListItemText
-                  primary={`${row.module}.${row.action}`}
-                  secondary={
-                    <Stack spacing={0.5} sx={{ mt: 0.25 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Target: {row.target_id ?? "—"}
+                  primary={<Stack spacing={0.5} sx={{ mt: 0.25 }}>
+                      <Typography variant="caption" color="text.primary ">
+                        {createdAt}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(row.created_at).toLocaleString()}
+                      <Typography variant="body2" color="text.primary">
+                        {summary}
                       </Typography>
-                      <Box>{summary}</Box>
-                    </Stack>
-                  }
+                    </Stack>}
                   secondaryTypographyProps={{ component: "div" }}
                 />
-              </ListItemButton>
+              </Box>
             </ListItem>
           );
         })}
@@ -111,22 +109,9 @@ export function AuditLogListInfinite({
             Load more
           </Button>
         ) : null}
-
-        {!hasMore ? (
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-            End of list
-          </Typography>
-        ) : null}
       </Box>
 
       <div ref={sentinelRef} />
-
-      <AuditLogDetailDrawer
-        open={Boolean(selectedRow)}
-        onClose={() => setSelectedRow(null)}
-        row={selectedRow}
-        renderers={renderers}
-      />
     </Paper>
   );
 }

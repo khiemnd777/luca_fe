@@ -16,6 +16,8 @@ import { OrderInProgress } from "../components/order-inprogress.component";
 import { TabContainer, type TabItem } from "@shared/components/ui/tab-container";
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { OrderDetailDeliveryStatusBoard } from "../components/order-delivery-status-board.component";
+import { AuditLogListInfinite } from "@core/auditlog";
+import { apiClient } from "@core/network/api-client";
 
 function OrderDetailBodyWidget() {
   const { orderId } = useParams();
@@ -32,6 +34,10 @@ function OrderDetailBodyWidget() {
     () => generateTitle(detail?.code, detail?.codeLatest),
     [detail?.code, detail?.codeLatest]
   );
+  const orderTargetId = React.useMemo(() => {
+    const value = detail?.id ?? (orderId ? Number(orderId) : undefined);
+    return typeof value === "number" && !Number.isNaN(value) ? value : undefined;
+  }, [detail?.id, orderId]);
 
   return (
     <>
@@ -112,6 +118,21 @@ function OrderDetailBodyWidget() {
                 <Box>
                   <SectionCard title={title ?? ""}>
                     <OrderDetailDeliveryStatusBoard />
+                  </SectionCard>
+                </Box>
+              ),
+            },
+            {
+              label: "Nhật ký",
+              value: "auditlog",
+              content: (
+                <Box>
+                  <SectionCard title="Nhật ký">
+                    <AuditLogListInfinite
+                      http={apiClient}
+                      module="order"
+                      targetId={orderTargetId}
+                    />
                   </SectionCard>
                 </Box>
               ),

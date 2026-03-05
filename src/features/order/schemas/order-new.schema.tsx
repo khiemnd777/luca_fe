@@ -538,12 +538,12 @@ export function buildNewOrderSchema(): FormSchema {
     toasts: {
       saved: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo đơn hàng "${values?.codeLatest ?? ""}" thành công!`
-          : `Cập nhật đơn hàng "${values?.codeLatest ?? ""}" thành công!`,
+          ? `Tạo đơn hàng "${values?.codeLatest ?? values?.code ?? ""}" thành công!`
+          : `Cập nhật đơn hàng "${values?.codeLatest ?? values?.code ?? ""}" thành công!`,
       failed: ({ mode, values }) =>
         mode === "create"
-          ? `Tạo đơn hàng "${values?.codeLatest ?? ""}" thất bại, xin thử lại!`
-          : `Cập nhật đơn hàng "${values?.codeLatest ?? ""}" thất bại, xin thử lại!`,
+          ? `Tạo đơn hàng "${values?.codeLatest ?? values?.code ?? ""}" thất bại, xin thử lại!`
+          : `Cập nhật đơn hàng "${values?.codeLatest ?? values?.code ?? ""}" thất bại, xin thử lại!`,
     },
 
     async initialResolver(data: any) {

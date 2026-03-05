@@ -432,6 +432,7 @@ function SearchSingleFieldInner<T>(
     ) {
       return;
     }
+
     lastInputReasonRef.current = reason;
     if (reason === "input" || reason === "clear") {
       userInteractedRef.current = true;
@@ -443,6 +444,10 @@ function SearchSingleFieldInner<T>(
     onInputChange?.(v);
     if (reason === "input") runValidation("input", v, null);
     if (reason === "clear") runValidation("clear", v, null);
+
+    if (reason !== "input" && reason !== "clear") {
+      return;
+    }
 
     if (v === "" || reason === "clear") {
       debounce(() => loadFirstPage(""), 0);
@@ -528,10 +533,16 @@ function SearchSingleFieldInner<T>(
                     return (
                       sourceOptions.find((o) => {
                         const raw = getRawLabel(o)?.trim();
-                        if (!raw) return false;
-                        const nraw = normalizeVietnamese(raw);
-                        if (nraw) return false;
-                        return nt.includes(nraw) || nraw.includes(nt);
+                        const optionLabel = getOptionLabel(o, options)?.trim();
+
+                        const candidates = [raw, optionLabel]
+                          .filter((label): label is string => !!label)
+                          .map((label) => normalizeVietnamese(label))
+                          .filter((label): label is string => !!label);
+
+                        return candidates.some(
+                          (label) => nt.includes(label) || label.includes(nt)
+                        );
                       }) ?? null
                     );
                   })();

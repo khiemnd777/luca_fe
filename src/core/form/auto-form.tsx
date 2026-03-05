@@ -36,6 +36,7 @@ import { parseIntSafe } from "@root/shared/utils/number.utils";
 import { packageData } from "./auto-form-package";
 import { resolveSubmitButtons } from "./auto-form.helper";
 import { emit, off, on } from "../module/event-bus";
+import { getUserFriendlyErrorMessage } from "@core/network/api-error";
 
 function mapMetadataFieldTypeToFieldKind(type: string): FieldKind {
   switch (type) {
@@ -1239,11 +1240,14 @@ export const AutoForm = React.forwardRef<AutoFormRef, Props>(
 
         return true;
       } catch (err: any) {
+        const friendlyMessage = getUserFriendlyErrorMessage(err);
+        const failedToast = renderModeText(
+          btn.toasts?.failed ?? schema!.toasts?.failed,
+          { mode, values }
+        );
+
         toasts.error(
-          renderModeText(
-            btn.toasts?.failed ?? schema!.toasts?.failed,
-            { mode, values }
-          ) ?? (err?.message ?? "Lỗi")
+          friendlyMessage ?? failedToast ?? "Lỗi"
         );
         return false;
       } finally {

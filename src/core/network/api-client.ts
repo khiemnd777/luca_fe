@@ -10,6 +10,7 @@ import { refreshAccessToken } from "@core/network/auth-api";
 import type { FetchTableOpts } from "@core/table/table.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { getIdemKeyFor } from "@core/network/api-client.utils";
+import { ApiServiceError } from "@core/network/api-error";
 import type { SearchOpts } from "../types/search.types";
 
 /** =========================
@@ -952,7 +953,11 @@ export class ApiClient {
           typeof res.data === "object" &&
           (res.data as any).statusCode === 102
         ) {
-          throw new Error((res.data as any).statusMessage || "Service message");
+          throw new ApiServiceError({
+            statusCode: (res.data as any).statusCode,
+            errorCode: (res.data as any).errorCode,
+            statusMessage: (res.data as any).statusMessage,
+          });
         }
 
         return res;

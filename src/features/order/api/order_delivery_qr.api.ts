@@ -8,9 +8,18 @@ import type {
 } from "@features/order/model/order-delivery-qr.model";
 
 const deliveryQRClient = axios.create({
-  baseURL: env.apiBaseUrl,
+  baseURL: env.apiOrigin,
   withCredentials: true,
 });
+
+type StartSessionCacheEntry = {
+  promise: Promise<DeliveryQRSessionStartResponse>;
+  data?: DeliveryQRSessionStartResponse;
+  cachedAt: number;
+};
+
+const startSessionCache = new Map<string, StartSessionCacheEntry>();
+const START_SESSION_CACHE_MS = 10_000;
 
 type ErrorPayload = {
   message?: string;
@@ -148,13 +157,50 @@ function toDeliveryQRFlowError(error: unknown): DeliveryQRFlowError {
 export async function startDeliveryQRSession(
   token: string,
 ): Promise<DeliveryQRSessionStartResponse> {
+  const cacheKey = token.trim();
+  const cached = startSessionCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached) {
+    if (cached.data && now - cached.cachedAt < START_SESSION_CACHE_MS) {
+      return cached.data;
+    }
+
+    if (!cached.data) {
+      return cached.promise;
+    }
+
+    startSessionCache.delete(cacheKey);
+  }
+
+  const request = deliveryQRClient.get<DeliveryQRSessionStartResponse>(
+    `/api/department/orders/delivery/qr/${encodeURIComponent(token)}/start`,
+  )
+    .then(({ data }) => {
+      startSessionCache.set(cacheKey, {
+        promise: Promise.resolve(data),
+        data,
+        cachedAt: Date.now(),
+      });
+      return data;
+    })
+    .catch((error) => {
+      startSessionCache.delete(cacheKey);
+      throw toDeliveryQRFlowError(error);
+    });
+
+  startSessionCache.set(cacheKey, {
+    promise: request,
+    cachedAt: now,
+  });
+
   try {
-    const { data } = await deliveryQRClient.get<DeliveryQRSessionStartResponse>(
-      `/department/orders/delivery/qr/${encodeURIComponent(token)}/start`,
-    );
-    return data;
-  } catch (error) {
-    throw toDeliveryQRFlowError(error);
+    return await request;
+  } finally {
+    const latest = startSessionCache.get(cacheKey);
+    if (latest && !latest.data) {
+      startSessionCache.delete(cacheKey);
+    }
   }
 }
 
@@ -164,7 +210,7 @@ export async function confirmDeliveredByQRSession(photo: File): Promise<Delivery
     formData.append("photo", photo);
 
     const { data } = await deliveryQRClient.post<DeliveryQRConfirmResponse>(
-      "/department/orders/delivery/confirm",
+      "/api/department/orders/delivery/confirm",
       formData,
       {
         headers: {

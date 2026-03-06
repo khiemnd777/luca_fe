@@ -1,5 +1,6 @@
 export type DeliveryQRSessionStartResponse = {
-  message: string;
+  message?: string;
+  message_type?: string;
   session_id: string;
   order_id: number;
   expires_in_seconds: number;

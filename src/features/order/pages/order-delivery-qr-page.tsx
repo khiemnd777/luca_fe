@@ -68,6 +68,15 @@ function resolveDeadline(session: DeliveryQRSessionStartResponse): number {
   return Date.now() + Math.max(session.expires_in_seconds, 0) * 1000;
 }
 
+function getStartSessionMessage(session: DeliveryQRSessionStartResponse): string {
+  switch (session.message_type) {
+    case "DeliverySessionStarted":
+      return "Phiên giao hàng đã được khởi tạo thành công.";
+    default:
+      return session.message || "Phiên giao hàng đã được khởi tạo thành công.";
+  }
+}
+
 function formatCountdown(totalSeconds: number): string {
   const safeSeconds = Math.max(totalSeconds, 0);
   const minutes = Math.floor(safeSeconds / 60);
@@ -157,25 +166,6 @@ export default function OrderDeliveryQRPage() {
     }
   });
 
-  const bootSession = React.useEffectEvent(async (qrToken: string) => {
-    setViewState({ status: "loading" });
-    setRemainingSeconds(0);
-    setActionError(null);
-    setSelectedPhoto(null);
-    deadlineRef.current = null;
-
-    try {
-      const session = await startDeliveryQRSession(qrToken);
-      const deadline = resolveDeadline(session);
-      deadlineRef.current = deadline;
-      setViewState({ status: "active", session });
-      setRemainingSeconds(Math.max(Math.ceil((deadline - Date.now()) / 1000), 0));
-    } catch (error) {
-      deadlineRef.current = null;
-      setViewState(mapViewStateFromError(error as DeliveryQRFlowError));
-    }
-  });
-
   React.useEffect(() => {
     if (!token) {
       setViewState({
@@ -185,8 +175,34 @@ export default function OrderDeliveryQRPage() {
       return;
     }
 
-    void bootSession(token);
-  }, [bootSession, token]);
+    let cancelled = false;
+
+    setViewState({ status: "loading" });
+    setRemainingSeconds(0);
+    setActionError(null);
+    setSelectedPhoto(null);
+    deadlineRef.current = null;
+
+    void startDeliveryQRSession(token)
+      .then((session) => {
+        if (cancelled) return;
+
+        const deadline = resolveDeadline(session);
+        deadlineRef.current = deadline;
+        setViewState({ status: "active", session });
+        setRemainingSeconds(Math.max(Math.ceil((deadline - Date.now()) / 1000), 0));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        deadlineRef.current = null;
+        setViewState(mapViewStateFromError(error as DeliveryQRFlowError));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   React.useEffect(() => {
     if (viewState.status !== "active") return;
@@ -313,7 +329,7 @@ export default function OrderDeliveryQRPage() {
           )}
 
           {viewState.status === "active" && (
-            <Alert severity="success">{viewState.session.message}</Alert>
+            <Alert severity="success">{getStartSessionMessage(viewState.session)}</Alert>
           )}
 
           {viewState.status === "success" && (

@@ -11,6 +11,8 @@ import {
   Paper,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import {
@@ -38,7 +40,6 @@ type DeliveryViewState =
     status: "success";
     session: DeliveryQRSessionStartResponse;
     message: string;
-    proofImageUrl?: string;
   }
   | {
     status: "expired";
@@ -52,7 +53,6 @@ type DeliveryViewState =
   | {
     status: "alreadyDelivered";
     message: string;
-    proofImageUrl?: string;
   }
   | {
     status: "error";
@@ -94,7 +94,6 @@ function mapViewStateFromError(error: DeliveryQRFlowError): DeliveryViewState {
       return {
         status: "alreadyDelivered",
         message: error.message,
-        proofImageUrl: error.proofImageUrl,
       };
     default:
       return { status: "error", message: error.message };
@@ -121,7 +120,14 @@ function formatFileSize(size: number): string {
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function buildProofFileName(orderId?: number): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return orderId ? `delivery-proof-${orderId}-${stamp}.jpg` : `delivery-proof-${stamp}.jpg`;
+}
+
 export default function OrderDeliveryQRPage() {
+  const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down("sm"));
   const { token } = useParams<{ token: string }>();
   const [viewState, setViewState] = React.useState<DeliveryViewState>({ status: "loading" });
   const [remainingSeconds, setRemainingSeconds] = React.useState(0);
@@ -129,7 +135,13 @@ export default function OrderDeliveryQRPage() {
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<File | null>(null);
   const [selectedPhotoPreviewUrl, setSelectedPhotoPreviewUrl] = React.useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = React.useState(false);
+  const [cameraLoading, setCameraLoading] = React.useState(false);
+  const [cameraError, setCameraError] = React.useState<string | null>(null);
   const deadlineRef = React.useRef<number | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
 
   React.useEffect(() => {
     if (!selectedPhoto) {
@@ -144,6 +156,59 @@ export default function OrderDeliveryQRPage() {
       URL.revokeObjectURL(objectUrl);
     };
   }, [selectedPhoto]);
+
+  React.useEffect(() => {
+    if (!cameraOpen) return;
+
+    let active = true;
+
+    const startCamera = async () => {
+      try {
+        setCameraLoading(true);
+        setCameraError(null);
+
+        if (!navigator?.mediaDevices?.getUserMedia) {
+          throw new Error("Thiết bị hoặc trình duyệt không hỗ trợ camera.");
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+
+        if (!active) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message
+          : "Không thể mở camera. Vui lòng chọn ảnh từ thiết bị.";
+        setCameraError(message);
+      } finally {
+        if (active) {
+          setCameraLoading(false);
+        }
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      active = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [cameraOpen]);
 
   const moveToExpired = React.useEffectEvent((message: string) => {
     setViewState((current) => {
@@ -168,6 +233,7 @@ export default function OrderDeliveryQRPage() {
 
   React.useEffect(() => {
     if (!token) {
+      setCameraOpen(false);
       setViewState({
         status: "invalid",
         message: "QR không hợp lệ. Vui lòng quét lại mã QR trên phiếu giao hàng.",
@@ -181,6 +247,7 @@ export default function OrderDeliveryQRPage() {
     setRemainingSeconds(0);
     setActionError(null);
     setSelectedPhoto(null);
+    setCameraOpen(false);
     deadlineRef.current = null;
 
     void startDeliveryQRSession(token)
@@ -238,6 +305,61 @@ export default function OrderDeliveryQRPage() {
     setSelectedPhoto(nextFile);
   };
 
+  const handleOpenCamera = async () => {
+    if (!canUpload) return;
+
+    setActionError(null);
+    setCameraError(null);
+    setCameraOpen(true);
+  };
+
+  const handleCloseCamera = () => {
+    setCameraOpen(false);
+  };
+
+  const handleCapturePhoto = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const orderId = viewState.status === "active" ? viewState.session.order_id : undefined;
+
+    if (!video || !canvas || video.videoWidth <= 0 || video.videoHeight <= 0) {
+      setCameraError("Camera chưa sẵn sàng. Vui lòng thử lại.");
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setCameraError("Không thể xử lý ảnh từ camera.");
+      return;
+    }
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.92);
+    });
+
+    if (!blob) {
+      setCameraError("Không thể tạo ảnh xác nhận. Vui lòng thử lại.");
+      return;
+    }
+
+    const file = new File([blob], buildProofFileName(orderId), { type: "image/jpeg" });
+    const validationMessage = validateProofFile(file);
+
+    if (validationMessage) {
+      setActionError(validationMessage);
+      return;
+    }
+
+    setActionError(null);
+    setSelectedPhoto(file);
+    setCameraOpen(false);
+  };
+
   const handleConfirm = async () => {
     if (!canConfirmWithPhoto || viewState.status !== "active" || !selectedPhoto) return;
 
@@ -251,7 +373,6 @@ export default function OrderDeliveryQRPage() {
         status: "success",
         session: viewState.session,
         message: response.message || "Đơn hàng đã được xác nhận giao thành công",
-        proofImageUrl: response.proof_image_url,
       });
     } catch (error) {
       const nextState = mapViewStateFromError(error as DeliveryQRFlowError);
@@ -276,11 +397,6 @@ export default function OrderDeliveryQRPage() {
       : viewState.status === "expired"
         ? viewState.session
         : undefined;
-
-  const proofImageUrl =
-    viewState.status === "success" || viewState.status === "alreadyDelivered"
-      ? viewState.proofImageUrl
-      : undefined;
 
   return (
     <Box
@@ -367,7 +483,7 @@ export default function OrderDeliveryQRPage() {
                     Mã đơn hàng
                   </Typography>
                   <Typography variant="h6" fontWeight={700}>
-                    #{activeSession.order_id}
+                    {activeSession.order_code || `#${activeSession.order_id}`}
                   </Typography>
                 </Stack>
 
@@ -407,23 +523,36 @@ export default function OrderDeliveryQRPage() {
                   Ảnh xác nhận giao hàng
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Trên thiết bị di động, trình duyệt có thể cho phép chụp ảnh trực tiếp hoặc chọn từ thư viện.
+                  {isMobileView
+                    ? "Thiết bị di động có thể chụp ảnh trực tiếp từ camera sau."
+                    : "Bạn có thể mở camera hoặc chọn ảnh xác nhận từ thiết bị."}
                 </Typography>
 
-                <Button
-                  component="label"
-                  variant="outlined"
-                  fullWidth
-                  disabled={!canUpload}
-                >
-                  {selectedPhoto ? "Đổi ảnh xác nhận" : "Chụp hoặc chọn ảnh xác nhận"}
-                  <input
-                    hidden
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleFileChange}
-                  />
-                </Button>
+                <Stack direction={isMobileView ? "column" : "row"} spacing={1.5}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    disabled={!canUpload}
+                    onClick={handleOpenCamera}
+                  >
+                    {selectedPhoto ? "Chụp lại ảnh xác nhận" : "Mở camera"}
+                  </Button>
+
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    fullWidth
+                    disabled={!canUpload}
+                  >
+                    Chọn từ thư viện
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileChange}
+                    />
+                  </Button>
+                </Stack>
 
                 {selectedPhoto && (
                   <Typography variant="body2" color="text.secondary">
@@ -448,14 +577,14 @@ export default function OrderDeliveryQRPage() {
 
                 {!selectedPhoto && (
                   <Typography variant="body2" color="text.secondary">
-                    Vui lòng chụp hoặc chọn một ảnh xác nhận trước khi hoàn tất.
+                    Vui lòng mở camera hoặc chọn một ảnh xác nhận trước khi hoàn tất.
                   </Typography>
                 )}
               </Stack>
             </Paper>
           )}
 
-          {proofImageUrl && (
+          {cameraOpen && (
             <Paper
               variant="outlined"
               sx={{
@@ -466,33 +595,58 @@ export default function OrderDeliveryQRPage() {
             >
               <Stack spacing={1.5}>
                 <Typography variant="subtitle1" fontWeight={600}>
-                  Ảnh xác nhận
+                  Camera xác nhận giao hàng
                 </Typography>
+
+                {cameraLoading && (
+                  <Alert severity="info">Đang mở camera...</Alert>
+                )}
+
+                {cameraError && (
+                  <Alert severity="warning">{cameraError}</Alert>
+                )}
+
                 <Box
-                  component="img"
-                  src={proofImageUrl}
-                  alt="Proof giao hàng"
                   sx={{
-                    width: "100%",
+                    position: "relative",
                     borderRadius: 2,
-                    maxHeight: 260,
-                    objectFit: "cover",
-                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                    overflow: "hidden",
+                    bgcolor: "common.black",
+                    minHeight: 240,
                   }}
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
-                />
-                <Typography
-                  component="a"
-                  href={proofImageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  variant="body2"
-                  sx={{ wordBreak: "break-all" }}
                 >
-                  {proofImageUrl}
-                </Typography>
+                  <Box
+                    component="video"
+                    ref={videoRef}
+                    muted
+                    playsInline
+                    autoPlay
+                    sx={{
+                      width: "100%",
+                      minHeight: 240,
+                      display: "block",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+
+                <Stack direction={isMobileView ? "column" : "row"} spacing={1.5}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    disabled={cameraLoading}
+                    onClick={handleCapturePhoto}
+                  >
+                    Chụp ảnh
+                  </Button>
+                  <Button
+                    variant="text"
+                    fullWidth
+                    onClick={handleCloseCamera}
+                  >
+                    Đóng camera
+                  </Button>
+                </Stack>
               </Stack>
             </Paper>
           )}
@@ -507,6 +661,8 @@ export default function OrderDeliveryQRPage() {
           >
             {confirming ? "Đang xác nhận..." : "Xác nhận đã giao"}
           </Button>
+
+          <Box component="canvas" ref={canvasRef} sx={{ display: "none" }} />
 
           {(viewState.status === "invalid" ||
             viewState.status === "expired" ||

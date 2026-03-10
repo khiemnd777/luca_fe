@@ -1,5 +1,4 @@
 import axios from "axios";
-import { env } from "@core/config/env";
 import type {
   DeliveryQRConfirmResponse,
   DeliveryQRFlowError,
@@ -8,8 +7,10 @@ import type {
 } from "@features/order/model/order-delivery-qr.model";
 
 const deliveryQRClient = axios.create({
-  baseURL: env.apiOrigin,
+  baseURL: "",
   withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+  timeout: 10000,
 });
 
 type StartSessionCacheEntry = {

@@ -1,5 +1,13 @@
 import type { OrderItemModel, OrderItemUpsertModel } from "./order-item.model";
 
+export interface DeliveryProofModel {
+  id?: number | null;
+  imageUrl?: string | null;
+  proofImageUrl?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
 export interface OrderModel {
   id: number;
   code: string;
@@ -28,6 +36,10 @@ export interface OrderModel {
   quantity?: number;
   totalPrice?: number;
   deliveryDate?: string | null;
+  imageUrl?: string | null;
+  proofImageUrl?: string | null;
+  deliveryProofs?: DeliveryProofModel[] | null;
+  orderDeliveryProofs?: DeliveryProofModel[] | null;
   remakeType?: string;
   remakeCount?: number;
   createdAt: string;

@@ -8,6 +8,9 @@ import NavigatorBinder from "@core/navigation/navigator-binder";
 const LoginPage = React.lazy(() => import("@core/pages/login-page"));
 const ForbiddenPage = React.lazy(() => import("@core/pages/forbidden-page"));
 const NotFoundPage = React.lazy(() => import("@core/pages/not-found-page"));
+const OrderDeliveryQRPage = React.lazy(
+  () => import("@features/order/pages/order-delivery-qr-page")
+);
 
 function withSuspense(node: React.ReactNode) {
   return <React.Suspense fallback={null}>{node}</React.Suspense>;
@@ -28,13 +31,13 @@ function useAppRouter() {
     const publicRoutes = [
       { path: "/login", element: withSuspense(<LoginPage />) },
       { path: "/forbidden", element: withSuspense(<ForbiddenPage />) },
+      { path: "/delivery/qr/:token", element: withSuspense(<OrderDeliveryQRPage />) },
     ];
 
     const protectedGroups = listRoutes().map((r) => {
-      const el =
-        typeof r.element === "function"
-          ? React.createElement(r.element as any)
-          : r.element;
+      const el = typeof r.element === "function"
+        ? React.createElement(r.element as React.ComponentType)
+        : r.element;
 
       return {
         element: (

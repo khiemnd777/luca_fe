@@ -1,7 +1,8 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "@routes/protected-route";
 import LoginPage from "@pages/login/login-page";
-import App from "@root/App";
+import App from "@root/app/app";
 import { useAuthStore } from "@root/store/auth-store";
 
 const Dashboard = () => <div>Dashboard</div>;

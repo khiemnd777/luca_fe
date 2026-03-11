@@ -31,6 +31,10 @@ mapper.register<OrderModel>({
     quantity: 0,
     totalPrice: 0,
     deliveryDate: null,
+    imageUrl: null,
+    proofImageUrl: null,
+    deliveryProofs: null,
+    orderDeliveryProofs: null,
     remakeCount: 0,
     remakeType: "",
     createdAt: "",
@@ -52,6 +56,10 @@ mapper.register<OrderModel>({
         // product
         productId: 0,
         productName: "",
+        imageUrl: null,
+        proofImageUrl: null,
+        deliveryProofs: null,
+        orderDeliveryProofs: null,
         // products
         products: null,
         // materials
@@ -77,6 +85,10 @@ mapper.register<OrderModel>({
       // product
       productId: 0,
       productName: "",
+      imageUrl: null,
+      proofImageUrl: null,
+      deliveryProofs: null,
+      orderDeliveryProofs: null,
       // products
       products: null,
       // materials

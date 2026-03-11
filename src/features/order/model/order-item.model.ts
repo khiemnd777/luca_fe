@@ -1,5 +1,6 @@
 import type { OrderItemMaterialModel } from "./order-item-material.model";
 import type { OrderItemProductModel } from "./order-item-product.model";
+import type { DeliveryProofModel } from "./order.model";
 
 export interface OrderItemModel {
   // general
@@ -19,6 +20,11 @@ export interface OrderItemModel {
   // product
   productId?: number | null;
   productName?: string;
+  deliveryDate?: string | null;
+  imageUrl?: string | null;
+  proofImageUrl?: string | null;
+  deliveryProofs?: DeliveryProofModel[] | null;
+  orderDeliveryProofs?: DeliveryProofModel[] | null;
   // products
   products?: OrderItemProductModel[] | null;
   // consumable materials

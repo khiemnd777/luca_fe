@@ -13,28 +13,40 @@ import {
   deliveryStatusColor,
 } from "@root/shared/utils/order.utils";
 import {
+  getDeliveryProofPhotoUrl,
   getDeliveryStatusByOrderItemId,
   id as getById,
   getByOrderIdAndOrderItemId,
   updateDeliveryStatus,
 } from "../api/order.api";
 import type { OrderItemModel } from "../model/order-item.model";
+import type { OrderModel } from "../model/order.model";
+import {
+  resolveDeliveryProofUrl,
+  resolveLatestOrderItem,
+} from "../utils/order-delivery-proof.utils";
+import { OrderDeliveryProofPhoto } from "./order-delivery-proof-photo.component";
+
+type OrderDetailDeliveryStatusBoardProps = {
+  orderId?: number;
+};
 
 type DeliveryBoardData = {
   orderId: number;
   orderItemId: number | null;
-  order: any;
-  orderItem: any;
+  order: OrderModel;
+  orderItem: Partial<OrderItemModel> | null;
   deliveryStatus: OrderDeliveryStatus;
 };
 
-export function OrderDetailDeliveryStatusBoard() {
+export function OrderDetailDeliveryStatusBoard({ orderId: explicitOrderId }: OrderDetailDeliveryStatusBoardProps) {
   const { orderId, orderItemId } = useParams();
+  const effectiveOrderId = explicitOrderId ?? (orderId ? Number(orderId) : undefined);
 
   const { data, loading } = useAsync<DeliveryBoardData | null>(() => {
     return (async () => {
-      if (!orderId) return null;
-      const orderIdNumber = Number(orderId);
+      if (typeof effectiveOrderId !== "number" || Number.isNaN(effectiveOrderId)) return null;
+      const orderIdNumber = effectiveOrderId;
 
       if (orderItemId) {
         const orderItemIdNumber = Number(orderItemId);
@@ -42,8 +54,8 @@ export function OrderDetailDeliveryStatusBoard() {
           getByOrderIdAndOrderItemId(orderIdNumber, orderItemIdNumber),
           getDeliveryStatusByOrderItemId(orderIdNumber, orderItemIdNumber),
         ]);
-        const item = detail?.latestOrderItem ?? detail?.latestOrderItemUpsert ?? null;
-        const realOrderItemId = (item as OrderItemModel)?.id ?? orderItemIdNumber;
+        const item = resolveLatestOrderItem(detail);
+        const realOrderItemId = item?.id ?? orderItemIdNumber;
         return {
           orderId: orderIdNumber,
           orderItemId: realOrderItemId ?? null,
@@ -54,8 +66,8 @@ export function OrderDetailDeliveryStatusBoard() {
       }
 
       const detail = await getById(orderIdNumber);
-      const item = detail?.latestOrderItem ?? detail?.latestOrderItemUpsert ?? null;
-      const realOrderItemId = (item as OrderItemModel)?.id ?? null;
+      const item = resolveLatestOrderItem(detail);
+      const realOrderItemId = item?.id ?? null;
       const deliveryStatus = realOrderItemId
         ? await getDeliveryStatusByOrderItemId(orderIdNumber, realOrderItemId)
         : "pending";
@@ -67,8 +79,8 @@ export function OrderDetailDeliveryStatusBoard() {
         deliveryStatus: (deliveryStatus ?? "pending") as OrderDeliveryStatus,
       };
     })();
-  }, [orderId, orderItemId], {
-    key: `order-delivery-status:${orderId ?? "new"}:${orderItemId ?? "latest"}`,
+  }, [effectiveOrderId, orderItemId], {
+    key: `order-delivery-status:${effectiveOrderId ?? "new"}:${orderItemId ?? "latest"}`,
   });
 
   const deliveryStatus = data?.orderItemId
@@ -109,6 +121,12 @@ export function OrderDetailDeliveryStatusBoard() {
             const item = payload.orderItem;
             const code = detail?.codeLatest ?? detail?.code ?? item?.code;
             const deliveryDate = detail?.deliveryDate ?? item?.deliveryDate;
+            const proofUrl = resolveDeliveryProofUrl({
+              order: payload.order,
+              orderItem: payload.orderItem,
+              orderItemId: payload.orderItemId,
+              fallbackUrlFactory: getDeliveryProofPhotoUrl,
+            });
             return (
               <Stack spacing={1}>
                 {code && (
@@ -129,6 +147,12 @@ export function OrderDetailDeliveryStatusBoard() {
                       </Typography>
                     </Box>
                   </Stack>
+                )}
+                {proofUrl && (
+                  <OrderDeliveryProofPhoto
+                    src={proofUrl}
+                    alt={`Ảnh xác nhận giao hàng của đơn ${code ?? payload.orderId}`}
+                  />
                 )}
               </Stack>
             );

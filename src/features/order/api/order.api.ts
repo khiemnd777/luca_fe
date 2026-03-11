@@ -233,6 +233,11 @@ export async function getDeliveryStatusByOrderItemId(orderId: number, orderItemI
   return data.delivery_status;
 }
 
+export function getDeliveryProofPhotoUrl(orderItemId: number): string {
+  const { departmentApiPath } = useAuthStore.getState();
+  return `${departmentApiPath()}/orders/delivery/proofs/${orderItemId}`;
+}
+
 export async function unlink(id: number): Promise<void> {
   const { departmentApiPath } = useAuthStore.getState();
   await apiClient.delete<any>(`${departmentApiPath()}/order/${id}`);

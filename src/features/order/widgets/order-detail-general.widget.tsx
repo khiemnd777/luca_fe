@@ -18,12 +18,13 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { OrderDetailDeliveryStatusBoard } from "../components/order-delivery-status-board.component";
 import { AuditLogListInfinite } from "@core/auditlog";
 import { apiClient } from "@core/network/api-client";
+import type { OrderModel } from "../model/order.model";
 
-function OrderDetailBodyWidget() {
+export function OrderDetailBodyWidget() {
   const { orderId } = useParams();
   const frmOrderEditRef = React.useRef<AutoFormRef>(null);
 
-  const { data: detail, loading } = useAsync<any>(() => {
+  const { data: detail, loading } = useAsync<OrderModel | null>(() => {
     if (!orderId) return Promise.resolve(null);
     return getById(Number(orderId ?? 0));
   }, [orderId], {
@@ -117,7 +118,9 @@ function OrderDetailBodyWidget() {
               content: (
                 <Box>
                   <SectionCard title={title ?? ""}>
-                    <OrderDetailDeliveryStatusBoard />
+                    <OrderDetailDeliveryStatusBoard
+                      orderId={orderId ? Number(orderId) : undefined}
+                    />
                   </SectionCard>
                 </Box>
               ),

@@ -9,10 +9,9 @@ import {
 type OrderDeliveryCompletedNotificationData = {
   departmentId?: number | string;
   adminId?: number | string;
+  orderId?: number | string;
   orderItemId?: number | string;
   orderItemCode?: string;
-  sectionName?: string;
-  processName?: string;
   href?: string;
 };
 
@@ -28,14 +27,6 @@ const OrderDeliveryCompletedNotificationRenderer: NotificationRenderer<
     bodyLines.push(`Mã: ${data.orderItemCode}`);
   }
 
-  if (data?.processName) {
-    bodyLines.push(`Công đoạn hoàn tất: ${data.processName}`);
-  }
-
-  if (data?.sectionName) {
-    bodyLines.push(`Phòng ban: ${data.sectionName}`);
-  }
-
   const body =
     bodyLines.length > 0 ? (
       <Box>
@@ -47,7 +38,7 @@ const OrderDeliveryCompletedNotificationRenderer: NotificationRenderer<
       notification.body || ""
     );
 
-  const href = data?.href || "/order";
+  const href = data?.href || (data?.orderId ? `/order/${data.orderId}` : "/order");
 
   const handleClick = () => {
     if (href) ctx.onAction?.(href);

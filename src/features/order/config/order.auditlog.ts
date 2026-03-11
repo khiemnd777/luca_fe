@@ -62,8 +62,15 @@ const orderAuditRenderers: AuditRenderer[] = [
     moduleLabel: "Order",
     actionLabel: () => "Delivery Status Changed",
     summary: (row) => {
-      const deliveryStatus = dataValue(row, "delivery_status") ?? "không xác định";
-      return `Đơn hàng thay đổi trạng thái giao/nhận thành ${deliveryStatus}.`;
+      const deliveryStatus = dataValue(row, "delivery_status");
+      const deliveryStatusLabel = deliveryStatus === "delivery_in_progress"
+        ? "đang giao"
+        : deliveryStatus === "delivered"
+          ? "đã giao"
+          : deliveryStatus === "returned"
+            ? "trả về"
+            : (deliveryStatus ?? "không xác định");
+      return `Đơn hàng thay đổi trạng thái giao/nhận thành ${deliveryStatusLabel}.`;
     },
     fields: [
       { key: "order_id", label: "Order ID" },

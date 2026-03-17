@@ -5,8 +5,12 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
-import { getAccessToken, getRefreshToken, saveAccessToken } from "@core/network/token-utils";
-import { refreshAccessToken } from "@core/network/auth-api";
+import { getRefreshToken } from "@core/network/token-utils";
+import {
+  bootstrapTokenSanity,
+  ensureValidAccessToken,
+  refreshOnce,
+} from "@core/network/auth-session";
 import type { FetchTableOpts } from "@core/table/table.types";
 import { mapper } from "@core/mapper/auto-mapper";
 import { getIdemKeyFor } from "@core/network/api-client.utils";
@@ -21,250 +25,14 @@ declare global {
   var __API_CLIENT_SINGLETON__: ApiClient | undefined;
 }
 
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-const requestQueue: Array<(token: string | null) => void> = [];
-let lastRefreshFailedAt: number | null = null;
-
-/** =========================
- *  Auth constants
- *  ========================= */
-const EARLY_REFRESH_S = 30;
-const BC_RACE_MS = 200;
-const REFRESH_HARD_TIMEOUT_MS = 6000;
-const LOGIN_PATH = "/login";
-
-/** =========================
- *  Broadcast đa tab (Auth)
- *  ========================= */
-const authBC =
-  typeof window !== "undefined" && "BroadcastChannel" in window
-    ? new BroadcastChannel("auth")
-    : null;
-
-function broadcastAuth(
-  type: "token_refreshed" | "logout" | "refresh_failed",
-  token?: string | null,
-) {
-  try {
-    authBC?.postMessage(
-      type === "token_refreshed" ? { type, token } : { type },
-    );
-  } catch {
-    // ignore
-  }
-}
-
-/** =========================
- *  Auth utils
- *  ========================= */
-function isOnLogin(): boolean {
-  try {
-    return (
-      typeof window !== "undefined" &&
-      window.location?.pathname?.startsWith(LOGIN_PATH)
-    );
-  } catch {
-    return false;
-  }
-}
-
-function getTokenExpSec(token?: string | null): number | null {
-  if (!token) return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  try {
-    const payload = JSON.parse(
-      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
-    return typeof payload?.exp === "number" ? payload.exp : null;
-  } catch {
-    return null;
-  }
-}
-
-function secondsUntilExpiry(token?: string | null): number | null {
-  const exp = getTokenExpSec(token);
-  if (!exp) return null;
-  const now = Math.floor(Date.now() / 1000);
-  return exp - now;
-}
-
-export function isAuthRefreshing(): boolean {
-  return isRefreshing;
-}
-
-export function hasUsableAccessToken(): boolean {
-  const t = getAccessToken();
-  const exp = getTokenExpSec(t);
-  if (!exp) return false;
-  const now = Math.floor(Date.now() / 1000);
-  return exp > now;
-}
-
-export function didLastRefreshFail(): boolean {
-  return !!lastRefreshFailedAt && Date.now() - lastRefreshFailedAt < 5 * 60 * 1000;
-}
-
-function markRefreshFail() {
-  lastRefreshFailedAt = Date.now();
-  broadcastAuth("refresh_failed");
-}
-
-function clearRefreshFailFlag() {
-  lastRefreshFailedAt = null;
-}
-
 /** =========================
  *  Bootstrap: dọn accessToken hết hạn
  *  ========================= */
-(function bootstrapTokenSanity() {
-  const t = getAccessToken();
-  const remain = secondsUntilExpiry(t);
-  if (t && (remain === null || remain <= 0)) {
-    try {
-      saveAccessToken("");
-    } catch {
-      // ignore
-    }
-  }
-})();
-
-/** =========================
- *  Queue helpers cho request chờ refresh
- *  ========================= */
-function flushQueue(newToken: string | null) {
-  while (requestQueue.length) {
-    const fn = requestQueue.shift()!;
-    try {
-      fn(newToken);
-    } catch {
-      // ignore
-    }
-  }
-}
-
-function failQueue() {
-  while (requestQueue.length) {
-    const fn = requestQueue.shift()!;
-    try {
-      fn(null);
-    } catch {
-      // ignore
-    }
-  }
-}
-
-/** =========================
- *  Timeout wrapper
- *  ========================= */
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | "__TIMEOUT__"> {
-  return Promise.race([
-    p,
-    new Promise<"__TIMEOUT__">((res) =>
-      setTimeout(() => res("__TIMEOUT__"), ms),
-    ),
-  ]);
-}
-
-/** =========================
- *  Race short từ tab khác (Auth)
- *  ========================= */
-function waitExternalRefreshShort(): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!authBC) return resolve(null);
-
-    const timer = setTimeout(() => {
-      try {
-        authBC.removeEventListener("message", handler);
-      } catch {
-        // ignore
-      }
-      resolve(null);
-    }, BC_RACE_MS);
-
-    const handler = (ev: MessageEvent) => {
-      if (ev.data?.type === "token_refreshed") {
-        clearTimeout(timer);
-        authBC.removeEventListener("message", handler);
-        resolve(ev.data.token ?? null);
-      }
-      if (ev.data?.type === "logout" || ev.data?.type === "refresh_failed") {
-        clearTimeout(timer);
-        authBC.removeEventListener("message", handler);
-        resolve(null);
-      }
-    };
-
-    authBC.addEventListener("message", handler);
-  });
-}
+bootstrapTokenSanity();
 
 function isRefreshRequest(config?: AxiosRequestConfig | null) {
   const url = config?.url ?? "";
   return url.includes("/auth/refresh") || url.includes("/refresh-token");
-}
-
-/** =========================
- *  Refresh logic (single-flight + đa tab)
- *  ========================= */
-async function doRefreshOnce(): Promise<string | null> {
-  if (refreshPromise) return refreshPromise;
-
-  isRefreshing = true;
-
-  const core = (async () => {
-    try {
-      if (isOnLogin()) return null;
-
-      // Race ngắn với tab khác
-      const external = await waitExternalRefreshShort();
-      if (external) {
-        saveAccessToken(external);
-        clearRefreshFailFlag();
-        return external;
-      }
-
-      const rt = getRefreshToken();
-      if (!rt) return null;
-
-      const newToken = await refreshAccessToken(rt);
-      if (newToken) {
-        saveAccessToken(newToken);
-        broadcastAuth("token_refreshed", newToken);
-        clearRefreshFailFlag();
-        return newToken;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  })();
-
-  const raced = withTimeout(core, REFRESH_HARD_TIMEOUT_MS).then((r) =>
-    r === "__TIMEOUT__" ? null : r,
-  );
-  refreshPromise = raced;
-
-  raced
-    .then((token) => {
-      isRefreshing = false;
-      refreshPromise = null;
-      if (token) {
-        flushQueue(token);
-      } else {
-        markRefreshFail();
-        failQueue();
-      }
-    })
-    .catch(() => {
-      isRefreshing = false;
-      refreshPromise = null;
-      markRefreshFail();
-      failQueue();
-    });
-
-  return raced;
 }
 
 /** =========================
@@ -600,36 +368,11 @@ export class ApiClient {
         };
 
         const isRefresh = isRefreshRequest(config);
-        const at = getAccessToken();
-        const remain = secondsUntilExpiry(at);
-
-        // Dọn accessToken hết hạn
-        if (at && (remain === null || remain <= 0)) {
-          try {
-            saveAccessToken("");
-          } catch {
-            // ignore
+        if (!isRefresh) {
+          const token = await ensureValidAccessToken();
+          if (token) {
+            setAuth(token);
           }
-        }
-
-        // Token còn hạn, attach luôn
-        if (at && remain !== null && remain > 0 && !isRefresh) {
-          setAuth(at);
-          // gần hết hạn thì kick off refresh nền
-          if (remain <= EARLY_REFRESH_S && !isRefreshing && !isOnLogin())
-            void doRefreshOnce();
-          return config;
-        }
-
-        // Không phải request refresh + có refresh token -> chờ refresh
-        if (!isRefresh && getRefreshToken()) {
-          if (!isRefreshing) void doRefreshOnce();
-          return new Promise<InternalAxiosRequestConfig>((resolve) => {
-            requestQueue.push((newToken) => {
-              if (newToken) setAuth(newToken);
-              resolve(config);
-            });
-          });
         }
 
         // Gắn Idempotency-Key cho POST/PUT/DELETE
@@ -659,7 +402,7 @@ export class ApiClient {
           getRefreshToken()
         ) {
           original._retry = true;
-          const newToken = await doRefreshOnce();
+          const newToken = await refreshOnce();
           if (newToken) {
             const headers = new AxiosHeaders(original.headers as any);
             headers.set("Authorization", `Bearer ${newToken}`);

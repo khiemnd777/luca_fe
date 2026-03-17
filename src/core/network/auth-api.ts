@@ -1,15 +1,21 @@
+import axios from "axios";
 import {
   ACCESS_KEY,
+  getAccessToken,
   getRefreshToken,
   REFRESH_KEY,
   saveAccessToken,
   saveRefreshToken,
 } from "@core/network/token-utils";
-import { apiClient } from "@core/network/api-client";
 import type { AuthResponse, RefreshTokenResponse } from "@core/network/auth-types";
 import { env } from "@root/core/config/env";
 
 const baseURL = env.apiBasePath;
+const authHttp = axios.create({
+  baseURL: "",
+  headers: { "Content-Type": "application/json" },
+  timeout: 10000,
+});
 
 /**
  * Đăng nhập và lưu lại access/refresh token
@@ -18,7 +24,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthResponse> {
-  const res = await apiClient.post<AuthResponse>(
+  const res = await authHttp.post<AuthResponse>(
     `${baseURL}/auth/login`,
     { phone_or_email: email, password }
   );
@@ -31,9 +37,22 @@ export async function login(
 
 export async function logout(): Promise<void> {
   const refreshToken = getRefreshToken();
-  await apiClient.post(`${baseURL}/auth/logout`, { refreshToken }).catch(() => {
-    // tránh chặn flow logout vì lỗi mạng
-  });
+  const accessToken = getAccessToken();
+  await authHttp
+    .post(
+      `${baseURL}/auth/logout`,
+      { refreshToken },
+      accessToken
+        ? {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        : undefined,
+    )
+    .catch(() => {
+      // tránh chặn flow logout vì lỗi mạng
+    });
 }
 
 /**
@@ -41,17 +60,18 @@ export async function logout(): Promise<void> {
  */
 export async function refreshAccessToken(
   refreshToken: string | null
-): Promise<string> {
+): Promise<RefreshTokenResponse> {
   if (!refreshToken) throw new Error("No refresh token");
 
-  const res = await apiClient.post<RefreshTokenResponse>(
+  const res = await authHttp.post<RefreshTokenResponse>(
     `${baseURL}/auth/refresh-token`,
     { refreshToken },
-    { isRefresh: true },
   );
 
   const data = res.data;
-  const newToken = data[ACCESS_KEY];
-  saveAccessToken(newToken);
-  return newToken;
+  saveAccessToken(data[ACCESS_KEY]);
+  if (data[REFRESH_KEY]) {
+    saveRefreshToken(data[REFRESH_KEY]!);
+  }
+  return data;
 }

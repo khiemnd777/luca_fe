@@ -2,8 +2,9 @@ import * as React from "react";
 import { Box, Button, Typography, Stack, TextField, Paper, Alert } from "@mui/material";
 import { useAuthStore } from "@store/auth-store";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { hasUsableAccessToken } from "@core/network/api-client";
+import { hasUsableAccessToken } from "@core/network/auth-session";
 import { EmailOrPhoneField } from "@shared/components/fields/email-or-phone-field";
+import axios from "axios";
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -33,8 +34,12 @@ export default function LoginPage() {
       if (hasUsableAccessToken()) {
         navigate(redirect, { replace: true });
       }
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || "Login failed";
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string } | undefined)?.message ?? err.message
+        : err instanceof Error
+          ? err.message
+          : "Login failed";
       setError(message);
     } finally {
       setLoading(false);

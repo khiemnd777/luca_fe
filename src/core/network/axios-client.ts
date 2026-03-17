@@ -28,7 +28,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const newToken = await refreshAccessToken(getRefreshToken());
+        const refreshed = await refreshAccessToken(getRefreshToken());
+        const newToken = refreshed?.accessToken;
         if (newToken) {
           saveAccessToken(newToken);
           originalRequest.headers.Authorization = `Bearer ${newToken}`;

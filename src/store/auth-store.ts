@@ -3,9 +3,6 @@ import { persist } from "zustand/middleware";
 import {
   ACCESS_KEY,
   REFRESH_KEY,
-  saveAccessToken,
-  saveRefreshToken,
-  clearTokens,
   getAccessToken,
 } from "@core/network/token-utils";
 import { login as apiLogin, logout as apiLogout } from "@core/network/auth-api";
@@ -16,6 +13,7 @@ import type { MatrixPermission, MyRoleDto } from "@core/network/rbac.types";
 import { fetchMyDepartment } from "@core/network/my-department.api";
 import type { MyDepartmentDto } from "@core/network/my-department.dto";
 import { env } from "@core/config/env";
+import { notifyLogin, notifyLogout } from "@core/network/auth-session";
 
 type AuthState = {
   user: MeModel | null;
@@ -75,15 +73,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           await apiLogout();
         } finally {
-          clearTokens();
+          notifyLogout("user_logout");
           set({ user: null, roles: [], roleObjects: undefined, isLoggedIn: false });
           window.location.href = "/login";
         }
       },
 
       setSession({ accessToken, refreshToken, user, roles }) {
-        saveAccessToken(accessToken);
-        saveRefreshToken(refreshToken);
+        notifyLogin({ accessToken, refreshToken });
         set({
           user: user ?? null,
           roles: roles ?? [],

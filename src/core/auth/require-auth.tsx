@@ -2,7 +2,11 @@ import * as React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { type Perm, useRoleChecks, usePermissionChecks } from "@core/auth/rbac-utils";
 import { getRefreshToken } from "@core/network/token-utils";
-import { hasUsableAccessToken, isAuthRefreshing, didLastRefreshFail } from "@core/network/api-client";
+import {
+  didLastRefreshFail,
+  hasUsableAccessToken,
+  isAuthRefreshing,
+} from "@core/network/auth-session";
 import { Box, LinearProgress } from "@mui/material";
 
 type RequireAuthProps = {

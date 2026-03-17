@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { wsClient } from "./ws-client";
-import { getAccessToken } from "../token-utils";
+import {
+  hasUsableAccessToken,
+  subscribeAuthEvents,
+} from "@core/network/auth-session";
 
 type Props = {
   children: React.ReactNode;
@@ -8,13 +11,26 @@ type Props = {
 
 export function WebSocketProvider({ children }: Props) {
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
+    if (hasUsableAccessToken()) {
+      wsClient.resume();
+    } else {
+      wsClient.shutdown();
+    }
 
-    wsClient.connect();
+    const offAuth = subscribeAuthEvents((event) => {
+      if (event.type === "login" || event.type === "token_refreshed") {
+        wsClient.resume();
+        return;
+      }
+
+      if (event.type === "logout" || event.type === "refresh_failed") {
+        wsClient.shutdown();
+      }
+    });
 
     return () => {
-      wsClient.close();
+      offAuth();
+      wsClient.shutdown();
     };
   }, []);
 

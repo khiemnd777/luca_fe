@@ -369,7 +369,9 @@ export class ApiClient {
 
         const isRefresh = isRefreshRequest(config);
         if (!isRefresh) {
-          const token = await ensureValidAccessToken();
+          // API requests should keep using the current access token until it is
+          // effectively expired, instead of eagerly refreshing far in advance.
+          const token = await ensureValidAccessToken({ minValiditySeconds: 5 });
           if (token) {
             setAuth(token);
           }
@@ -396,7 +398,7 @@ export class ApiClient {
         const status = error?.response?.status as number | undefined;
 
         if (
-          (status === 401 || status === 403) &&
+          status === 401 &&
           !original._retry &&
           !isRefreshRequest(original) &&
           getRefreshToken()

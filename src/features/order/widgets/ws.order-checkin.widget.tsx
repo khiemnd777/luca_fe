@@ -32,7 +32,7 @@ function NotificationStackWidget(msg: any) {
   return null;
 }
 
-function NotificationWSWidget() {
+function NotificationWSCheckinWidget() {
   const { lastMessage } = useWebSocket();
 
   useEffect(() => {
@@ -47,4 +47,4 @@ function NotificationWSWidget() {
   return null;
 }
 
-registerWS(<NotificationWSWidget />);
+registerWS(<NotificationWSCheckinWidget />);

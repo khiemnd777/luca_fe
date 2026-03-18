@@ -50,7 +50,7 @@ const columns: ColumnDef<SystemLogModel>[] = [
   },
   {
     key: "message",
-    header: "Thông điệp",
+    header: "Message",
     width: 420,
     render: (row) => (
       <span

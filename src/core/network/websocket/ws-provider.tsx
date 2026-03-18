@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { env } from "@core/config/env";
 import { wsClient } from "./ws-client";
 import {
   hasUsableAccessToken,
@@ -11,6 +12,11 @@ type Props = {
 
 export function WebSocketProvider({ children }: Props) {
   useEffect(() => {
+    if (!env.wsEnabled) {
+      wsClient.shutdown();
+      return;
+    }
+
     if (hasUsableAccessToken()) {
       wsClient.resume();
     } else {

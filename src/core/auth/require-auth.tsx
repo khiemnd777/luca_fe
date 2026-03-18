@@ -32,7 +32,6 @@ export default function RequireAuth({
   const { hasAnyRole, hasAllRoles } = useRoleChecks();
   const { hasAnyPermissions } = usePermissionChecks();
   const bootstrapAuth = useAuthStore((state) => state.bootstrap);
-  const debugId = React.useId();
 
   const navigate = useNavigate();
   const location = useLocation();

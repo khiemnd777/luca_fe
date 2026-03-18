@@ -4,6 +4,7 @@ import {
   ACCESS_KEY,
   REFRESH_KEY,
   getAccessToken,
+  getRefreshToken,
 } from "@core/network/token-utils";
 import { login as apiLogin, logout as apiLogout } from "@core/network/auth-api";
 import { fetchMe } from "@core/network/me.api";
@@ -44,6 +45,10 @@ type AuthState = {
   hasPermission: (permission: string) => boolean;
   departmentApiPath: () => string;
 };
+
+function hasStoredSession(): boolean {
+  return !!getAccessToken() || !!getRefreshToken();
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -89,22 +94,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       async fetchMe() {
-        const token = getAccessToken();
-        if (!token) return;
+        if (!hasStoredSession()) return;
         const me = await fetchMe();
         set({ user: me, isLoggedIn: true });
       },
 
       async fetchDepartment() {
-        const token = getAccessToken();
-        if (!token) return;
+        if (!hasStoredSession()) return;
         const myDept = await fetchMyDepartment();
         set({ department: myDept });
       },
 
       async fetchRoles() {
-        const token = getAccessToken();
-        if (!token) return;
+        if (!hasStoredSession()) return;
         const list = await fetchMyRoles();
         set({
           roleObjects: list,
@@ -114,8 +116,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       async fetchMatrixPermissions() {
-        const token = getAccessToken();
-        if (!token) return;
+        if (!hasStoredSession()) return;
         const matrix = await fetchMyMatrixPermissions();
         set({
           matrixPermission: matrix,
@@ -123,9 +124,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       async bootstrap() {
-        // gọi khi app khởi động: nếu có token thì nạp me + roles + permissions
-        const token = getAccessToken();
-        if (!token) return;
+        // gọi khi app khởi động: nếu còn access hoặc refresh token thì phục hồi session
+        if (!hasStoredSession()) return;
         await Promise.allSettled([
           get().fetchMe(),
           get().fetchDepartment(),

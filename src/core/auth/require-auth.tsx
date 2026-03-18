@@ -6,8 +6,11 @@ import {
   didLastRefreshFail,
   hasUsableAccessToken,
   isAuthRefreshing,
+  refreshOnce,
+  subscribeAuthEvents,
 } from "@core/network/auth-session";
 import { Box, LinearProgress } from "@mui/material";
+import { useAuthStore } from "@store/auth-store";
 
 type RequireAuthProps = {
   roles?: string[];
@@ -28,9 +31,19 @@ export default function RequireAuth({
 }: RequireAuthProps) {
   const { hasAnyRole, hasAllRoles } = useRoleChecks();
   const { hasAnyPermissions } = usePermissionChecks();
+  const bootstrapAuth = useAuthStore((state) => state.bootstrap);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [, forceAuthStateRefresh] = React.useReducer((value) => value + 1, 0);
+  const [recoveringSession, setRecoveringSession] = React.useState(false);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeAuthEvents(() => forceAuthStateRefresh());
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Auth state
   const usable = hasUsableAccessToken();
@@ -39,6 +52,29 @@ export default function RequireAuth({
   const refreshFailed = didLastRefreshFail();
 
   const mustLogin = requireLogin && !usable;
+  const canRecoverSession = mustLogin && hasRT && !refreshFailed;
+
+  React.useEffect(() => {
+    if (!canRecoverSession || refreshing || recoveringSession) return;
+
+    let active = true;
+    setRecoveringSession(true);
+
+    void refreshOnce()
+      .then(async (token) => {
+        if (!token || !active) return;
+        await bootstrapAuth();
+      })
+      .finally(() => {
+        if (active) {
+          setRecoveringSession(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [bootstrapAuth, canRecoverSession, recoveringSession, refreshing]);
 
   const redirectTo = React.useMemo(() => {
     if (mustLogin && (!hasRT || refreshFailed)) {
@@ -49,8 +85,7 @@ export default function RequireAuth({
       return `${loginPath}?redirect=${encodeURIComponent(safeRedirect)}`;
     }
 
-
-    if (refreshing) return null;
+    if (canRecoverSession || refreshing || recoveringSession) return null;
     if (roles?.length) {
       const ok = requireAll ? hasAllRoles(roles) : hasAnyRole(roles);
       if (!ok) return forbiddenPath;
@@ -64,7 +99,9 @@ export default function RequireAuth({
     mustLogin,
     hasRT,
     refreshFailed,
+    canRecoverSession,
     refreshing,
+    recoveringSession,
     roles,
     permissions,
     requireAll,
@@ -83,15 +120,16 @@ export default function RequireAuth({
   }, [redirectTo, navigate, location.pathname, location.search, forbiddenPath]);
 
   const blocking = !!redirectTo;
+  const showLoader = blocking || canRecoverSession || refreshing || recoveringSession;
 
   return (
     <Box sx={{ position: "relative", minHeight: 0 }}>
-      {(blocking || (mustLogin && hasRT && !refreshFailed && refreshing)) && (
+      {showLoader && (
         <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 13000 }}>
           <LinearProgress />
         </Box>
       )}
-      {!blocking && <Outlet />}
+      {!showLoader && <Outlet />}
     </Box>
   );
 }

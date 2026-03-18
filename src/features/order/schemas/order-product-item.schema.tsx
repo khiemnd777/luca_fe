@@ -80,17 +80,19 @@ export function buildOrderProductItemSchema(): FormSchema {
           return;
         }
 
+        const product = matched as ProductModel | null;
+
         ctx?.emit("item:patch", {
           __meta: {
             listKey: "order-product",
             itemId,
           },
           patch: {
-            productId: matched.id ?? null,
-            productCode: matched.code ?? "",
-            categoryId: matched.categoryId ?? null,
+            productId: product?.id ?? null,
+            productCode: product?.code ?? "",
+            categoryId: product?.categoryId ?? null,
             quantity: 1,
-            retailPrice: 0,
+            retailPrice: product?.retailPrice ?? 0,
             teethPosition: null,
             note: "",
           },

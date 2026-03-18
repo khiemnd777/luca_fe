@@ -32,11 +32,22 @@ export default function RequireAuth({
   const { hasAnyRole, hasAllRoles } = useRoleChecks();
   const { hasAnyPermissions } = usePermissionChecks();
   const bootstrapAuth = useAuthStore((state) => state.bootstrap);
+  const debugId = React.useId();
 
   const navigate = useNavigate();
   const location = useLocation();
   const [, forceAuthStateRefresh] = React.useReducer((value) => value + 1, 0);
   const [recoveringSession, setRecoveringSession] = React.useState(false);
+  const [syncingSession, setSyncingSession] = React.useState(false);
+  const mountedRef = React.useRef(true);
+  const recoveryInFlightRef = React.useRef(false);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     const unsubscribe = subscribeAuthEvents(() => forceAuthStateRefresh());
@@ -55,26 +66,38 @@ export default function RequireAuth({
   const canRecoverSession = mustLogin && hasRT && !refreshFailed;
 
   React.useEffect(() => {
-    if (!canRecoverSession || refreshing || recoveringSession) return;
+    if (!canRecoverSession) {
+      recoveryInFlightRef.current = false;
+      return;
+    }
 
-    let active = true;
+    if (refreshing || recoveryInFlightRef.current) return;
+
+    recoveryInFlightRef.current = true;
     setRecoveringSession(true);
 
     void refreshOnce()
-      .then(async (token) => {
-        if (!token || !active) return;
-        await bootstrapAuth();
+      .then((token) => {
+        if (!token || !mountedRef.current) return;
+
+        if (mountedRef.current) {
+          setRecoveringSession(false);
+          setSyncingSession(true);
+        }
+
+        void bootstrapAuth().finally(() => {
+          if (mountedRef.current) {
+            setSyncingSession(false);
+          }
+        });
       })
       .finally(() => {
-        if (active) {
+        recoveryInFlightRef.current = false;
+        if (mountedRef.current) {
           setRecoveringSession(false);
         }
       });
-
-    return () => {
-      active = false;
-    };
-  }, [bootstrapAuth, canRecoverSession, recoveringSession, refreshing]);
+  }, [bootstrapAuth, canRecoverSession, refreshing]);
 
   const redirectTo = React.useMemo(() => {
     if (mustLogin && (!hasRT || refreshFailed)) {
@@ -86,6 +109,7 @@ export default function RequireAuth({
     }
 
     if (canRecoverSession || refreshing || recoveringSession) return null;
+    if (syncingSession) return null;
     if (roles?.length) {
       const ok = requireAll ? hasAllRoles(roles) : hasAnyRole(roles);
       if (!ok) return forbiddenPath;
@@ -102,6 +126,7 @@ export default function RequireAuth({
     canRecoverSession,
     refreshing,
     recoveringSession,
+    syncingSession,
     roles,
     permissions,
     requireAll,

@@ -204,7 +204,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
   const [confirming, setConfirming] = React.useState(false);
   const [targetRow, setTargetRow] = React.useState<T | null>(null);
 
-  const { loading, reload } = useAsync(
+  const { loading, error, reload } = useAsync(
     async () => {
       const res = await schema.fetch({
         limit: pageSize,
@@ -224,7 +224,7 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
       }));
       return res;
     },
-    [schema, page, pageSize, sortBy, sortDir],
+    [schema, page, pageSize, sortBy, sortDir, params],
     { key: schemaName }
   );
 
@@ -290,6 +290,8 @@ export function ForwardSchemaTable<T extends { id?: string | number }>(
         loading={loading}
         onPageChange={(p) => setPage(p)}
         onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        onRowClick={schema.onRowClick}
+        error={error instanceof Error ? error.message : (typeof error === "string" ? error : null)}
 
         // sort (server-side)
         onSortChange={(by, dir) => { setSortBy(by); setSortDir(dir); setPage(1); }}

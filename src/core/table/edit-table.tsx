@@ -44,8 +44,10 @@ export type EditTableProps<T> = {
   onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   onView?: (row: T) => void;
+  onRowClick?: (row: T) => void;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
+  error?: string | null;
   /** Header dính khi scroll dọc */
   stickyHeader?: boolean;
   /** Bảng dense */
@@ -145,10 +147,14 @@ function LinkCell({ label, url }: { label: React.ReactNode; url?: string | null 
     <Box
       role="link"
       tabIndex={0}
-      onClick={() => navigate(url)}
+      onClick={(e) => {
+        e.stopPropagation();
+        navigate(url);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
+          e.stopPropagation();
           navigate(url);
         }
       }}
@@ -274,8 +280,10 @@ export function EditTable<T extends { id?: string | number }>({
   onPageChange,
   onPageSizeChange,
   onView,
+  onRowClick,
   onEdit,
   onDelete,
+  error = null,
   stickyHeader = true,
   dense = true,
   onSortChange,
@@ -284,6 +292,30 @@ export function EditTable<T extends { id?: string | number }>({
   stickyTopOffset = 0,
   onReorder,
 }: EditTableProps<T>) {
+  const isClickableRow = typeof onRowClick === "function";
+
+  const handleRowClick = React.useCallback((row: T) => {
+    onRowClick?.(row);
+  }, [onRowClick]);
+
+  const stopRowClick = React.useCallback((event: React.SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
+  const getRowA11yProps = React.useCallback((row: T) => {
+    if (!isClickableRow) return {};
+    return {
+      tabIndex: 0,
+      onClick: () => handleRowClick(row),
+      onKeyDown: (event: React.KeyboardEvent) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleRowClick(row);
+        }
+      },
+    };
+  }, [handleRowClick, isClickableRow]);
+
 
   // ==== sort state (uncontrolled for client-side) ====
   const [orderBy, setOrderBy] = React.useState<string | null>(controlledSortBy ?? null);
@@ -816,6 +848,32 @@ export function EditTable<T extends { id?: string | number }>({
                 Đang tải…
               </Box>
             </Box>
+          ) : error ? (
+            <Box
+              role="row"
+              sx={{
+                display: "grid",
+                gridTemplateColumns,
+              }}
+            >
+              <Box
+                role="cell"
+                sx={{
+                  gridColumn: `1 / span ${totalColumns}`,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "56px",
+                  textAlign: "center",
+                  px: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                  color: "error.main",
+                }}
+              >
+                {error}
+              </Box>
+            </Box>
           ) : sortedRows.length === 0 ? (
             <Box
               role="row"
@@ -853,10 +911,12 @@ export function EditTable<T extends { id?: string | number }>({
                           <Box
                             role="row"
                             ref={setNodeRef}
+                            {...getRowA11yProps(r)}
                             sx={{
                               display: "grid",
                               gridTemplateColumns,
                               alignItems: "stretch",
+                              cursor: isClickableRow ? "pointer" : undefined,
                               "& > [role='cell']:not([data-sticky='true'])": {
                                 backgroundColor: isDragging ? "action.hover" : undefined,
                               },
@@ -890,6 +950,7 @@ export function EditTable<T extends { id?: string | number }>({
                                 size="small"
                                 aria-label="Drag to reorder"
                                 {...handleProps}
+                                onClick={stopRowClick}
                                 sx={{
                                   cursor: isDragging ? "grabbing" : "grab",
                                 }}
@@ -921,21 +982,30 @@ export function EditTable<T extends { id?: string | number }>({
                                 <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                                   {onView && (
                                     <Tooltip title="View">
-                                      <IconButton size="small" onClick={() => onView(r)}>
+                                      <IconButton size="small" onClick={(event) => {
+                                        stopRowClick(event);
+                                        onView(r);
+                                      }}>
                                         <VisibilityRoundedIcon fontSize="small" />
                                       </IconButton>
                                     </Tooltip>
                                   )}
                                   {onEdit && (
                                     <Tooltip title="Edit">
-                                      <IconButton size="small" onClick={() => onEdit(r)}>
+                                      <IconButton size="small" onClick={(event) => {
+                                        stopRowClick(event);
+                                        onEdit(r);
+                                      }}>
                                         <EditRoundedIcon fontSize="small" />
                                       </IconButton>
                                     </Tooltip>
                                   )}
                                   {onDelete && (
                                     <Tooltip title="Delete">
-                                      <IconButton size="small" color="error" onClick={() => onDelete(r)}>
+                                      <IconButton size="small" color="error" onClick={(event) => {
+                                        stopRowClick(event);
+                                        onDelete(r);
+                                      }}>
                                         <DeleteRoundedIcon fontSize="small" />
                                       </IconButton>
                                     </Tooltip>
@@ -984,10 +1054,12 @@ export function EditTable<T extends { id?: string | number }>({
                 <Box
                   role="row"
                   key={(r as any).id ?? rowIdx}
+                  {...getRowA11yProps(r)}
                   sx={{
                     display: "grid",
                     gridTemplateColumns,
                     alignItems: "stretch",
+                    cursor: isClickableRow ? "pointer" : undefined,
                     "&:hover > [role='cell']:not([data-sticky='true'])": {
                       backgroundColor: "action.hover",
                     },
@@ -1016,21 +1088,30 @@ export function EditTable<T extends { id?: string | number }>({
                       <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                         {onView && (
                           <Tooltip title="View">
-                            <IconButton size="small" onClick={() => onView(r)}>
+                            <IconButton size="small" onClick={(event) => {
+                              stopRowClick(event);
+                              onView(r);
+                            }}>
                               <VisibilityRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}
                         {onEdit && (
                           <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => onEdit(r)}>
+                            <IconButton size="small" onClick={(event) => {
+                              stopRowClick(event);
+                              onEdit(r);
+                            }}>
                               <EditRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}
                         {onDelete && (
                           <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => onDelete(r)}>
+                            <IconButton size="small" color="error" onClick={(event) => {
+                              stopRowClick(event);
+                              onDelete(r);
+                            }}>
                               <DeleteRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>

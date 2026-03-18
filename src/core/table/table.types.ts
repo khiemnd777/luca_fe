@@ -115,6 +115,7 @@ export type TableSchema<T> = {
 
   // row actions
   onView?: (row: T) => void | Promise<void>;
+  onRowClick?: (row: T) => void | Promise<void>;
   onEdit?: (row: T) => void | Promise<void>;
   onDelete?: (row: T) => void | Promise<void>;
   onReorder?: (newRows: T[], from: number, to: number) => void;
